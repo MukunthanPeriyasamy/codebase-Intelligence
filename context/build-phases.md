@@ -1,0 +1,30 @@
+# Build Phases
+
+## Latest provider decision — Ollama (2026-10-09)
+
+The requested provider replacement is local Ollama for documentation/chat and installed embedding-model selection. This changes the runtime provider, not the phase completion claims. Real local-model quality/performance evaluation and embedding execution remain pending. This supersedes earlier OpenRouter-specific runtime instructions; earlier completed-work entries remain historical.
+
+Each phase ends with a working, verified unit. Phases 1-6 are complete; Phase 7 is next. Evidence and limits are in `../validation/README.md`, `../validation/phase2.md`, `../validation/phase3.md`, `../validation/phase4.md`, `../validation/phase5.md` and `../validation/phase6.md`. Later phases are not yet implemented. Incremental updates are part of this MVP, not a later production feature.
+
+| Phase | Work | Exit evidence |
+| --- | --- | --- |
+| 1. Backend validation and baseline | Pin RepoWise, verify language capabilities and source spans, probe graphs and commit diffs, define the adapter contract, establish representative evaluation fixtures/questions. | Reproducible coverage and retrieval baseline, documented incompatibilities and mitigation, and a justified integration decision. Synthetic smoke tests alone do not finish this phase. |
+| 2. Electron foundation | Main/preload/renderer scaffold, typed validated bridge, local service/worker lifecycle, credential boundary, build tooling. | Desktop launch and build pass; privileged operations stay outside the renderer; worker status and failures reach the UI. |
+| 3. Snapshots and background sync | Local repository selection/remote clone, immutable committed snapshots, full inventory, new-commit detection, changed/affected records, resumable jobs, atomic publication and requested notification sidebar. | Add/edit/rename/delete commits refresh correctly; dirty worktrees are excluded; published source retains a consistent version during rebuilds; updates are visible under the top-nav notification icon. Selected branch checks run every 60 seconds while the app is open. |
+| 4. Behaviour and documentation | OpenRouter analysis, evidence records, schema/span validation, bounded generation, function/module/workflow docs, invalidation and regeneration on new commits. | Browsable documentation is grounded in the active snapshot; claims carry evidence/uncertainty; incomplete work is visible and resumable. |
+| 5. Retrieval and cited chat | Rules-based routing, symbol/source/docs/graph retrieval, evidence budgets, OpenRouter answers, direct lookup answers, exact caching, bounded fallback. | Representative questions return supporting citations; insufficient evidence is explicit; cache/version and deletion tests pass. |
+| 6. Complete desktop workflow | Integrate repository setup, model settings, progress/coverage, documentation navigation, source viewer, and chat; finalize visual design. | A developer completes the repository-to-documentation-to-chat flow while background sync remains responsive. |
+| 7. Evaluation and packaging | Representative held-out evaluation, regression checks, recovery/resource limits, performance and cost measurement, desktop packaging. | Initial 50-question developer-verified evaluation, documented measured limits, working packaged application for the selected OS, and reliable restart/update behavior. |
+
+The seven phases order implementation; they do not add SaaS, code modification, learned routing, or other deferred features. The baseline evaluation begins in Phase 1 and is rerun against the integrated app in Phase 7. The user selects the model in the app; documentation is manual by default with configurable request/token limits. Live model quality evaluation and packaging targets remain tracked in `progress-tracker.md`. Phase 2 selected React/Vite and a provisional dark design; Phase 3 implemented repository/sync defaults and the requested notifications.
+
+Phase 5 uses bounded lexical/source/symbol retrieval and unresolved call-site expansion, plus current-commit documentation source candidates. Semantic embeddings and complete graph resolution are not claimed. The model is shared with documentation; chat consumes the same daily request budget and takes priority over documentation jobs. Exact caching includes the effective bounded conversation context.
+
+Phase 6 implements four persistent navigation views, shared Settings, commit/job status and a captured-source dialog with keyboard focus return. Documentation can prefill Chat without a provider request. The integrated Electron workflow verifies drafts and old citations through the actual 60-second background sync timer. The dark/mint layout is implemented and visually reviewed at normal and narrow desktop widths.
+
+
+Before Phase 7, implement the user-requested extension: workspace storage and document export, OpenRouter embedding lifecycle, sequential vector/KG/source retrieval, full-section Chat and live React Flow KG. Model catalog selection is the first implemented unit; this does not mark vector indexing complete.
+
+The full-section Chat and live React Flow KG presentation units are complete. Workspace directory selection/document export is also complete. Embedding storage/publication and sequential vector/KG/source retrieval remain pending before Phase 7.
+
+Workspace selection and Markdown export are complete: native picker persistence, destination-local clone staging, versioned browsable source, generation-specific Markdown with a latest index and preservation of prior exports/notes. Vector storage and re-embedding remain separate work.

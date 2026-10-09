@@ -1,0 +1,20 @@
+{
+  "repowise": {
+    "owner": "repowise-dev",
+    "commit": "7f84ae07908de40595fc64b3fe3c910123367a1e",
+    "version": "0.55.0",
+    "archive_sha256": "2d4898a791626b6cb56045eaec28e8ab965b62c52262655f56520c405b45374f"
+  },
+  "itsdangerous": {
+    "owner": "pallets",
+    "commit": "096c8d42545d3b68ea21a4f890fb2b2d8979c0bd",
+    "version": "2.2.0",
+    "archive_sha256": "502ad59b29c347f90448be4761bce5fea55b84e232ad00ce6f1a212db7737172"
+  },
+  "p-limit": {
+    "owner": "sindresorhus",
+    "commit": "7d14b3f04aa990f621a853e24e2a4b796baf1ec9",
+    "version": "6.2.0",
+    "archive_sha256": "9138600c2bf9e2eee9906d0e391988f6ab1615322c3a0530324bfceca5c3b693"
+  }
+}

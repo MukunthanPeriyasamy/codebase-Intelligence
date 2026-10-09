@@ -1,0 +1,191 @@
+{
+  "fixture": "D:\\office-project\\codebase-intelligence\\.research\\lifecycle-lcw3juba",
+  "checks": [
+    {
+      "name": "initial-persisted-index",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "initial-symbols",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "cross-file-call-and-provenance",
+      "passed": true,
+      "detail": [
+        [
+          "app.py::entry",
+          "helper.py::helper",
+          "import_scoped"
+        ]
+      ]
+    },
+    {
+      "name": "persisted-structural-pages",
+      "passed": true,
+      "detail": {
+        "pages": 9
+      }
+    },
+    {
+      "name": "persisted-parse-cache-hit",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "changed-hash-cache-miss",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "dependent-caller-invalidated",
+      "passed": true,
+      "detail": {
+        "regenerate": [
+          "helper.py",
+          "obsolete.py",
+          "app.py",
+          "added.py",
+          "renamed.py"
+        ],
+        "rename_patch": [],
+        "decay_only": [],
+        "stale_due_to_budget": 0
+      }
+    },
+    {
+      "name": "incremental-update-exit",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "added-symbol-indexed",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "deleted-symbol-removed",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "renamed-symbol-rekeyed",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "deleted-renamed-graph-edges-removed",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "deleted-renamed-pages-tombstoned",
+      "passed": true,
+      "detail": [
+        [
+          "rename_me.py",
+          "tombstone"
+        ],
+        [
+          "obsolete.py",
+          "tombstone"
+        ]
+      ]
+    },
+    {
+      "name": "deleted-symbol-not-retrievable",
+      "passed": true,
+      "detail": {
+        "results": [],
+        "mode": "symbol",
+        "_meta": {
+          "index_age_days": 0,
+          "indexed_commit": "11366a29b761",
+          "live_head": "11366a29b761",
+          "index_behind": false,
+          "index_scope": {
+            "version": 1,
+            "projection": "compact",
+            "run_mode": "standard",
+            "content_provenance": "template",
+            "git_tier": "full",
+            "status": "upgrading",
+            "fingerprint": "78bee3ceb07f",
+            "full": "get_overview()"
+          },
+          "embedder": "mock",
+          "embedder_degraded": false,
+          "semantic_search": false
+        },
+        "exact_match": false,
+        "note": "No indexed symbol exactly matches 'obsolete'. The results are fuzzy neighbours ranked by token overlap \u2014 confirm a hit names what you meant before relying on it. If you expected an exact symbol, recheck spelling/casing. For an exhaustive sweep of every literal usage \u2014 before a rename, say \u2014 Grep the name; that is the one job this surface does not do.",
+        "grep_hint": "No indexed match for identifier 'obsolete'. Retry with mode=\"symbol\" (or check spelling/casing). For an exhaustive sweep of every literal usage \u2014 before a rename, say \u2014 Grep the name; that is the one job this surface does not do."
+      }
+    },
+    {
+      "name": "tombstoned-pages-not-retrievable",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "indexed-commit-stamped",
+      "passed": true,
+      "detail": "11366a29b761797a262df858d98aa3d272221c14"
+    },
+    {
+      "name": "independent-prior-index-preserved",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "same-commit-detector-ignores-dirty-content",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "resume-command-exit",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "resume-does-not-duplicate-symbols",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "resume-database-integrity",
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "commands": [
+    {
+      "label": "init",
+      "exit_code": 0,
+      "seconds": 41.749,
+      "log": "D:\\office-project\\codebase-intelligence\\.research\\lifecycle-lcw3juba-init.log"
+    },
+    {
+      "label": "update",
+      "exit_code": 0,
+      "seconds": 18.201,
+      "log": "D:\\office-project\\codebase-intelligence\\.research\\lifecycle-lcw3juba-update.log"
+    },
+    {
+      "label": "resume",
+      "exit_code": 0,
+      "seconds": 19.511,
+      "log": "D:\\office-project\\codebase-intelligence\\.research\\lifecycle-lcw3juba-resume.log"
+    }
+  ],
+  "model_calls": 0,
+  "commits": {
+    "base": "d74c4b62533b9ca6fd2c2a315f85d9708caa6f0f",
+    "head": "11366a29b761797a262df858d98aa3d272221c14"
+  },
+  "passed": 21,
+  "total": 21,
+  "limits": "Upstream clean-fixture update and completed-run resume; product job cancellation, atomic publication, answer-cache invalidation and provider generation belong to later implementation gates."
+}

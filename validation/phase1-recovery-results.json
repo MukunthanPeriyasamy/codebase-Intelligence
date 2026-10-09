@@ -1,0 +1,21 @@
+{
+  "fixture": "D:\\office-project\\codebase-intelligence\\.research\\recovery-a5wv8n8d\\snapshot",
+  "interruption_after_persistence": true,
+  "interrupted_exit": 1,
+  "resumed_exit": 0,
+  "integrity": "ok",
+  "counts": {
+    "wiki_symbols": 158,
+    "wiki_pages": 27,
+    "graph_edges": 557
+  },
+  "uninterrupted_reference_counts": {
+    "wiki_symbols": 158,
+    "wiki_pages": 27,
+    "graph_edges": 557
+  },
+  "duplicate_symbols": [],
+  "resume_seconds": 37.305,
+  "passed": true,
+  "limits": "Abrupt termination after symbol persistence, one small repository; does not prove crash recovery at every write point or product-level job cancellation."
+}

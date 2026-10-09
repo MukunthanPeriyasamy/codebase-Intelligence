@@ -1,0 +1,3167 @@
+{
+  "upstream_commit": "7f84ae07908de40595fc64b3fe3c910123367a1e",
+  "language_matrix": [
+    {
+      "language": "python",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_python",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "typescript",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_typescript",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "javascript",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_javascript",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "svelte",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": null,
+      "shares_grammar_with": "typescript",
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "vue",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": null,
+      "shares_grammar_with": "typescript",
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "go",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_go",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "rust",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_rust",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "java",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_java",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "cpp",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_cpp",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "c",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": null,
+      "shares_grammar_with": "cpp",
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "kotlin",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_kotlin",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "ruby",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_ruby",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "csharp",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_c_sharp",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "razor",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": null,
+      "shares_grammar_with": "csharp",
+      "grammar_loaded": true,
+      "declared_import_support": "none",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "php",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_php",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "swift",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_swift",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "scala",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_scala",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "partial",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "dart",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_dart",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "pascal",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_pascal",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "none",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "cobol",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_language_pack",
+      "shares_grammar_with": null,
+      "grammar_loaded": false,
+      "declared_import_support": "none",
+      "status": "grammar-unavailable"
+    },
+    {
+      "language": "gdscript",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_gdscript",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "vbnet",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_vb_dotnet",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "full",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "shell",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_bash",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "partial",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "yaml",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "json",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "toml",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "proto",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "graphql",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "terraform",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "dockerfile",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "makefile",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "markdown",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "asciidoc",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "sql",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "partial",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "openapi",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "html",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "partial",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "xaml",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "godot_resource",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "full",
+      "status": "special-handler-or-document"
+    },
+    {
+      "language": "objectivec",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_objc",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "none",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "elixir",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_elixir",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "partial",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "erlang",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "partial",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "luau",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_luau",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "partial",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "r",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "zig",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "julia",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "clojure",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "partial",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "elm",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "haskell",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "partial",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "lean",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "partial",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "qml",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "partial",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "ocaml",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "fsharp",
+      "is_code": true,
+      "passthrough": false,
+      "grammar_package": "tree_sitter_fsharp",
+      "shares_grammar_with": null,
+      "grammar_loaded": true,
+      "declared_import_support": "partial",
+      "status": "grammar-loaded-not-accuracy-certified"
+    },
+    {
+      "language": "crystal",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "nim",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "dlang",
+      "is_code": true,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "unsupported-structural"
+    },
+    {
+      "language": "unknown",
+      "is_code": false,
+      "passthrough": true,
+      "grammar_package": null,
+      "shares_grammar_with": null,
+      "grammar_loaded": null,
+      "declared_import_support": "none",
+      "status": "special-handler-or-document"
+    }
+  ],
+  "fixture_parses": [
+    {
+      "file": "cpp/assertions.cpp",
+      "language": "cpp",
+      "symbols": 2,
+      "calls": 18,
+      "errors": []
+    },
+    {
+      "file": "cpp/classes.cpp",
+      "language": "cpp",
+      "symbols": 11,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "cpp/nested.cpp",
+      "language": "cpp",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "csharp/assertions.cs",
+      "language": "csharp",
+      "symbols": 3,
+      "calls": 18,
+      "errors": []
+    },
+    {
+      "file": "csharp/classes.cs",
+      "language": "csharp",
+      "symbols": 15,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "csharp/nested.cs",
+      "language": "csharp",
+      "symbols": 4,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "csharp/PerfIoInLoop.cs",
+      "language": "csharp",
+      "symbols": 10,
+      "calls": 4,
+      "errors": []
+    },
+    {
+      "file": "dart/assertions.dart",
+      "language": "dart",
+      "symbols": 2,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "dart/classes.dart",
+      "language": "dart",
+      "symbols": 10,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "dart/nested.dart",
+      "language": "dart",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "dart/perf_io_in_loop.dart",
+      "language": "dart",
+      "symbols": 6,
+      "calls": 6,
+      "errors": []
+    },
+    {
+      "file": "go/conditionals.go",
+      "language": "go",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "go/nested.go",
+      "language": "go",
+      "symbols": 2,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "go/perf_io_in_loop.go",
+      "language": "go",
+      "symbols": 9,
+      "calls": 9,
+      "errors": []
+    },
+    {
+      "file": "java/Conditionals.java",
+      "language": "java",
+      "symbols": 4,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "java/Nested.java",
+      "language": "java",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "java/PerfIoInLoop.java",
+      "language": "java",
+      "symbols": 10,
+      "calls": 10,
+      "errors": []
+    },
+    {
+      "file": "javascript/nested.js",
+      "language": "javascript",
+      "symbols": 2,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "javascript/route.js",
+      "language": "javascript",
+      "symbols": 3,
+      "calls": 13,
+      "errors": []
+    },
+    {
+      "file": "kotlin/assertions.kt",
+      "language": "kotlin",
+      "symbols": 2,
+      "calls": 18,
+      "errors": []
+    },
+    {
+      "file": "kotlin/classes.kt",
+      "language": "kotlin",
+      "symbols": 15,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "kotlin/nested.kt",
+      "language": "kotlin",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "lean/BigOperators.lean",
+      "language": "lean",
+      "symbols": 0,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "lean/Main.lean",
+      "language": "lean",
+      "symbols": 0,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "lean/Plain/Local.lean",
+      "language": "lean",
+      "symbols": 0,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "lean/Public/Visible.lean",
+      "language": "lean",
+      "symbols": 0,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "pascal/complex.pas",
+      "language": "pascal",
+      "symbols": 1,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "pascal/nested.pas",
+      "language": "pascal",
+      "symbols": 2,
+      "calls": 1,
+      "errors": []
+    },
+    {
+      "file": "python/assertions.py",
+      "language": "python",
+      "symbols": 6,
+      "calls": 4,
+      "errors": []
+    },
+    {
+      "file": "python/classes.py",
+      "language": "python",
+      "symbols": 12,
+      "calls": 1,
+      "errors": []
+    },
+    {
+      "file": "python/complex.py",
+      "language": "python",
+      "symbols": 1,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "python/conditionals.py",
+      "language": "python",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "python/match.py",
+      "language": "python",
+      "symbols": 2,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "python/nested.py",
+      "language": "python",
+      "symbols": 2,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "python/perf_io_in_loop.py",
+      "language": "python",
+      "symbols": 13,
+      "calls": 17,
+      "errors": []
+    },
+    {
+      "file": "python/py_overload_init.py",
+      "language": "python",
+      "symbols": 9,
+      "calls": 2,
+      "errors": []
+    },
+    {
+      "file": "ruby/assertions.rb",
+      "language": "ruby",
+      "symbols": 3,
+      "calls": 7,
+      "errors": []
+    },
+    {
+      "file": "ruby/classes.rb",
+      "language": "ruby",
+      "symbols": 13,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "ruby/nested.rb",
+      "language": "ruby",
+      "symbols": 11,
+      "calls": 6,
+      "errors": []
+    },
+    {
+      "file": "ruby/perf_io_in_loop.rb",
+      "language": "ruby",
+      "symbols": 12,
+      "calls": 29,
+      "errors": []
+    },
+    {
+      "file": "rust/conditionals.rs",
+      "language": "rust",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "rust/flat_match.rs",
+      "language": "rust",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "rust/nested.rs",
+      "language": "rust",
+      "symbols": 2,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "rust/perf_io_in_loop.rs",
+      "language": "rust",
+      "symbols": 10,
+      "calls": 13,
+      "errors": []
+    },
+    {
+      "file": "scala/assertions.scala",
+      "language": "scala",
+      "symbols": 6,
+      "calls": 4,
+      "errors": []
+    },
+    {
+      "file": "scala/classes.scala",
+      "language": "scala",
+      "symbols": 20,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "scala/nested.scala",
+      "language": "scala",
+      "symbols": 7,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "scala/perf_io_in_loop.scala",
+      "language": "scala",
+      "symbols": 12,
+      "calls": 10,
+      "errors": []
+    },
+    {
+      "file": "shell/control_flow.sh",
+      "language": "shell",
+      "symbols": 2,
+      "calls": 3,
+      "errors": []
+    },
+    {
+      "file": "shell/functions.sh",
+      "language": "shell",
+      "symbols": 3,
+      "calls": 2,
+      "errors": []
+    },
+    {
+      "file": "shell/sourcing.sh",
+      "language": "shell",
+      "symbols": 1,
+      "calls": 4,
+      "errors": []
+    },
+    {
+      "file": "shell/zero_functions.sh",
+      "language": "shell",
+      "symbols": 0,
+      "calls": 1,
+      "errors": []
+    },
+    {
+      "file": "shell/zshisms.zsh",
+      "language": "shell",
+      "symbols": 1,
+      "calls": 1,
+      "errors": []
+    },
+    {
+      "file": "typescript/assertions.ts",
+      "language": "typescript",
+      "symbols": 2,
+      "calls": 36,
+      "errors": []
+    },
+    {
+      "file": "typescript/classes.ts",
+      "language": "typescript",
+      "symbols": 11,
+      "calls": 1,
+      "errors": []
+    },
+    {
+      "file": "typescript/conditionals.ts",
+      "language": "typescript",
+      "symbols": 3,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "typescript/nested.ts",
+      "language": "typescript",
+      "symbols": 2,
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "file": "typescript/perf_io_in_loop.ts",
+      "language": "typescript",
+      "symbols": 5,
+      "calls": 3,
+      "errors": []
+    },
+    {
+      "file": "typescript/ts_class_modifiers.ts",
+      "language": "typescript",
+      "symbols": 15,
+      "calls": 2,
+      "errors": []
+    },
+    {
+      "file": "typescript/ts_module_consts.ts",
+      "language": "typescript",
+      "symbols": 6,
+      "calls": 1,
+      "errors": []
+    },
+    {
+      "file": "typescript/ts_overload_fn_method.ts",
+      "language": "typescript",
+      "symbols": 12,
+      "calls": 1,
+      "errors": []
+    }
+  ],
+  "fallback": [
+    {
+      "question_id": "Q01",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 10,
+          "score": 72
+        },
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 7,
+          "score": 46
+        },
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 17,
+          "score": 27
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 11,
+          "score": 27
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 19,
+          "score": 15
+        },
+        {
+          "path": "docs/serializer.rst",
+          "line": 6,
+          "score": 10
+        },
+        {
+          "path": "docs/concepts.rst",
+          "line": 5,
+          "score": 9
+        },
+        {
+          "path": "docs/signer.rst",
+          "line": 1,
+          "score": 6
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 76,
+          "score": 6
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 58,
+          "score": 5
+        }
+      ],
+      "latency_ms": 61.83,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q02",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 22,
+          "score": 6
+        },
+        {
+          "path": "docs/timed.rst",
+          "line": 7,
+          "score": 4
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 13,
+          "score": 3
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 76,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 19,
+          "score": 1
+        }
+      ],
+      "latency_ms": 37.28,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q03",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 16,
+          "score": 59
+        },
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 26,
+          "score": 58
+        },
+        {
+          "path": "docs/serializer.rst",
+          "line": 1,
+          "score": 15
+        },
+        {
+          "path": "docs/concepts.rst",
+          "line": 5,
+          "score": 13
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 12,
+          "score": 13
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 12,
+          "score": 12
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 10,
+          "score": 11
+        },
+        {
+          "path": "tests/test_itsdangerous/test_url_safe.py",
+          "line": 5,
+          "score": 10
+        },
+        {
+          "path": "docs/url_safe.rst",
+          "line": 8,
+          "score": 5
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 14,
+          "score": 4
+        }
+      ],
+      "latency_ms": 37.0,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q04",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 48,
+          "score": 3
+        },
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 7,
+          "score": 2
+        },
+        {
+          "path": "docs/signer.rst",
+          "line": 49,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 15,
+          "score": 1
+        }
+      ],
+      "latency_ms": 39.69,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q05",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 8,
+          "score": 2
+        },
+        {
+          "path": "docs/signer.rst",
+          "line": 47,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 16,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 31,
+          "score": 1
+        }
+      ],
+      "latency_ms": 39.49,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q06",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 15,
+          "score": 3
+        }
+      ],
+      "latency_ms": 37.13,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q07",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_url_safe.py",
+          "line": 6,
+          "score": 4
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 12,
+          "score": 3
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 12,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 18,
+          "score": 2
+        },
+        {
+          "path": "docs/timed.rst",
+          "line": 27,
+          "score": 1
+        },
+        {
+          "path": "docs/url_safe.rst",
+          "line": 21,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 170,
+          "score": 1
+        }
+      ],
+      "latency_ms": 33.57,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q08",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 11,
+          "score": 10
+        },
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 7,
+          "score": 5
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 13,
+          "score": 5
+        },
+        {
+          "path": "tests/test_itsdangerous/test_encoding.py",
+          "line": 7,
+          "score": 4
+        },
+        {
+          "path": "src/itsdangerous/encoding.py",
+          "line": 11,
+          "score": 3
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 187,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 7,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.82,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q09",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_encoding.py",
+          "line": 3,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 9,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 9,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 7,
+          "score": 2
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 123,
+          "score": 1
+        },
+        {
+          "path": "docs/encoding.rst",
+          "line": 8,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 5,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/encoding.py",
+          "line": 28,
+          "score": 1
+        }
+      ],
+      "latency_ms": 39.87,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q10",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/encoding.py",
+          "line": 46,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 11,
+          "score": 2
+        },
+        {
+          "path": "tests/test_itsdangerous/test_encoding.py",
+          "line": 5,
+          "score": 2
+        }
+      ],
+      "latency_ms": 40.04,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q11",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 68,
+          "score": 25
+        },
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 56,
+          "score": 16
+        },
+        {
+          "path": "docs/concepts.rst",
+          "line": 21,
+          "score": 9
+        },
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 39,
+          "score": 3
+        },
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 21,
+          "score": 2
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 32,
+          "score": 2
+        },
+        {
+          "path": "tests/test_itsdangerous/test_url_safe.py",
+          "line": 14,
+          "score": 2
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 84,
+          "score": 1
+        },
+        {
+          "path": "docs/serializer.rst",
+          "line": 91,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.68,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q12",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 10,
+          "score": 72
+        },
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 7,
+          "score": 46
+        },
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 17,
+          "score": 27
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 11,
+          "score": 27
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 19,
+          "score": 15
+        },
+        {
+          "path": "docs/serializer.rst",
+          "line": 6,
+          "score": 10
+        },
+        {
+          "path": "docs/concepts.rst",
+          "line": 5,
+          "score": 9
+        },
+        {
+          "path": "docs/signer.rst",
+          "line": 1,
+          "score": 6
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 76,
+          "score": 6
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 58,
+          "score": 5
+        }
+      ],
+      "latency_ms": 39.15,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q13",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 182,
+          "score": 3
+        },
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 78,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.88,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q14",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 24,
+          "score": 4
+        },
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 46,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.94,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q15",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 24,
+          "score": 4
+        },
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 46,
+          "score": 1
+        }
+      ],
+      "latency_ms": 40.26,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q16",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 25,
+          "score": 14
+        },
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 102,
+          "score": 8
+        },
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 31,
+          "score": 8
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 37,
+          "score": 8
+        },
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 45,
+          "score": 7
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 26,
+          "score": 5
+        },
+        {
+          "path": "docs/signer.rst",
+          "line": 17,
+          "score": 5
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 77,
+          "score": 4
+        },
+        {
+          "path": "docs/serializer.rst",
+          "line": 86,
+          "score": 2
+        },
+        {
+          "path": "docs/timed.rst",
+          "line": 8,
+          "score": 2
+        }
+      ],
+      "latency_ms": 40.16,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q17",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 30,
+          "score": 4
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 79,
+          "score": 3
+        },
+        {
+          "path": "docs/concepts.rst",
+          "line": 23,
+          "score": 2
+        },
+        {
+          "path": "docs/serializer.rst",
+          "line": 31,
+          "score": 2
+        },
+        {
+          "path": "docs/signer.rst",
+          "line": 16,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 258,
+          "score": 2
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 262,
+          "score": 1
+        },
+        {
+          "path": "docs/timed.rst",
+          "line": 8,
+          "score": 1
+        }
+      ],
+      "latency_ms": 40.19,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q18",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_signer.py",
+          "line": 8,
+          "score": 2
+        },
+        {
+          "path": "docs/signer.rst",
+          "line": 47,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 16,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 31,
+          "score": 1
+        }
+      ],
+      "latency_ms": 40.46,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q19",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 29,
+          "score": 4
+        }
+      ],
+      "latency_ms": 40.1,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q20",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 35,
+          "score": 5
+        }
+      ],
+      "latency_ms": 39.86,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q21",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 22,
+          "score": 6
+        },
+        {
+          "path": "docs/timed.rst",
+          "line": 7,
+          "score": 4
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 13,
+          "score": 3
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 76,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 19,
+          "score": 1
+        }
+      ],
+      "latency_ms": 37.76,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q22",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 22,
+          "score": 6
+        },
+        {
+          "path": "docs/timed.rst",
+          "line": 7,
+          "score": 4
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 13,
+          "score": 3
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 76,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 19,
+          "score": 1
+        }
+      ],
+      "latency_ms": 31.28,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q23",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_url_safe.py",
+          "line": 6,
+          "score": 4
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 12,
+          "score": 3
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 12,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 18,
+          "score": 2
+        },
+        {
+          "path": "docs/timed.rst",
+          "line": 27,
+          "score": 1
+        },
+        {
+          "path": "docs/url_safe.rst",
+          "line": 21,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 170,
+          "score": 1
+        }
+      ],
+      "latency_ms": 37.72,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q24",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 273,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 55,
+          "score": 2
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 128,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.17,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q25",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 15,
+          "score": 3
+        }
+      ],
+      "latency_ms": 38.94,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q26",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 15,
+          "score": 3
+        }
+      ],
+      "latency_ms": 39.13,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q27",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 10,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 10,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 8,
+          "score": 2
+        },
+        {
+          "path": "tests/test_itsdangerous/test_encoding.py",
+          "line": 4,
+          "score": 2
+        },
+        {
+          "path": "docs/encoding.rst",
+          "line": 6,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 6,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/encoding.py",
+          "line": 20,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.86,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q28",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_encoding.py",
+          "line": 3,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 9,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 9,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 7,
+          "score": 2
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 123,
+          "score": 1
+        },
+        {
+          "path": "docs/encoding.rst",
+          "line": 8,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 5,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/encoding.py",
+          "line": 28,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.66,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q29",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 11,
+          "score": 10
+        },
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 7,
+          "score": 5
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 13,
+          "score": 5
+        },
+        {
+          "path": "tests/test_itsdangerous/test_encoding.py",
+          "line": 7,
+          "score": 4
+        },
+        {
+          "path": "src/itsdangerous/encoding.py",
+          "line": 11,
+          "score": 3
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 187,
+          "score": 1
+        },
+        {
+          "path": "src/itsdangerous/__init__.py",
+          "line": 7,
+          "score": 1
+        }
+      ],
+      "latency_ms": 37.99,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q30",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/encoding.py",
+          "line": 45,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 12,
+          "score": 2
+        },
+        {
+          "path": "tests/test_itsdangerous/test_encoding.py",
+          "line": 6,
+          "score": 2
+        }
+      ],
+      "latency_ms": 38.78,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q31",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 53,
+          "score": 17
+        },
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 31,
+          "score": 12
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 12,
+          "score": 5
+        },
+        {
+          "path": "docs/concepts.rst",
+          "line": 76,
+          "score": 5
+        },
+        {
+          "path": "docs/serializer.rst",
+          "line": 7,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/_json.py",
+          "line": 15,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 73,
+          "score": 2
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 102,
+          "score": 2
+        },
+        {
+          "path": "README.md",
+          "line": 22,
+          "score": 1
+        },
+        {
+          "path": "docs/url_safe.rst",
+          "line": 14,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.9,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q32",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 177,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 289,
+          "score": 2
+        },
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 167,
+          "score": 2
+        }
+      ],
+      "latency_ms": 38.98,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q33",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 53,
+          "score": 18
+        },
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 31,
+          "score": 15
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 12,
+          "score": 6
+        },
+        {
+          "path": "docs/concepts.rst",
+          "line": 76,
+          "score": 6
+        },
+        {
+          "path": "src/itsdangerous/url_safe.py",
+          "line": 55,
+          "score": 4
+        },
+        {
+          "path": "docs/serializer.rst",
+          "line": 7,
+          "score": 3
+        },
+        {
+          "path": "src/itsdangerous/_json.py",
+          "line": 15,
+          "score": 2
+        },
+        {
+          "path": "tests/test_itsdangerous/test_timed.py",
+          "line": 102,
+          "score": 2
+        },
+        {
+          "path": "README.md",
+          "line": 22,
+          "score": 1
+        },
+        {
+          "path": "docs/url_safe.rst",
+          "line": 14,
+          "score": 1
+        }
+      ],
+      "latency_ms": 39.1,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q34",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 367,
+          "score": 2
+        },
+        {
+          "path": "src/itsdangerous/timed.py",
+          "line": 228,
+          "score": 1
+        }
+      ],
+      "latency_ms": 37.68,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q35",
+      "candidates": [
+        {
+          "path": "tests/test_itsdangerous/test_serializer.py",
+          "line": 156,
+          "score": 1
+        }
+      ],
+      "latency_ms": 39.98,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q36",
+      "candidates": [
+        {
+          "path": "src/itsdangerous/serializer.py",
+          "line": 57,
+          "score": 4
+        },
+        {
+          "path": "src/itsdangerous/signer.py",
+          "line": 86,
+          "score": 4
+        },
+        {
+          "path": "docs/concepts.rst",
+          "line": 101,
+          "score": 2
+        },
+        {
+          "path": "CHANGES.rst",
+          "line": 83,
+          "score": 1
+        }
+      ],
+      "latency_ms": 38.62,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q37",
+      "candidates": [
+        {
+          "path": "test.js",
+          "line": 7,
+          "score": 17
+        },
+        {
+          "path": "readme.md",
+          "line": 16,
+          "score": 3
+        },
+        {
+          "path": "index.js",
+          "line": 3,
+          "score": 2
+        },
+        {
+          "path": "index.test-d.ts",
+          "line": 2,
+          "score": 2
+        },
+        {
+          "path": "index.d.ts",
+          "line": 43,
+          "score": 1
+        }
+      ],
+      "latency_ms": 12.47,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q38",
+      "candidates": [
+        {
+          "path": "index.d.ts",
+          "line": 1,
+          "score": 5
+        },
+        {
+          "path": "readme.md",
+          "line": 80,
+          "score": 3
+        },
+        {
+          "path": "test.js",
+          "line": 7,
+          "score": 3
+        },
+        {
+          "path": "index.js",
+          "line": 93,
+          "score": 1
+        }
+      ],
+      "latency_ms": 8.32,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q39",
+      "candidates": [
+        {
+          "path": "index.js",
+          "line": 4,
+          "score": 3
+        }
+      ],
+      "latency_ms": 8.14,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q40",
+      "candidates": [
+        {
+          "path": "test.js",
+          "line": 147,
+          "score": 2
+        },
+        {
+          "path": "index.d.ts",
+          "line": 24,
+          "score": 1
+        },
+        {
+          "path": "index.js",
+          "line": 68,
+          "score": 1
+        },
+        {
+          "path": "index.test-d.ts",
+          "line": 20,
+          "score": 1
+        },
+        {
+          "path": "readme.md",
+          "line": 68,
+          "score": 1
+        }
+      ],
+      "latency_ms": 7.06,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q41",
+      "candidates": [
+        {
+          "path": "index.js",
+          "line": 9,
+          "score": 4
+        }
+      ],
+      "latency_ms": 7.72,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q42",
+      "candidates": [
+        {
+          "path": "index.js",
+          "line": 9,
+          "score": 8
+        }
+      ],
+      "latency_ms": 8.21,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q43",
+      "candidates": [
+        {
+          "path": "index.d.ts",
+          "line": 1,
+          "score": 5
+        },
+        {
+          "path": "readme.md",
+          "line": 80,
+          "score": 3
+        },
+        {
+          "path": "test.js",
+          "line": 7,
+          "score": 3
+        },
+        {
+          "path": "index.js",
+          "line": 93,
+          "score": 1
+        }
+      ],
+      "latency_ms": 8.38,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q44",
+      "candidates": [
+        {
+          "path": "package.json",
+          "line": 1,
+          "score": 1000
+        }
+      ],
+      "latency_ms": 8.3,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q45",
+      "candidates": [
+        {
+          "path": "package.json",
+          "line": 1,
+          "score": 1000
+        }
+      ],
+      "latency_ms": 8.23,
+      "combined_expected_file_hit": true,
+      "negative_empty": null
+    },
+    {
+      "question_id": "Q46",
+      "candidates": [],
+      "latency_ms": 33.74,
+      "combined_expected_file_hit": null,
+      "negative_empty": true
+    },
+    {
+      "question_id": "Q47",
+      "candidates": [],
+      "latency_ms": 32.11,
+      "combined_expected_file_hit": null,
+      "negative_empty": true
+    },
+    {
+      "question_id": "Q48",
+      "candidates": [],
+      "latency_ms": 8.39,
+      "combined_expected_file_hit": null,
+      "negative_empty": true
+    },
+    {
+      "question_id": "Q49",
+      "candidates": [],
+      "latency_ms": 9.19,
+      "combined_expected_file_hit": null,
+      "negative_empty": true
+    },
+    {
+      "question_id": "Q50",
+      "candidates": [],
+      "latency_ms": 10.07,
+      "combined_expected_file_hit": null,
+      "negative_empty": true
+    }
+  ],
+  "cross_file_calls": {
+    "itsdangerous": [
+      {
+        "source": "src/itsdangerous/encoding.py::base64_decode",
+        "target": "src/itsdangerous/exc.py::BadData",
+        "origin": "import_scoped",
+        "call_lines": [
+          38
+        ]
+      },
+      {
+        "source": "src/itsdangerous/serializer.py::Serializer::__init__",
+        "target": "src/itsdangerous/signer.py::_make_keys_list",
+        "origin": "import_scoped",
+        "call_lines": [
+          210
+        ]
+      },
+      {
+        "source": "src/itsdangerous/serializer.py::Serializer::__init__",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          213
+        ]
+      },
+      {
+        "source": "src/itsdangerous/serializer.py::Serializer::load_payload",
+        "target": "src/itsdangerous/exc.py::BadPayload",
+        "origin": "import_scoped",
+        "call_lines": [
+          267
+        ]
+      },
+      {
+        "source": "src/itsdangerous/serializer.py::Serializer::dump_payload",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          278
+        ]
+      },
+      {
+        "source": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          316
+        ]
+      },
+      {
+        "source": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "target": "src/itsdangerous/signer.py::Signer::sign",
+        "origin": "import_merged",
+        "call_lines": [
+          317
+        ]
+      },
+      {
+        "source": "src/itsdangerous/serializer.py::Serializer::loads",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          336
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::_make_keys_list",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          71,
+          73
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::__init__",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          144,
+          154
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::derive_key",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          198
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::get_signature",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          217
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::get_signature",
+        "target": "src/itsdangerous/encoding.py::base64_encode",
+        "origin": "import_scoped",
+        "call_lines": [
+          220
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::sign",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          224
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::verify_signature",
+        "target": "src/itsdangerous/encoding.py::base64_decode",
+        "origin": "import_scoped",
+        "call_lines": [
+          230
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::verify_signature",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          234
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::unsign",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          246
+        ]
+      },
+      {
+        "source": "src/itsdangerous/signer.py::Signer::unsign",
+        "target": "src/itsdangerous/exc.py::BadSignature",
+        "origin": "import_scoped",
+        "call_lines": [
+          249,
+          256
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::sign",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          47,
+          49
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::sign",
+        "target": "src/itsdangerous/encoding.py::base64_encode",
+        "origin": "import_scoped",
+        "call_lines": [
+          48
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::sign",
+        "target": "src/itsdangerous/encoding.py::int_to_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          48
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::sign",
+        "target": "src/itsdangerous/signer.py::Signer::get_signature",
+        "origin": "self_inherited",
+        "call_lines": [
+          51
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::unsign",
+        "target": "src/itsdangerous/signer.py::Signer::unsign",
+        "origin": "self_inherited",
+        "call_lines": [
+          89
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::unsign",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          95
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::unsign",
+        "target": "src/itsdangerous/exc.py::BadTimeSignature",
+        "origin": "import_scoped",
+        "call_lines": [
+          106,
+          126,
+          130,
+          135
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::unsign",
+        "target": "src/itsdangerous/encoding.py::bytes_to_int",
+        "origin": "import_scoped",
+        "call_lines": [
+          113
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::unsign",
+        "target": "src/itsdangerous/encoding.py::base64_decode",
+        "origin": "import_scoped",
+        "call_lines": [
+          113
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimestampSigner::unsign",
+        "target": "src/itsdangerous/exc.py::SignatureExpired",
+        "origin": "import_scoped",
+        "call_lines": [
+          142,
+          149
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimedSerializer::iter_unsigners",
+        "target": "src/itsdangerous/serializer.py::Serializer::iter_unsigners",
+        "origin": "self_inherited",
+        "call_lines": [
+          180
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimedSerializer::loads",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          199
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimedSerializer::loads",
+        "target": "src/itsdangerous/serializer.py::Serializer::load_payload",
+        "origin": "self_inherited",
+        "call_lines": [
+          207
+        ]
+      },
+      {
+        "source": "src/itsdangerous/timed.py::TimedSerializer::loads_unsafe",
+        "target": "src/itsdangerous/serializer.py::Serializer::_loads_unsafe_impl",
+        "origin": "self_inherited",
+        "call_lines": [
+          228
+        ]
+      },
+      {
+        "source": "src/itsdangerous/url_safe.py::URLSafeSerializerMixin::load_payload",
+        "target": "src/itsdangerous/encoding.py::base64_decode",
+        "origin": "import_scoped",
+        "call_lines": [
+          37
+        ]
+      },
+      {
+        "source": "src/itsdangerous/url_safe.py::URLSafeSerializerMixin::load_payload",
+        "target": "src/itsdangerous/exc.py::BadPayload",
+        "origin": "import_scoped",
+        "call_lines": [
+          39,
+          48
+        ]
+      },
+      {
+        "source": "src/itsdangerous/url_safe.py::URLSafeSerializerMixin::load_payload",
+        "target": "src/itsdangerous/serializer.py::Serializer::load_payload",
+        "origin": "self_inherited",
+        "call_lines": [
+          53
+        ]
+      },
+      {
+        "source": "src/itsdangerous/url_safe.py::URLSafeSerializerMixin::dump_payload",
+        "target": "src/itsdangerous/serializer.py::Serializer::dump_payload",
+        "origin": "self_inherited",
+        "call_lines": [
+          56
+        ]
+      },
+      {
+        "source": "src/itsdangerous/url_safe.py::URLSafeSerializerMixin::dump_payload",
+        "target": "src/itsdangerous/encoding.py::base64_encode",
+        "origin": "import_scoped",
+        "call_lines": [
+          64
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_encoding.py::test_want_bytes",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          13
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_encoding.py::test_base64",
+        "target": "src/itsdangerous/encoding.py::base64_encode",
+        "origin": "import_scoped",
+        "call_lines": [
+          19
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_encoding.py::test_base64",
+        "target": "src/itsdangerous/encoding.py::base64_decode",
+        "origin": "import_scoped",
+        "call_lines": [
+          21
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_encoding.py::test_base64",
+        "target": "src/itsdangerous/encoding.py::want_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          22
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_encoding.py::test_base64_bad",
+        "target": "src/itsdangerous/encoding.py::base64_decode",
+        "origin": "import_scoped",
+        "call_lines": [
+          27
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_encoding.py::test_int_bytes",
+        "target": "src/itsdangerous/encoding.py::int_to_bytes",
+        "origin": "import_scoped",
+        "call_lines": [
+          34
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_encoding.py::test_int_bytes",
+        "target": "src/itsdangerous/encoding.py::bytes_to_int",
+        "origin": "import_scoped",
+        "call_lines": [
+          36
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_serializer",
+        "target": "src/itsdangerous/serializer.py::Serializer::loads",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          53
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_serializer",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          53
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_changed_value",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          65
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_changed_value",
+        "target": "src/itsdangerous/serializer.py::Serializer::loads",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          66,
+          70
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_bad_signature_exception",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          73
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_bad_signature_exception",
+        "target": "src/itsdangerous/serializer.py::Serializer::loads",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          76
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_bad_signature_exception",
+        "target": "src/itsdangerous/serializer.py::Serializer::load_payload",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          79
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_bad_payload_exception",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          82
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_bad_payload_exception",
+        "target": "src/itsdangerous/serializer.py::Serializer::make_signer",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          84
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_bad_payload_exception",
+        "target": "src/itsdangerous/signer.py::Signer::sign",
+        "origin": "import_merged",
+        "call_lines": [
+          84
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_bad_payload_exception",
+        "target": "src/itsdangerous/serializer.py::Serializer::loads",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          87
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_loads_unsafe",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          92
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_loads_unsafe",
+        "target": "src/itsdangerous/serializer.py::Serializer::loads_unsafe",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          93,
+          96,
+          100,
+          111
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_loads_unsafe",
+        "target": "src/itsdangerous/serializer.py::Serializer::make_signer",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          99
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_loads_unsafe",
+        "target": "src/itsdangerous/signer.py::Signer::sign",
+        "origin": "import_merged",
+        "call_lines": [
+          99
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_file",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          115
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_file",
+        "target": "src/itsdangerous/serializer.py::Serializer::dump",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          117
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_file",
+        "target": "src/itsdangerous/serializer.py::Serializer::load",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          119
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_file",
+        "target": "src/itsdangerous/serializer.py::Serializer::load_unsafe",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          121
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_alt_salt",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          124
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_alt_salt",
+        "target": "src/itsdangerous/serializer.py::Serializer::loads",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          127,
+          129
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_signer_cls",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          137
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_signer_kwargs",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          144
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::TestSerializer::test_iter_unsigners",
+        "target": "src/itsdangerous/serializer.py::Serializer::iter_unsigners",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          180
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_serializer.py::test_digests",
+        "target": "src/itsdangerous/serializer.py::Serializer::dumps",
+        "origin": "import_merged",
+        "call_lines": [
+          189,
+          190,
+          191
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_signer.py::TestSigner",
+        "target": "src/itsdangerous/signer.py::NoneAlgorithm",
+        "origin": "import_scoped",
+        "call_lines": [
+          85
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_signer.py::TestSigner",
+        "target": "src/itsdangerous/signer.py::HMACAlgorithm",
+        "origin": "import_scoped",
+        "call_lines": [
+          85
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_signer.py::TestSigner::test_secret_keys",
+        "target": "src/itsdangerous/signer.py::Signer",
+        "origin": "import_scoped",
+        "call_lines": [
+          95,
+          99
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_signer.py::TestSigner::test_secret_keys",
+        "target": "src/itsdangerous/signer.py::Signer::sign",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          96
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_signer.py::TestSigner::test_secret_keys",
+        "target": "src/itsdangerous/signer.py::Signer::validate",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          100
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_signer.py::TestSigner::test_secret_keys",
+        "target": "src/itsdangerous/signer.py::Signer::unsign",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          101
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_signer.py::test_abstract_algorithm",
+        "target": "src/itsdangerous/signer.py::SigningAlgorithm",
+        "origin": "import_scoped",
+        "call_lines": [
+          106
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_signer.py::test_abstract_algorithm",
+        "target": "src/itsdangerous/signer.py::SigningAlgorithm::get_signature",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          109
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_timed.py::TestTimestampSigner::test_timestamp_missing",
+        "target": "src/itsdangerous/signer.py::Signer",
+        "origin": "import_scoped",
+        "call_lines": [
+          50
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_timed.py::TestTimestampSigner::test_timestamp_missing",
+        "target": "src/itsdangerous/signer.py::Signer::sign",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          51
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_timed.py::TestTimestampSigner::test_malformed_timestamp",
+        "target": "src/itsdangerous/signer.py::Signer",
+        "origin": "import_scoped",
+        "call_lines": [
+          60
+        ]
+      },
+      {
+        "source": "tests/test_itsdangerous/test_timed.py::TestTimestampSigner::test_malformed_timestamp",
+        "target": "src/itsdangerous/signer.py::Signer::sign",
+        "origin": "receiver_typed_import",
+        "call_lines": [
+          61
+        ]
+      }
+    ],
+    "p-limit": [
+      {
+        "source": "index.test-d.ts::limit",
+        "target": "index.js::pLimit",
+        "origin": "import_merged",
+        "call_lines": [
+          4
+        ]
+      },
+      {
+        "source": "test.js::__module__",
+        "target": "index.js::pLimit",
+        "origin": "import_merged",
+        "call_lines": [
+          17,
+          32,
+          46,
+          63,
+          69,
+          87,
+          94,
+          114,
+          148,
+          161,
+          165,
+          169,
+          173,
+          177,
+          182,
+          202
+        ]
+      },
+      {
+        "source": "test.js::__module__",
+        "target": "index.js::limitFunction",
+        "origin": "import_scoped",
+        "call_lines": [
+          225
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "fixture_files": 61,
+    "fixture_languages": [
+      "cpp",
+      "csharp",
+      "dart",
+      "go",
+      "java",
+      "javascript",
+      "kotlin",
+      "lean",
+      "pascal",
+      "python",
+      "ruby",
+      "rust",
+      "scala",
+      "shell",
+      "typescript"
+    ],
+    "files_with_symbols": 56,
+    "files_with_parse_diagnostics": 0,
+    "combined_file_hits": 45,
+    "positive_questions": 45,
+    "negative_source_empty": 5,
+    "limits": "Lexical candidates are file locations, not complete evidence packets. Upstream fixtures include deliberately malformed inputs. No semantic accuracy score inferred from nonempty output."
+  }
+}

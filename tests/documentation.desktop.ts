@@ -1,0 +1,83 @@
+import { test, expect, _electron as electron } from '@playwright/test';
+import { writeFile, readFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { python, temporary } from './helpers';
+
+test('manual documentation settings, bounded generation, citations and stale commit warning', async () => {
+  test.setTimeout(90000);
+  const source = await temporary('desktop-doc-source-'); const data = await temporary('desktop-docs-'); const workspace = await temporary('desktop-doc-workspace-');
+  const exec = promisify(execFile);
+  const git = async (...args: string[]) => (await exec('git', ['-C', source, '-c', 'user.name=Doc Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', ...args], { windowsHide: true })).stdout.trim();
+  await git('init', '-b', 'main'); await writeFile(join(source, 'main.py'), 'def first():\n    return 1\n'); await git('add', '.'); await git('commit', '-m', 'first');
+  const env: Record<string, string> = { CODEBASE_INTELLIGENCE_DATA_DIR: data, CODEBASE_INTELLIGENCE_PYTHON: python };
+  for (const [key, value] of Object.entries(process.env)) if (value !== undefined && !(key in env)) env[key] = value;
+  delete env.ELECTRON_RUN_AS_NODE;
+  const app = await electron.launch({ args: ['.'], cwd: resolve('.'), env });
+  const errors: string[] = [];
+  try {
+    const page = await app.firstWindow(); page.on('pageerror', error => errors.push(error.message));
+    await expect(page.getByTestId('worker-state')).toHaveText('ready');
+    // In-process fixture transport: no external request and no production test bypass.
+    await app.evaluate(({ dialog }, paths) => {
+      dialog.showOpenDialog = async (_window: Electron.BaseWindow | Electron.OpenDialogOptions, options?: Electron.OpenDialogOptions) => ({ canceled: false, filePaths: [options?.title === 'Choose workspace folder' ? paths.workspace : paths.source] });
+      let attempts = 0;
+      globalThis.fetch = async (url, init) => {
+        if (String(url).endsWith('/api/show')) return Response.json({ capabilities: ['completion'] });
+        if (++attempts === 1) return new Response(JSON.stringify({ model: 'test/model', done: true, done_reason: 'length', message: { content: '{"title":' }, eval_count: 8000 }));
+        if (String(url) !== 'http://127.0.0.1:11434/api/chat') throw new Error('Unexpected network request');
+        const body = JSON.parse(init!.body as string);
+        const input = JSON.parse(body.messages[1].content);
+        const evidence = input.evidence[0];
+        const content = { title: input.kind === 'workflow' ? 'Fixture workflow' : 'First function', sections: [{ title: 'Entry point', kind: input.kind, symbolId: null, claims: [{ text: 'The function returns one.', basis: 'inferred', citations: [{ evidenceId: evidence.id, start: evidence.start, end: evidence.start, quote: evidence.text.split('\n')[0] }] }] }], gaps: ['Fixture response; no live provider evaluation.'] };
+        return new Response(JSON.stringify({ model: 'test/model', done: true, done_reason: 'stop', message: { content: JSON.stringify(content) }, eval_count: 100 }));
+      };
+    }, { source, workspace });
+    await page.getByRole('button', { name: 'Choose workspace folder', exact: true }).click();
+    await page.getByRole('button', { name: 'Choose repository folder' }).click();
+    await expect(page.getByTestId('sync-phase')).toHaveText('ready', { timeout: 30000 });
+    await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByLabel('Ollama model ID').fill('test/model');
+    await page.getByLabel('Requests per run').fill('1');
+    await expect(page.getByRole('checkbox', { name: /Automatically generate/ })).not.toBeChecked();
+    await page.getByRole('button', { name: 'Save generation settings' }).click();
+    await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Documentation', exact: true }).click();
+    await expect(page.getByTestId('docs-state')).toHaveText('idle');
+    await page.getByRole('button', { name: 'Generate / resume documentation' }).click();
+    await expect(page.getByTestId('docs-state')).toHaveText('error', { timeout: 30000 });
+    const failure = page.getByRole('alert').filter({ hasText: 'Documentation generation stopped' });
+    await expect(failure).toContainText('[output-truncated]');
+    await expect(failure).toContainText('Increase Output tokens per request');
+    await failure.getByText('Debug context', { exact: true }).click();
+    await expect(failure.locator('pre')).toContainText('Model: test/model');
+    await expect(failure.locator('pre')).toContainText('generated 8000 tokens');
+    await page.screenshot({ path: 'test-results/documentation-error.png', fullPage: true });
+    await page.getByRole('button', { name: 'Generate / resume documentation' }).click();
+    await expect(page.getByTestId('docs-state')).toHaveText('partial', { timeout: 30000 });
+    const selected = await page.evaluate(() => window.desktop.status());
+    const project = selected.ok ? selected.status.sync.repository?.workspacePath : undefined; expect(project).toBeTruthy();
+    await expect.poll(async () => readFile(join(project!, 'docs', 'README.md'), 'utf8').catch(() => '')).toContain('1 pages');
+    await page.getByRole('button', { name: /First function/ }).click();
+    await expect(page.getByText('The function returns one.', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: 'main.py:1–1', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Citation source' })).toContainText('def first():');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.getByRole('heading', { name: 'Documentation', exact: true, level: 2 }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'test-results/documentation.png', fullPage: true });
+    await page.getByRole('button', { name: 'Generate / resume documentation' }).click();
+    await expect(page.getByTestId('docs-state')).toHaveText('ready', { timeout: 30000 });
+    await writeFile(join(source, 'main.py'), 'def second():\n    return 2\n'); await git('add', '.'); await git('commit', '-m', 'second');
+    await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Repository', exact: true }).click();
+    await page.getByRole('button', { name: 'Sync now', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Documentation', exact: true }).click();
+    await expect(page.getByText(/Out of date — generate/)).toBeVisible({ timeout: 30000 });
+    const result = await page.evaluate(() => window.desktop.status()); expect(result.ok && result.status.docs.requestsToday).toBe(3);
+    await page.setViewportSize({ width: 780, height: 650 });
+    await page.getByRole('heading', { name: 'Documentation', exact: true, level: 2 }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'test-results/documentation-narrow.png', fullPage: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    expect(errors).toEqual([]);
+  } finally { await app.close(); }
+});

@@ -1,0 +1,55 @@
+import { test, expect, _electron as electron } from '@playwright/test';
+import { writeFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { python, temporary } from './helpers';
+
+const exec = promisify(execFile);
+test('connect a repository, publish a commit update and use the notification sidebar', async () => {
+  test.setTimeout(90000);
+  const source = await temporary('desktop-source-'); const data = await temporary('desktop-repository-');
+  const git = async (...args: string[]) => (await exec('git', ['-C', source, '-c', 'user.name=Desktop Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', ...args], { windowsHide: true })).stdout.trim();
+  await git('init', '-b', 'main');
+  await writeFile(join(source, 'main.py'), 'def first():\n    return 1\n');
+  await git('add', '.'); await git('commit', '-m', 'first');
+  const initial = await git('rev-parse', 'HEAD');
+  const env: Record<string, string> = { CODEBASE_INTELLIGENCE_DATA_DIR: data, CODEBASE_INTELLIGENCE_PYTHON: python };
+  for (const [key, value] of Object.entries(process.env)) if (value !== undefined && !(key in env)) env[key] = value;
+  delete env.ELECTRON_RUN_AS_NODE;
+  const app = await electron.launch({ args: ['.'], cwd: resolve('.'), env });
+  try {
+    const page = await app.firstWindow();
+    await expect(page.getByTestId('worker-state')).toHaveText('ready');
+    await page.getByRole('button', { name: 'Notifications', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Notifications' })).toBeVisible();
+    await expect(page.getByText('All quiet for now')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Notifications' })).toHaveCount(0);
+    await app.evaluate(({ dialog }, path) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] }); }, source);
+    await page.getByRole('button', { name: 'Choose repository folder' }).click();
+    await expect(page.getByTestId('sync-phase')).toHaveText('ready', { timeout: 30000 });
+    await expect(page.getByTestId('active-commit')).toHaveText(initial.slice(0, 8));
+    await writeFile(join(source, 'main.py'), 'def second():\n    return 2\n');
+    await git('add', '.'); await git('commit', '-m', 'second');
+    const updated = await git('rev-parse', 'HEAD');
+    await writeFile(join(source, 'main.py'), 'def dirty(): pass\n');
+    await page.getByRole('button', { name: 'Sync now', exact: true }).click();
+    await expect(page.getByTestId('active-commit')).toHaveText(updated.slice(0, 8), { timeout: 30000 });
+    await page.getByRole('button', { name: /^Notifications/ }).click();
+    const panel = page.getByRole('dialog', { name: 'Notifications' });
+    await expect(panel.getByRole('heading', { name: 'Repository snapshot updated', exact: true })).toBeVisible();
+    await expect(panel.getByText('New repository commit detected', { exact: true })).toBeVisible();
+    await page.screenshot({ path: 'test-results/repository-notifications.png', fullPage: true });
+    await panel.getByRole('button', { name: 'Mark all as read' }).click();
+    await expect(page.getByRole('button', { name: 'Notifications', exact: true })).toBeVisible();
+    await panel.getByRole('button', { name: 'Close notifications' }).click();
+    await page.getByRole('checkbox', { name: 'Check for new commits every 60 seconds' }).uncheck();
+    await expect(page.getByRole('checkbox', { name: 'Check for new commits every 60 seconds' })).toBeEnabled();
+    const result = await page.evaluate(() => window.desktop.status());
+    expect(result.ok && result.status.sync.repository?.autoSync).toBe(false);
+    await page.setViewportSize({ width: 780, height: 650 });
+    await page.getByRole('button', { name: 'Notifications', exact: true }).click();
+    await page.screenshot({ path: 'test-results/repository-narrow.png', fullPage: true });
+  } finally { await app.close(); }
+});

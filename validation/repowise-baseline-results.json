@@ -1,0 +1,443 @@
+{
+  "upstream_commit": "7f84ae07908de40595fc64b3fe3c910123367a1e",
+  "upstream_version": "0.55.0",
+  "scope": "synthetic parser/graph/change-detector probes; no LLM, full pipeline or performance benchmark",
+  "fixture_path": "D:\\office-project\\codebase-intelligence\\.research\\baseline-_iq4ikyp",
+  "checks": [
+    {
+      "name": "symbols:sample.py",
+      "passed": true,
+      "detail": {
+        "symbols": [
+          "entry",
+          "helper"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "name": "spans:sample.py",
+      "passed": true,
+      "detail": [
+        {
+          "name": "helper",
+          "start": 1,
+          "end": 2
+        },
+        {
+          "name": "entry",
+          "start": 3,
+          "end": 4
+        }
+      ]
+    },
+    {
+      "name": "call:sample.py",
+      "passed": true,
+      "detail": [
+        [
+          "sample.py::entry",
+          "sample.py::helper",
+          {
+            "confidence": 0.95,
+            "resolution_origin": "same_file",
+            "edge_type": "calls",
+            "call_lines": [
+              4
+            ],
+            "supplied_props": null
+          }
+        ]
+      ]
+    },
+    {
+      "name": "symbols:sample.ts",
+      "passed": true,
+      "detail": {
+        "symbols": [
+          "entry",
+          "helper"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "name": "spans:sample.ts",
+      "passed": true,
+      "detail": [
+        {
+          "name": "helper",
+          "start": 1,
+          "end": 1
+        },
+        {
+          "name": "entry",
+          "start": 2,
+          "end": 2
+        }
+      ]
+    },
+    {
+      "name": "call:sample.ts",
+      "passed": true,
+      "detail": [
+        [
+          "sample.ts::entry",
+          "sample.ts::helper",
+          {
+            "confidence": 0.95,
+            "resolution_origin": "same_file",
+            "edge_type": "calls",
+            "call_lines": [
+              2
+            ],
+            "supplied_props": null
+          }
+        ]
+      ]
+    },
+    {
+      "name": "symbols:sample.js",
+      "passed": true,
+      "detail": {
+        "symbols": [
+          "entry",
+          "helper"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "name": "spans:sample.js",
+      "passed": true,
+      "detail": [
+        {
+          "name": "helper",
+          "start": 1,
+          "end": 1
+        },
+        {
+          "name": "entry",
+          "start": 2,
+          "end": 2
+        }
+      ]
+    },
+    {
+      "name": "call:sample.js",
+      "passed": true,
+      "detail": [
+        [
+          "sample.js::entry",
+          "sample.js::helper",
+          {
+            "confidence": 0.95,
+            "resolution_origin": "same_file",
+            "edge_type": "calls",
+            "call_lines": [
+              2
+            ],
+            "supplied_props": null
+          }
+        ]
+      ]
+    },
+    {
+      "name": "symbols:sample.go",
+      "passed": true,
+      "detail": {
+        "symbols": [
+          "entry",
+          "helper"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "name": "spans:sample.go",
+      "passed": true,
+      "detail": [
+        {
+          "name": "helper",
+          "start": 2,
+          "end": 2
+        },
+        {
+          "name": "entry",
+          "start": 3,
+          "end": 3
+        }
+      ]
+    },
+    {
+      "name": "call:sample.go",
+      "passed": true,
+      "detail": [
+        [
+          "sample.go::entry",
+          "sample.go::helper",
+          {
+            "confidence": 0.95,
+            "resolution_origin": "same_file",
+            "edge_type": "calls",
+            "call_lines": [
+              3
+            ],
+            "supplied_props": null
+          }
+        ]
+      ]
+    },
+    {
+      "name": "symbols:sample.rs",
+      "passed": true,
+      "detail": {
+        "symbols": [
+          "entry",
+          "helper"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "name": "spans:sample.rs",
+      "passed": true,
+      "detail": [
+        {
+          "name": "helper",
+          "start": 1,
+          "end": 1
+        },
+        {
+          "name": "entry",
+          "start": 2,
+          "end": 2
+        }
+      ]
+    },
+    {
+      "name": "call:sample.rs",
+      "passed": true,
+      "detail": [
+        [
+          "sample.rs::entry",
+          "sample.rs::helper",
+          {
+            "confidence": 0.95,
+            "resolution_origin": "same_file",
+            "edge_type": "calls",
+            "call_lines": [
+              2
+            ],
+            "supplied_props": null
+          }
+        ]
+      ]
+    },
+    {
+      "name": "symbols:Sample.java",
+      "passed": true,
+      "detail": {
+        "symbols": [
+          "Sample",
+          "entry",
+          "helper"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "name": "spans:Sample.java",
+      "passed": true,
+      "detail": [
+        {
+          "name": "Sample",
+          "start": 1,
+          "end": 4
+        },
+        {
+          "name": "helper",
+          "start": 2,
+          "end": 2
+        },
+        {
+          "name": "entry",
+          "start": 3,
+          "end": 3
+        }
+      ]
+    },
+    {
+      "name": "call:Sample.java",
+      "passed": true,
+      "detail": [
+        [
+          "Sample.java::Sample::entry",
+          "Sample.java::Sample::helper",
+          {
+            "confidence": 0.95,
+            "resolution_origin": "same_file",
+            "edge_type": "calls",
+            "call_lines": [
+              3
+            ],
+            "supplied_props": null
+          }
+        ]
+      ]
+    },
+    {
+      "name": "symbols:sample.cpp",
+      "passed": true,
+      "detail": {
+        "symbols": [
+          "entry",
+          "helper"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "name": "spans:sample.cpp",
+      "passed": true,
+      "detail": [
+        {
+          "name": "helper",
+          "start": 1,
+          "end": 1
+        },
+        {
+          "name": "entry",
+          "start": 2,
+          "end": 2
+        }
+      ]
+    },
+    {
+      "name": "call:sample.cpp",
+      "passed": true,
+      "detail": [
+        [
+          "sample.cpp::entry",
+          "sample.cpp::helper",
+          {
+            "confidence": 0.95,
+            "resolution_origin": "same_file",
+            "edge_type": "calls",
+            "call_lines": [
+              2
+            ],
+            "supplied_props": null
+          }
+        ]
+      ]
+    },
+    {
+      "name": "commit-diff-statuses",
+      "passed": true,
+      "detail": {
+        "added.py": "added",
+        "delete.py": "deleted",
+        "renamed.py": "renamed",
+        "sample.py": "modified"
+      }
+    },
+    {
+      "name": "same-commit-no-update",
+      "passed": true,
+      "detail": "dirty working tree; HEAD unchanged"
+    },
+    {
+      "name": "git-blob-isolation",
+      "passed": true,
+      "detail": {
+        "symbols": [
+          "helper",
+          "entry"
+        ],
+        "hash": "bf3edf347d67d041dc1e50cf027591cc6e5c8c54f09443c13d94e38c9fd5bee8"
+      }
+    }
+  ],
+  "fallback_probe": {
+    "language": "haskell",
+    "symbols": 0,
+    "errors": []
+  },
+  "registry": {
+    "code_languages": [
+      "c",
+      "cobol",
+      "cpp",
+      "csharp",
+      "dart",
+      "elixir",
+      "fsharp",
+      "gdscript",
+      "go",
+      "java",
+      "javascript",
+      "kotlin",
+      "luau",
+      "objectivec",
+      "pascal",
+      "php",
+      "python",
+      "razor",
+      "ruby",
+      "rust",
+      "scala",
+      "shell",
+      "svelte",
+      "swift",
+      "typescript",
+      "vbnet",
+      "vue"
+    ],
+    "passthrough_languages": [
+      "asciidoc",
+      "clojure",
+      "crystal",
+      "dlang",
+      "dockerfile",
+      "elm",
+      "erlang",
+      "godot_resource",
+      "graphql",
+      "haskell",
+      "html",
+      "json",
+      "julia",
+      "lean",
+      "makefile",
+      "markdown",
+      "nim",
+      "ocaml",
+      "openapi",
+      "proto",
+      "qml",
+      "r",
+      "sql",
+      "terraform",
+      "toml",
+      "unknown",
+      "xaml",
+      "yaml",
+      "zig"
+    ]
+  },
+  "known_incompatibility": {
+    "name": "upstream commit diff reads new content from working tree",
+    "reproduced": true,
+    "observed_symbols": [
+      "uncommitted_only"
+    ],
+    "required_mitigation": "analyze isolated committed snapshots, never the user's mutable checkout"
+  },
+  "fixture_commits": {
+    "base": "1321d67a0bd385d26154f787034d5f4cefeed08a",
+    "head": "f7a2dce9642b4c1623969d34e836de31ac583aa3"
+  },
+  "passed": 24,
+  "total": 24
+}
