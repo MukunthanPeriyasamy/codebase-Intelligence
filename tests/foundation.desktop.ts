@@ -16,7 +16,7 @@ test('desktop launch, sandbox, local Ollama connection and worker controls', asy
     await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Settings', exact: true }).click();
     await expect(page.getByTestId('worker-state')).toHaveText('ready');
     expect(await page.evaluate(() => typeof Reflect.get(window, 'require'))).toBe('undefined');
-    expect(await page.evaluate(() => Object.keys(window.desktop))).not.toContain('saveCredential');
+    expect(await page.evaluate(() => Object.keys(window.desktop))).toContain('saveCredential');
     await app.evaluate(() => { globalThis.fetch = async () => Response.json({ models: [] }); });
     await page.getByRole('button', { name: 'Test Ollama connection' }).click();
     await expect(page.getByTestId('ollama-state')).toHaveText('Connected');
@@ -37,7 +37,7 @@ test('missing Python reaches the UI as an actionable failure', async () => {
     await page.screenshot({ path: 'test-results/foundation-error.png', fullPage: true });
   } finally { await app.close(); }
 });
-test('legacy encrypted credentials are not read or required', async () => {
+test('unreadable remote key is recoverable and does not block Ollama or the worker', async () => {
   const data = await temporary('desktop-legacy-');
   await mkdir(join(data, 'credentials'));
   await writeFile(join(data, 'credentials/openrouter.enc'), 'invalid-encrypted-data');
@@ -47,6 +47,8 @@ test('legacy encrypted credentials are not read or required', async () => {
     await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Settings', exact: true }).click();
     await expect(page.getByTestId('worker-state')).toHaveText('ready');
     await expect(page.getByRole('heading', { name: 'Connect Ollama' })).toBeVisible();
+    await expect(page.getByRole('alert')).toContainText('saved OpenRouter key cannot be read');
+    await page.getByRole('button', { name: 'Remove saved key' }).click();
     await expect(page.getByRole('alert')).toHaveCount(0);
   } finally { await app.close(); }
 });

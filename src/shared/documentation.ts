@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const DOC_VERSION = 'docs-v1';
 export const digestSchema = z.string().regex(/^[a-f0-9]{64}$/);
 export const docSettingsSchema = z.object({
-  provider: z.literal('ollama').optional(),
+  provider: z.enum(['ollama', 'openrouter']).optional(),
+  profiles: z.object({ ollama: z.object({ model: z.string().max(150), embeddingModel: z.string().max(150) }).strict().optional(), openrouter: z.object({ model: z.string().max(150), embeddingModel: z.string().max(150) }).strict().optional() }).strict().optional(),
   model: z.string().trim().max(150).refine(value => value === '' || /^[a-zA-Z0-9][a-zA-Z0-9_.:/-]*$/.test(value)),
   embeddingModel: z.string().trim().max(150).refine(value => value === '' || /^[a-zA-Z0-9][a-zA-Z0-9_.:/-]*$/.test(value)).optional(),
   autoGenerate: z.boolean(), requestsPerRun: z.number().int().min(1).max(20), requestsPerDay: z.number().int().min(1).max(200),
@@ -28,7 +29,7 @@ export const unitSchema = z.object({ id: digestSchema, kind: z.enum(['module', '
 export type DocUnit = z.infer<typeof unitSchema>;
 export const planSchema = z.object({ units: z.array(unitSchema).max(2000), omitted: z.number().int().nonnegative(), excluded: z.number().int().nonnegative() }).strict();
 export type DocPlan = z.infer<typeof planSchema>;
-export const pageSchema = z.object({ id: digestSchema, repoId: z.string().uuid(), commit: z.string().regex(/^[a-f0-9]{40,64}$/), model: z.string().max(150), servedModel: z.string().max(150), promptVersion: z.literal(DOC_VERSION), analyzer: z.string().max(100), kind: z.enum(['module', 'workflow']), evidence: z.array(evidenceSchema).max(6), content: generatedSchema, inputHash: digestSchema, created: z.string().datetime(), cost: z.number().nonnegative().nullable() }).strict();
+export const pageSchema = z.object({ provider: z.enum(['ollama', 'openrouter']).optional(), id: digestSchema, repoId: z.string().uuid(), commit: z.string().regex(/^[a-f0-9]{40,64}$/), model: z.string().max(150), servedModel: z.string().max(150), promptVersion: z.literal(DOC_VERSION), analyzer: z.string().max(100), kind: z.enum(['module', 'workflow']), evidence: z.array(evidenceSchema).max(6), content: generatedSchema, inputHash: digestSchema, created: z.string().datetime(), cost: z.number().nonnegative().nullable() }).strict();
 export type DocPage = z.infer<typeof pageSchema>;
 export const catalogEntrySchema = z.object({ id: digestSchema, title: z.string().max(180), kind: z.enum(['module', 'workflow']), path: z.string().max(4096) }).strict();
 export const catalogSchema = z.array(catalogEntrySchema).max(2000);

@@ -55,7 +55,7 @@ export class DocumentationService {
   }
   private jobPath(repoId: string, key: string) { return join(this.root, repoId, 'jobs', key, 'job.json'); }
   private pagePath(repoId: string, key: string, id: string) { return join(this.root, repoId, 'jobs', key, 'pages', id + '.json'); }
-  private jobKey(ref: SnapshotRef) { return digest(JSON.stringify(['ollama-v1', DOC_VERSION, ref.repoId, ref.commit, ref.analyzer, this.ledger.settings.model, this.ledger.settings.maxOutputTokens])); }
+  private jobKey(ref: SnapshotRef) { return digest(JSON.stringify([this.ledger.settings.provider === 'openrouter' ? 'openrouter-v2' : 'ollama-v1', DOC_VERSION, ref.repoId, ref.commit, ref.analyzer, this.ledger.settings.model, this.ledger.settings.maxOutputTokens])); }
   private async saveLedger() { await atomic(join(this.root, 'settings.json'), this.ledger); }
   async initialize() {
     try {
@@ -72,7 +72,10 @@ export class DocumentationService {
   }
   async configure(input: DocSettings) {
     if (this.running || this.broken || this.configuring || this.interactive) throw new RepoError('Stop generation or chat before changing settings, and resolve any storage error.');
-    const settings = docSettingsSchema.parse({ ...input, provider: 'ollama' });
+    const settings = docSettingsSchema.parse({ ...input, provider: input.provider ?? 'ollama' });
+    const previousProvider = this.ledger.settings.provider ?? 'ollama';
+    settings.profiles = { ...this.ledger.settings.profiles, ...settings.profiles, [previousProvider]: { model: this.ledger.settings.model, embeddingModel: this.ledger.settings.embeddingModel ?? '' }, [settings.provider!]: { model: settings.model, embeddingModel: settings.embeddingModel ?? '' } };
+    if (settings.provider !== previousProvider) settings.autoGenerate = false;
     this.configuring = true;
     const previous = this.ledger.settings; this.ledger.settings = settings;
     try { await this.saveLedger(); } catch (error) { this.ledger.settings = previous; throw error; }
@@ -111,13 +114,13 @@ export class DocumentationService {
     const ref = this.options.snapshot();
     if (this.closed || this.running || this.broken || this.configuring || this.interactive) return false;
     if (!ref) throw new RepoError('Connect and sync a repository before generating documentation.');
-    if (!this.ledger.settings.model) throw new RepoError('Choose and save an Ollama model first.');
+    if (!this.ledger.settings.model) throw new RepoError('Choose and save a model first.');
     this.validateRef(ref);
     this.controller = new AbortController();
     const signal = this.controller.signal;
     this.running = this.generate(ref, signal, automatic).catch(async error => {
       const message = error instanceof RepoError ? error.message : 'Documentation generation failed. Saved progress is retained; check settings and resume.';
-      this.update({ phase: signal.aborted ? 'cancelled' : 'error', error: signal.aborted ? 'Generation stopped. Resume explicitly; local generation can be resumed.' : message });
+      this.update({ phase: signal.aborted ? 'cancelled' : 'error', error: signal.aborted ? 'Generation stopped. Resume explicitly; remote requests may have been billed.' : message });
       if (!signal.aborted) await this.options.notify('error', 'Documentation generation stopped', message).catch(() => {});
     }).finally(() => { this.running = null; this.controller = null; this.options.changed(); });
     return true;
@@ -184,7 +187,7 @@ export class DocumentationService {
         if (missingSymbols) gaps.push(`${missingSymbols} supplied symbols have no individual function section.`);
         if (evidence.some(item => item.blocked.length)) gaps.push('Some source lines were redacted or omitted.');
         if (unit.kind === 'workflow') gaps.push('Workflow interpretation uses bounded representative excerpts, not a complete resolved execution graph.');
-        page = pageSchema.parse({ id: unit.id, repoId: ref.repoId, commit: ref.commit, model: settings.model, servedModel: response.servedModel, promptVersion: DOC_VERSION, analyzer: ref.analyzer, kind: unit.kind, evidence, content: { ...response.content, gaps: gaps.slice(-20) }, inputHash, created: new Date().toISOString(), cost: response.cost });
+        page = pageSchema.parse({ provider: settings.provider ?? 'ollama', id: unit.id, repoId: ref.repoId, commit: ref.commit, model: settings.model, servedModel: response.servedModel, promptVersion: DOC_VERSION, analyzer: ref.analyzer, kind: unit.kind, evidence, content: { ...response.content, gaps: gaps.slice(-20) }, inputHash, created: new Date().toISOString(), cost: response.cost });
         await atomic(this.pagePath(ref.repoId, key, unit.id), page);
       }
       job.done[unit.id] = { id: unit.id, title: page.content.title, kind: unit.kind, path: unit.kind === 'module' ? `${unit.path}:${unit.start}–${unit.end}` : unit.path };
@@ -258,7 +261,10 @@ export class DocumentationService {
     signal.throwIfAborted();
     if (this.ledger.day !== day()) { this.ledger.day = day(); this.ledger.requests = 0; this.ledger.cost = 0; this.ledger.unknown = 0; }
     this.ledger.requests++; this.ledger.unknown++; await this.saveLedger(); this.options.changed();
-    const result = await run({ ...this.ledger.settings });
+    const result = await run({ ...this.ledger.settings }).catch(async error => {
+      if (error instanceof ProviderError && error.cost !== null) { this.ledger.cost += error.cost; this.ledger.unknown--; await this.saveLedger(); }
+      throw error;
+    });
     if (result.cost !== null) { this.ledger.cost += result.cost; this.ledger.unknown--; await this.saveLedger(); }
     this.options.changed(); return result;
   }

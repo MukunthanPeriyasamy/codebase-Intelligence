@@ -39,7 +39,7 @@ export class ChatService {
     const deadline = setTimeout(() => this.controller?.abort(), 1260000);
     this.update({ phase: 'retrieving', error: null });
     this.running = this.answer(ref, question, signal).catch(error => {
-      this.update({ phase: signal.aborted ? 'cancelled' : 'error', error: signal.aborted ? 'Question stopped. Local generation was cancelled.' : error instanceof RepoError ? error.message : 'The answer could not be verified. Retry with a file or symbol name.' });
+      this.update({ phase: signal.aborted ? 'cancelled' : 'error', error: signal.aborted ? 'Question stopped. Remote requests may have been billed.' : error instanceof RepoError ? error.message : 'The answer could not be verified. Retry with a file or symbol name.' });
     }).finally(() => { clearTimeout(deadline); this.running = null; this.controller = null; this.options.changed(); });
   }
   private async verify(ref: SnapshotRef, answer: ChatAnswer, signal?: AbortSignal) {
@@ -59,7 +59,7 @@ export class ChatService {
       for (const item of this.state.answers.filter(item => item.repoId === ref.repoId && item.commit === ref.commit).slice(-3).reverse()) {
         if (Buffer.byteLength(JSON.stringify([item.question, ...previousQuestions])) <= 3500) previousQuestions.unshift(item.question);
       }
-      const fingerprint = digest(JSON.stringify([CHAT_VERSION, ref, question, previousQuestions, settings.model, settings.maxOutputTokens, this.options.docs.fingerprint(ref)]));
+      const fingerprint = digest(JSON.stringify([CHAT_VERSION, ref, question, previousQuestions, settings.provider ?? 'ollama', settings.model, settings.maxOutputTokens, this.options.docs.fingerprint(ref)]));
       const cache = join(this.options.directory, 'chat', ref.repoId, fingerprint + '.json');
       try {
         if ((await stat(cache)).size > 256 * 1024) throw new Error('limit');
@@ -114,7 +114,7 @@ export class ChatService {
         }
       } else gaps.push('No safe supporting evidence was retrieved. Try an exact file or symbol name.');
       if (containsSecret(JSON.stringify({ content, gaps }))) throw new RepoError('The response may contain sensitive content and was not displayed.');
-      const answer = answerSchema.parse({ id: randomUUID(), repoId: ref.repoId, commit: ref.commit, question, mode, cached: false, model: mode === 'model' ? settings.model : '', servedModel, content, evidence, gaps: gaps.slice(0, 20), route: retrieval.route, expanded, documents: documents.length, quality: answerQuality(mode, content, evidence, gaps, retrieval, documentIds), created: new Date().toISOString(), cost, fingerprint });
+      const answer = answerSchema.parse({ provider: settings.provider ?? 'ollama', id: randomUUID(), repoId: ref.repoId, commit: ref.commit, question, mode, cached: false, model: mode === 'model' ? settings.model : '', servedModel, content, evidence, gaps: gaps.slice(0, 20), route: retrieval.route, expanded, documents: documents.length, quality: answerQuality(mode, content, evidence, gaps, retrieval, documentIds), created: new Date().toISOString(), cost, fingerprint });
       await this.verify(ref, answer, signal); signal.throwIfAborted();
       if (mode !== 'insufficient') {
         await mkdir(dirname(cache), { recursive: true }); const temporary = cache + '.' + randomUUID() + '.tmp';

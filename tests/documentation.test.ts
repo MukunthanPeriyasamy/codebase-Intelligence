@@ -145,3 +145,20 @@ test('OpenRouter settings migrate once to manual Ollama setup without losing his
     assert.match(await readFile(join(directory, 'documentation/settings.before-ollama.json'), 'utf8'), /anthropic/);
   } finally { await docs.close(); }
 });
+
+
+test('provider switching preserves profiles and accounting, disables automation and separates jobs', async () => {
+  const directory = await temporary('provider-switch-'); const repoId = randomUUID(); const commit = 'a'.repeat(40);
+  const ref: SnapshotRef = { repoId, repoName: 'fixture', commit, analyzer: 'fixture', directory: join(directory, 'repositories', repoId, 'snapshots', `${commit}-${randomUUID()}`) };
+  const calls: string[] = [];
+  const options = { knowledgeDirectory: directory, reader: new FixtureReader(), snapshot: () => ref, changed: () => {}, notify: async () => {}, provider: { async generate(settings: typeof defaultDocSettings, _kind: string, evidence: Evidence[]) { calls.push(settings.provider!); return { content: generated(evidence), cost: 0, servedModel: settings.model }; } } };
+  let docs = new DocumentationService(options);
+  try {
+    await docs.initialize(); await docs.configure({ ...defaultDocSettings, model: 'same/model', autoGenerate: true }); docs.start(); await docs.settle();
+    await docs.configure({ ...docs.status.settings, provider: 'openrouter', model: 'same/model', autoGenerate: true });
+    assert.equal(docs.status.settings.autoGenerate, false); assert.equal(docs.status.settings.profiles?.ollama?.model, 'same/model');
+    docs.start(); await docs.settle(); assert.deepEqual(calls, ['ollama', 'openrouter']);
+    assert.equal(docs.status.requestsToday, 2); await docs.close(); docs = new DocumentationService(options); await docs.initialize();
+    assert.equal(docs.status.settings.provider, 'openrouter'); assert.equal(docs.status.settings.profiles?.ollama?.model, 'same/model'); assert.equal(docs.status.requestsToday, 2);
+  } finally { await docs.close(); }
+});

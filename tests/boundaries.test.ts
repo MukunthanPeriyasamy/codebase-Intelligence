@@ -5,7 +5,7 @@ import { APP_URL, trustedSender } from '../src/main/security';
 
 test('bridge rejects arbitrary operations, extra paths and invalid keys', () => {
   for (const input of [{ type: 'read-file', path: 'C:/secret' }, { type: 'worker.restart', python: 'evil' }, { type: 'credential.save', key: 'short' }, { type: 'credential.save', key: 'contains space' }, { type: 'credential.save', key: 'x'.repeat(513) }, null]) assert.equal(actionSchema.safeParse(input).success, false);
-  assert.equal(actionSchema.safeParse({ type: 'credential.save', key: 'sk-or-test-key' }).success, false);
+  assert.equal(actionSchema.safeParse({ type: 'credential.save', key: 'sk-or-test-key' }).success, true);
   assert.equal(workerEventSchema.safeParse({ v: 2, type: 'ready', python: '3.12.14', schema: 1 }).success, false);
   assert.equal(workerEventSchema.safeParse({ v: 1, type: 'ready', python: '3.11.9', schema: 1 }).success, false);
 });

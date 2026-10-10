@@ -1,5 +1,9 @@
 # Architecture Context
 
+## Current providers — Ollama and OpenRouter (2026-10-10)
+
+The host completion router dispatches by saved provider: fixed local Ollama endpoints or fixed HTTPS OpenRouter endpoints. OpenRouter JSON-schema generation enforces the saved output cap, 16KB evidence, 2MiB response and two-minute timeout without automatic retries/fallback; catalog GETs are capped at 16MiB and 20 seconds. OS-encrypted OpenRouter keys are host-only; no plaintext fallback. Credentials are never read/sent by the Ollama route. Provider identity scopes document jobs and chat caches; new artifacts record provider provenance. Model/embedding profiles persist per provider; limits/accounting are shared and never reset on switch. A provider switch disables automatic generation. Existing Ollama settings and documents remain intact. This supersedes earlier Ollama-only or OpenRouter-only instructions; historical verification entries remain historical.
+
 ## Python compatibility update — 2026-10-10
 
 Python 3.14 is now supported alongside 3.12; this supersedes earlier 3.12-only runtime requirements. Verified CPython 3.14.2 with unchanged pinned RepoWise/dependencies: 34 service tests, four Electron checks and identical parser counts/diagnostics on 61 fixtures across 15 tags compared with 3.12.14. Worker and snapshot gates, IPC validation, UI messages and setup script were updated. Other minor versions are not enabled. Setup and limits: `../validation/python314.md`.

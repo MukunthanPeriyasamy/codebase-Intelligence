@@ -44,7 +44,7 @@ function App() {
   const chatRunning = status?.chat.phase === 'retrieving' || status?.chat.phase === 'answering';
   const docsRunning = status?.docs.phase === 'planning' || status?.docs.phase === 'generating';
   const syncRunning = ['cloning', 'checking', 'indexing'].includes(status?.sync.phase ?? '');
-  const modelReady = !!status?.docs.settings.model;
+  const modelReady = !!status?.docs.settings.model && (status.docs.settings.provider !== 'openrouter' || status.credential.configured);
   const hostError = status?.worker.error?.message || status?.ollama.error;
   function askAbout(question: string) { setDraft({ question, sequence: Date.now() }); navigate('Chat'); }
   function inspectSource(next: SourceSelection) { if (currentView.current === (next.origin === 'chat' ? 'Chat' : 'Documentation')) setSource(next); }
@@ -67,12 +67,12 @@ function App() {
         <div hidden={view !== 'Repository'} className="workspace-view">
           <RepositoryPanel active={view === 'Repository'} sync={status?.sync} act={act} busy={pending > 0} />
           <section className="panel journey" aria-labelledby="journey-title"><span className="section-number">NEXT STEPS</span><h2 id="journey-title">From source to understanding</h2><div className="journey-grid">
-            <button onClick={() => navigate('Settings')}><span className="step-label">01 / MODEL ACCESS</span><strong>{modelReady ? 'Model configured' : 'Choose your model'}</strong><span>{modelReady ? status?.docs.settings.model : 'Connect Ollama and choose a local model.'}</span></button>
+            <button onClick={() => navigate('Settings')}><span className="step-label">01 / MODEL ACCESS</span><strong>{modelReady ? 'Model configured' : 'Choose your model'}</strong><span>{modelReady ? status?.docs.settings.model : 'Choose Ollama or OpenRouter and a model.'}</span></button>
             <button onClick={() => navigate('Documentation')}><span className="step-label">02 / DOCUMENTATION</span><strong>{status?.docs.completed ? `${status.docs.completed} pages available` : 'Build your documentation'}</strong><span>{snapshot ? 'Generate manually, then inspect the citations.' : 'Available after the first snapshot.'}</span></button>
             <button onClick={() => navigate('Chat')}><span className="step-label">03 / EXPLORE</span><strong>Ask your repository</strong><span>Local symbol lookups work without a model key.</span></button>
           </div></section>
         </div>
-        <div hidden={view !== 'Documentation'} className="workspace-view"><DocumentationPanel docs={status?.docs} repoId={repository?.id} configured={!!status?.docs.settings.model} chatRunning={chatRunning} act={act} onSettings={() => navigate('Settings')} onSource={inspectSource} onAsk={askAbout} /></div>
+        <div hidden={view !== 'Documentation'} className="workspace-view"><DocumentationPanel docs={status?.docs} repoId={repository?.id} configured={modelReady} chatRunning={chatRunning} act={act} onSettings={() => navigate('Settings')} onSource={inspectSource} onAsk={askAbout} /></div>
         <div hidden={view !== 'Chat'} className="workspace-view chat-view"><ChatPanel chat={status?.chat} repoId={repository?.id} commit={snapshot?.commit} act={act} onSource={inspectSource} onSettings={() => navigate('Settings')} draft={draft} active={view === 'Chat'} /></div>
         <div hidden={view !== 'Settings'} className="workspace-view"><SettingsPanel status={status} busy={pending > 0} active={view === 'Settings'} act={act} /></div>
         <footer className="view-footer" hidden={view === 'Chat'}>Committed source only · Source checkouts stay unchanged</footer>

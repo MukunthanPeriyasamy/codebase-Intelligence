@@ -1,7 +1,8 @@
 import type { DesktopStatus, Result } from '../shared/contracts';
+import { OpenRouterAccess } from './OpenRouterAccess';
 import { GenerationSettings } from './GenerationSettings';
 
-export function SettingsPanel({ status, busy, act }: { status: DesktopStatus | null; busy: boolean; active: boolean; act: (action: () => Promise<Result>, success?: string) => Promise<void> }) {
+export function SettingsPanel({ status, busy, active, act }: { status: DesktopStatus | null; busy: boolean; active: boolean; act: (action: () => Promise<Result>, success?: string) => Promise<void> }) {
   const worker = status?.worker;
   const pending = busy || worker?.state === 'starting' || worker?.state === 'stopping';
   return <>
@@ -20,6 +21,7 @@ export function SettingsPanel({ status, busy, act }: { status: DesktopStatus | n
           <button disabled={busy || !status} onClick={() => void act(() => window.desktop.testOllama(), 'Ollama connected. Refresh models below to select an installed model.')}>Test Ollama connection</button>
           {status?.ollama.error && <p className="error" role="alert">{status.ollama.error}</p>}
         </section>
+    <OpenRouterAccess status={status} busy={busy} active={active} act={act} />
     <GenerationSettings docs={status?.docs} chatRunning={status?.chat.phase === 'retrieving' || status?.chat.phase === 'answering'} act={act} />
   </>;
 }

@@ -7,12 +7,14 @@ async function invoke(action: Action): Promise<Result> {
   catch { return { ok: false, error: { code: 'INTERNAL', message: 'Desktop services are unavailable. Restart the app.' } }; }
 }
 const bridge: DesktopBridge = {
+  saveCredential: key => invoke({ type: 'credential.save', key }),
+  clearCredential: () => invoke({ type: 'credential.clear' }),
   testOllama: () => invoke({ type: 'ollama.test' }),
   chooseWorkspace: () => invoke({ type: 'workspace.choose' }),
   openWorkspace: () => invoke({ type: 'workspace.open' }),
   exportDocs: () => invoke({ type: 'docs.export' }),
   repositoryGraph: () => invoke({ type: 'repository.graph' }),
-  listModels: kind => invoke({ type: 'models.list', kind }),
+  listModels: (kind, provider) => invoke({ type: 'models.list', kind, provider }),
   askQuestion: question => invoke({ type: 'chat.ask', question }),
   cancelQuestion: () => invoke({ type: 'chat.cancel' }),
   clearChat: () => invoke({ type: 'chat.clear' }),

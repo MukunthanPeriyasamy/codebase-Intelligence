@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { digestSchema, evidenceSchema, generatedSchema, unitSchema } from './documentation';
 
-export const CHAT_VERSION = 'chat-v3-ollama';
+export const CHAT_VERSION = 'chat-v4-providers';
 export const questionSchema = z.string().trim().min(1).max(2000);
 export const retrievalSchema = z.object({
   units: z.array(unitSchema).max(12), exact: z.boolean(), route: z.enum(['symbol', 'source', 'graph']),
@@ -9,7 +9,7 @@ export const retrievalSchema = z.object({
   edges: z.array(z.object({ path: z.string().max(4096), line: z.number().int().positive(), target: z.string().max(1000), resolution: z.literal('unresolved') }).strict()).max(24),
 }).strict();
 export type Retrieval = z.infer<typeof retrievalSchema>;
-export const answerSchema = z.object({
+export const answerSchema = z.object({ provider: z.enum(['ollama', 'openrouter']).optional(),
   id: z.string().uuid(), repoId: z.string().uuid(), commit: z.string().regex(/^[a-f0-9]{40,64}$/),
   question: questionSchema, mode: z.enum(['direct', 'model', 'insufficient']), cached: z.boolean(),
   model: z.string().max(150), servedModel: z.string().max(150), content: generatedSchema.nullable(),

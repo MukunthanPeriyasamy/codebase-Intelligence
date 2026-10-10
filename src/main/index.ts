@@ -1,10 +1,14 @@
+import { CredentialStore } from './credentials';
+import { listOpenRouterModels } from './openrouter';
+import { completionRouter, RoutedDocumentationProvider } from './providers';
+import { OllamaChatProvider } from './chat-provider';
 import { GraphReader } from './graph';
 import { listModels } from './models';
 import { DocumentationService } from './documentation';
 import { EvidenceReader } from './evidence';
 import { ChatService } from './chat';
 import { RetrievalReader } from './retrieval';
-import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, protocol, safeStorage, session, shell } from 'electron';
 import { existsSync } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -21,6 +25,9 @@ if (!app.isPackaged && process.env.CODEBASE_INTELLIGENCE_DATA_DIR) app.setPath('
 let window: BrowserWindow | null = null;
 let worker: WorkerService | null = null;
 let ollamaStatus: DesktopStatus['ollama'] = { connected: false, error: null };
+let credentials: CredentialStore;
+let credentialStatus: DesktopStatus['credential'] = { available: false, configured: false, error: null };
+let credentialBusy = false;
 let quitting = false;
 let repositories: RepositoryService;
 let documentation: DocumentationService;
@@ -31,7 +38,7 @@ let graphBusy = false;
 const graphController = new AbortController();
 
 function status(): DesktopStatus {
-  return { worker: worker?.status ?? { state: 'stopped', error: null, python: null, storageReady: false }, ollama: ollamaStatus,
+  return { worker: worker?.status ?? { state: 'stopped', error: null, python: null, storageReady: false }, ollama: ollamaStatus, credential: credentialStatus,
     docs: documentation.status, chat: chat.status, sync: repositories?.status ?? { repository: null, phase: 'idle', processed: 0, total: 0, error: null, notices: [] } };
 }
 function publish() {
@@ -95,6 +102,13 @@ async function dispatch(input: unknown): Promise<Result> {
       return { ok: true, status: status(), graph };
     } finally { graphBusy = false; }
   }
+  if (action.type === 'credential.save' || action.type === 'credential.clear') {
+    if (credentialBusy) throw new RepoError('Credential settings are busy. Retry shortly.');
+    credentialBusy = true;
+    try { if (action.type === 'credential.save') await credentials.save(action.key); else await credentials.clear(); }
+    finally { credentialStatus = await credentials.status(); credentialBusy = false; publish(); }
+  }
+  if (action.type === 'models.list' && action.provider === 'openrouter') return { ok: true, status: status(), models: await listOpenRouterModels(action.kind, await credentials.read()) };
   if (action.type === 'models.list' || action.type === 'ollama.test') {
     try {
       const models = await listModels(action.type === 'models.list' ? action.kind : 'chat');
@@ -141,13 +155,19 @@ else {
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     await installAppProtocol();
+    credentials = new CredentialStore(join(app.getPath('userData'), 'credentials'), {
+      available: () => safeStorage.isEncryptionAvailable() && (process.platform !== 'linux' || safeStorage.getSelectedStorageBackend() !== 'basic_text'),
+      encrypt: key => safeStorage.encryptString(key), decrypt: bytes => safeStorage.decryptString(bytes),
+    });
+    credentialStatus = await credentials.status();
+    const complete = completionRouter(() => credentials.read());
     const developmentPython = join(app.getAppPath(), '.research', 'venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
     const python = process.env.CODEBASE_INTELLIGENCE_PYTHON ?? (!app.isPackaged && existsSync(developmentPython) ? developmentPython : 'python');
     worker = new WorkerService({ python, script: join(__dirname, 'worker', 'service.py'), dataDir: join(app.getPath('userData'), 'knowledge') }, publish);
     graphReader = new GraphReader(python, join(__dirname, 'worker', 'graph.py'));
     repositories = new RepositoryService({ directory: join(app.getPath('userData'), 'knowledge'), python, script: join(__dirname, 'worker', 'snapshot.py') }, () => { chat?.contextChanged(); void documentation?.refreshContext(); publish(); });
-    documentation = new DocumentationService({ knowledgeDirectory: join(app.getPath('userData'), 'knowledge'), reader: new EvidenceReader(python, join(__dirname, 'worker', 'evidence.py')), snapshot: () => repositories.getSnapshot(), workspaceProject: id => repositories.workspaceProject(id), changed: publish, notify: (kind, title, body) => repositories.notifyDocumentation(kind, title, body) });
-    chat = new ChatService({ directory: join(app.getPath('userData'), 'knowledge'), snapshot: () => repositories.getSnapshot(), reader: new RetrievalReader(python, join(__dirname, 'worker', 'evidence.py')), docs: documentation, changed: publish });
+    documentation = new DocumentationService({ provider: new RoutedDocumentationProvider(complete), knowledgeDirectory: join(app.getPath('userData'), 'knowledge'), reader: new EvidenceReader(python, join(__dirname, 'worker', 'evidence.py')), snapshot: () => repositories.getSnapshot(), workspaceProject: id => repositories.workspaceProject(id), changed: publish, notify: (kind, title, body) => repositories.notifyDocumentation(kind, title, body) });
+    chat = new ChatService({ provider: new OllamaChatProvider(complete), directory: join(app.getPath('userData'), 'knowledge'), snapshot: () => repositories.getSnapshot(), reader: new RetrievalReader(python, join(__dirname, 'worker', 'evidence.py')), docs: documentation, changed: publish });
     await documentation.initialize();
     await repositories.initialize();
     await documentation.refreshContext();

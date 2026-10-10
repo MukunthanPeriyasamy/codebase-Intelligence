@@ -1,5 +1,9 @@
 # Progress Tracker
 
+## Current providers — Ollama and OpenRouter (2026-10-10)
+
+Implemented dual Ollama/OpenRouter routing, encrypted remote credentials, provider-specific catalogs and model profiles, explicit active-provider labels, provider-scoped caches/jobs and automatic-generation reset on provider switch. Existing local settings/publications remain readable. Build, all 38 service tests and seven targeted Electron scenarios passed across runs. The dual-provider scenario verifies remote documentation/chat, key encryption, return to Ollama and restart persistence. No paid calls. Report: `../validation/dual-providers.md`. This supersedes earlier Ollama-only or OpenRouter-only instructions; historical verification entries remain historical.
+
 ## Python compatibility update — 2026-10-10
 
 Python 3.14 is now supported alongside 3.12; this supersedes earlier 3.12-only runtime requirements. Verified CPython 3.14.2 with unchanged pinned RepoWise/dependencies: 34 service tests, four Electron checks and identical parser counts/diagnostics on 61 fixtures across 15 tags compared with 3.12.14. Worker and snapshot gates, IPC validation, UI messages and setup script were updated. Other minor versions are not enabled. Setup and limits: `../validation/python314.md`.

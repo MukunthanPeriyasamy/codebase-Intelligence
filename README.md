@@ -1,3 +1,15 @@
+# Choose Ollama or OpenRouter
+
+Both providers are supported. Restart the rebuilt app, open Settings and select **Model provider** under Generation settings.
+
+- **Ollama:** start your local server, refresh installed models and select a local chat/code model.
+- **OpenRouter:** save your API key in Connect OpenRouter, select OpenRouter, refresh the chat and embedding catalogs and choose model IDs.
+- Click **Save generation settings**. Chat and documentation share the selected chat model. Model selections are remembered separately for each provider. Switching provider turns off automatic generation; enable it explicitly only if wanted.
+- Output defaults to 8000 tokens. Requests/day and requests/run are shared across providers. OpenRouter incurs provider charges; saving settings and refreshing catalogs do not run inference.
+- Embedding selection is available for both providers, but vector indexing remains pending.
+
+Keys are OS-encrypted and never sent to Ollama. Existing documents, workspace data and Python 3.12/3.14 support are preserved. Earlier provider-exclusive descriptions below are historical.
+
 # Python runtime compatibility
 
 Python 3.14 is now supported alongside 3.12. Verified on Windows with CPython 3.14.2, RepoWise 0.55.0 and the existing pinned dependencies. Python 3.13 and 3.15+ are not enabled because they were not validated in this change.

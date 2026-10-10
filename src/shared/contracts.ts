@@ -18,7 +18,7 @@ export const workerStatusSchema = z.object({
   error: failureSchema.nullable(),
 }).strict();
 export type WorkerStatus = z.infer<typeof workerStatusSchema>;
-export const desktopStatusSchema = z.object({ worker: workerStatusSchema, ollama: z.object({ connected: z.boolean(), error: z.string().max(300).nullable() }).strict(), sync: repositoryStatusSchema, docs: docStatusSchema, chat: chatStatusSchema }).strict();
+export const desktopStatusSchema = z.object({ worker: workerStatusSchema, credential: z.object({ available: z.boolean(), configured: z.boolean(), error: z.string().max(300).nullable() }).strict(), ollama: z.object({ connected: z.boolean(), error: z.string().max(300).nullable() }).strict(), sync: repositoryStatusSchema, docs: docStatusSchema, chat: chatStatusSchema }).strict();
 export type DesktopStatus = z.infer<typeof desktopStatusSchema>;
 export const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('chat.ask'), question: questionSchema }).strict(),
@@ -35,7 +35,9 @@ export const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('workspace.open') }).strict(),
   z.object({ type: z.literal('docs.export') }).strict(),
   z.object({ type: z.literal('repository.graph') }).strict(),
-  z.object({ type: z.literal('models.list'), kind: z.enum(['chat', 'embedding']) }).strict(),
+  z.object({ type: z.literal('models.list'), kind: z.enum(['chat', 'embedding']), provider: z.enum(['ollama', 'openrouter']).optional() }).strict(),
+  z.object({ type: z.literal('credential.save'), key: z.string().trim().min(8).max(512).regex(/^[\x21-\x7E]+$/) }).strict(),
+  z.object({ type: z.literal('credential.clear') }).strict(),
   z.object({ type: z.literal('ollama.test') }).strict(),
   z.object({ type: z.literal('status') }).strict(),
   z.object({ type: z.literal('worker.restart') }).strict(),
@@ -60,12 +62,14 @@ export const workerEventSchema = z.discriminatedUnion('type', [
   z.object({ v: z.literal(1), type: z.literal('error'), code: z.enum(['RUNTIME_VERSION', 'STORAGE_INIT', 'REQUEST_INVALID']) }).strict(),
 ]);
 export interface DesktopBridge {
+  saveCredential(key: string): Promise<Result>;
+  clearCredential(): Promise<Result>;
   testOllama(): Promise<Result>;
   chooseWorkspace(): Promise<Result>;
   openWorkspace(): Promise<Result>;
   exportDocs(): Promise<Result>;
   repositoryGraph(): Promise<Result>;
-  listModels(kind: 'chat' | 'embedding'): Promise<Result>;
+  listModels(kind: 'chat' | 'embedding', provider?: 'ollama' | 'openrouter'): Promise<Result>;
   askQuestion(question: string): Promise<Result>;
   cancelQuestion(): Promise<Result>;
   clearChat(): Promise<Result>;
