@@ -1,3 +1,4 @@
+import { OLLAMA_GENERATION_TIMEOUT_MS } from './ollama';
 import { answerQuality } from './answer-quality';
 import { randomUUID } from 'node:crypto';
 import { readFile, writeFile, mkdir, rename, stat } from 'node:fs/promises';
@@ -36,7 +37,7 @@ export class ChatService {
     this.activeRepo = ref.repoId;
     if (containsSecret(question)) throw new RepoError('The question appears to contain a secret. Remove it before asking.');
     this.controller = new AbortController(); const signal = this.controller.signal;
-    const deadline = setTimeout(() => this.controller?.abort(), 1260000);
+    const deadline = setTimeout(() => this.controller?.abort(), 2 * OLLAMA_GENERATION_TIMEOUT_MS + 60000);
     this.update({ phase: 'retrieving', error: null });
     this.running = this.answer(ref, question, signal).catch(error => {
       this.update({ phase: signal.aborted ? 'cancelled' : 'error', error: signal.aborted ? 'Question stopped. Remote requests may have been billed.' : error instanceof RepoError ? error.message : 'The answer could not be verified. Retry with a file or symbol name.' });

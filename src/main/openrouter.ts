@@ -1,13 +1,39 @@
 import { z } from 'zod';
 import type { DocSettings } from '../shared/documentation';
 import { ProviderError } from './ollama';
+import { completionSchema } from './provider-schema';
 import { modelCatalogSchema } from '../shared/models';
+
+async function rejectionReason(response: Response): Promise<string> {
+  // Classify bounded provider diagnostics, never expose echoed prompts or keys.
+  const reader = response.body?.getReader(); if (!reader) return '';
+  try {
+    const chunks: Uint8Array[] = []; let size = 0;
+    while (true) {
+      const { done, value } = await reader.read(); if (done) break;
+      size += value.byteLength; if (size > 65536) return '';
+      chunks.push(value);
+    }
+    const parsed = z.object({ error: z.object({ message: z.string().optional(), metadata: z.object({ raw: z.string().optional() }).optional() }) }).safeParse(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+    if (!parsed.success) return '';
+    const message = `${parsed.data.error.message ?? ''} ${parsed.data.error.metadata?.raw ?? ''}`;
+    if (/schema|response_format|responseSchema|structured.output/i.test(message)) {
+      const keyword = ['exclusiveMinimum', 'minLength', 'maxLength', 'pattern', 'additionalProperties', 'anyOf'].find(word => message.includes(word));
+      return `Provider reported a structured-output rejection${keyword ? ` involving ${keyword}` : ''}. Schema compatibility or endpoint support needs checking; no automatic retry.`;
+    }
+    if (/no endpoints|no available provider/i.test(message)) return 'No compatible provider endpoint was available. Check model availability; resume explicitly.';
+    if (/max_tokens|token limit|context length/i.test(message)) return 'Provider reported a token/context limit rejection. Review output limits in Settings.';
+    return '';
+  } catch { return ''; }
+  finally { await reader.cancel().catch(() => undefined); }
+}
 
 async function request(path: 'chat/completions' | 'models' | 'embeddings/models', key: string, body?: unknown, signal?: AbortSignal) {
   const response = await fetch(`https://openrouter.ai/api/v1/${path}`, { method: body === undefined ? 'GET' : 'POST', redirect: 'error', signal: AbortSignal.any([AbortSignal.timeout(body === undefined ? 20000 : 120000), ...(signal ? [signal] : [])]), headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   if (!response.ok) {
-    await response.body?.cancel();
-    const reasons: Record<number, string> = { 400: 'Model or JSON-schema settings were rejected. Choose a JSON-schema model.', 401: 'API key rejected. Replace it in Settings.', 402: 'Insufficient OpenRouter credits.', 403: 'Access denied for this model.', 404: 'Model or compatible endpoint not found.', 429: 'Rate limit reached. Resume later.' };
+    const detail = response.status === 400 ? await rejectionReason(response) : '';
+    if (response.status !== 400) await response.body?.cancel();
+    const reasons: Record<number, string> = { 400: detail || 'OpenRouter rejected the request; the cause could not be identified. Model support is not confirmed by this error.', 401: 'API key rejected. Replace it in Settings.', 402: 'Insufficient OpenRouter credits.', 403: 'Access denied for this model.', 404: 'Model or compatible endpoint not found.', 429: 'Rate limit reached. Resume later.' };
     throw new ProviderError(`[HTTP ${response.status}] ${reasons[response.status] ?? 'OpenRouter could not complete the request. Resume later.'}`, null);
   }
   const reader = response.body?.getReader(); if (!reader) throw new ProviderError('[empty-response] OpenRouter returned no body.', null);
@@ -20,7 +46,7 @@ export async function openRouterCompletion<T>(settings: DocSettings, schema: z.Z
   const fail = (message: string): never => { throw new ProviderError(message, cost); };
   try {
     const input = JSON.stringify(data); if (Buffer.byteLength(input) > 16000) throw new ProviderError('Evidence exceeds the input limit. Nothing was sent.', 0);
-    const raw = await request('chat/completions', key, { model: settings.model, stream: false, max_tokens: settings.maxOutputTokens, provider: { require_parameters: true, allow_fallbacks: false }, response_format: { type: 'json_schema', json_schema: { name: 'repository_response', strict: true, schema: z.toJSONSchema(schema, { target: 'draft-7' }) } }, messages: [{ role: 'system', content: prompt + ` Return compact JSON within ${settings.maxOutputTokens} output tokens.` }, { role: 'user', content: input }] }, signal);
+    const raw = await request('chat/completions', key, { model: settings.model, stream: false, max_tokens: settings.maxOutputTokens, provider: { require_parameters: true, allow_fallbacks: false }, response_format: { type: 'json_schema', json_schema: { name: 'repository_response', strict: true, schema: completionSchema(schema, settings.model) } }, messages: [{ role: 'system', content: prompt + ` Return compact JSON within ${settings.maxOutputTokens} output tokens.` }, { role: 'user', content: input }] }, signal);
     const payload = z.object({ error: z.unknown().optional(), model: z.string().max(150).optional(), usage: z.object({ cost: z.number().nonnegative().nullable().optional(), completion_tokens: z.number().int().nonnegative().optional() }).nullish(), choices: z.array(z.object({ finish_reason: z.string().nullish(), message: z.object({ content: z.string().max(100000).nullish(), refusal: z.unknown().optional() }).optional() })).max(1).optional() }).safeParse(raw);
     if (!payload.success) return fail('[response-envelope] OpenRouter returned an invalid response structure.');
     cost = payload.data.usage?.cost ?? null; const choice = payload.data.choices?.[0];

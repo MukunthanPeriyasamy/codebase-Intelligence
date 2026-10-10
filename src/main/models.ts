@@ -5,7 +5,7 @@ import { RepoError } from './git';
 
 export async function listModels(kind: 'chat' | 'embedding', _key?: string, transport: typeof fetch = fetch): Promise<ModelCatalog> {
   try {
-    const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 30000);
+    const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 120000);
     try {
       const payload = z.object({ models: z.array(z.object({ name: z.string().min(1).max(150) })).max(100) }).parse(await ollamaJson('/api/tags', undefined, controller.signal, transport));
       const models: ModelCatalog['models'] = [];

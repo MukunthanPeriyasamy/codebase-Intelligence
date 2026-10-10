@@ -1,7 +1,13 @@
+import { Agent } from 'undici';
 import { z } from 'zod';
 import { generatedSchema, type Evidence, type Generated, type DocSettings } from '../shared/documentation';
 import { RepoError } from './git';
 
+// The AbortController owns the full request deadline, including response reads.
+// Disable Undici's independent five-minute header/body limits for local inference.
+export const ollamaDispatcher = new Agent({ headersTimeout: 0, bodyTimeout: 0, connect: { timeout: 10000 } });
+export const OLLAMA_GENERATION_TIMEOUT_MS = 30 * 60 * 1000;
+export const OLLAMA_METADATA_TIMEOUT_MS = 60000;
 export const OLLAMA_URL = 'http://127.0.0.1:11434';
 export class ProviderError extends RepoError {
   constructor(message: string, readonly cost: number | null = 0) { super(message); }
@@ -12,8 +18,12 @@ export const SYSTEM_PROMPT = 'Explain repository behavior using ONLY supplied so
 
 // Fixed loopback endpoint: no renderer-supplied URL, authentication or redirects.
 export async function ollamaJson(path: '/api/tags' | '/api/show' | '/api/chat', body?: unknown, signal?: AbortSignal, transport: typeof fetch = fetch): Promise<unknown> {
+  const deadline = new AbortController();
+  const timeout = path === '/api/chat' ? OLLAMA_GENERATION_TIMEOUT_MS : OLLAMA_METADATA_TIMEOUT_MS;
+  const timer = setTimeout(() => deadline.abort(), timeout);
+  const requestSignal = AbortSignal.any([deadline.signal, ...(signal ? [signal] : [])]);
   try {
-    const response = await transport(OLLAMA_URL + path, { method: body === undefined ? 'GET' : 'POST', redirect: 'error', signal: AbortSignal.any([AbortSignal.timeout(path === '/api/chat' ? 600000 : 20000), ...(signal ? [signal] : [])]), headers: { 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    const response = await transport(OLLAMA_URL + path, { method: body === undefined ? 'GET' : 'POST', redirect: 'error', signal: requestSignal, ...{ dispatcher: ollamaDispatcher }, headers: { 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     if (!response.ok) { await response.body?.cancel(); throw new ProviderError(`[HTTP ${response.status}] Ollama rejected the request. ${response.status === 404 ? 'Install the exact selected model with ollama pull, then refresh models.' : 'Check the Ollama server and model compatibility.'}`); }
     const reader = response.body?.getReader(); if (!reader) throw new ProviderError('[empty-response] Ollama returned no response.');
     const chunks: Uint8Array[] = []; let bytes = 0;
@@ -22,8 +32,11 @@ export async function ollamaJson(path: '/api/tags' | '/api/show' | '/api/chat', 
   } catch (error) {
     if (error instanceof RepoError) throw error;
     if (signal?.aborted) throw new ProviderError('Local model request stopped. Resume explicitly to retry.');
-    throw new ProviderError('[connection] Ollama is unavailable or timed out. Start Ollama (ollama serve) at 127.0.0.1:11434 and retry. Generation allows up to 10 minutes.');
-  }
+    if (deadline.signal.aborted) throw new ProviderError(path === '/api/chat' ? '[timeout] Ollama generation exceeded 30 minutes. Try a smaller model or reduce output tokens. Resume explicitly; no automatic retry.' : '[timeout] Ollama model information took over 60 seconds. The server may be busy; wait for its current work to finish and retry.');
+    const code = (error as { cause?: { code?: string } })?.cause?.code;
+    if (code === 'UND_ERR_CONNECT_TIMEOUT') throw new ProviderError('[connection-timeout] Could not connect to Ollama within 10 seconds. Check the local server.');
+    throw new ProviderError('[connection] Cannot reach Ollama or the connection was interrupted. Start Ollama (ollama serve) at 127.0.0.1:11434; check its logs if generation stopped.');
+  } finally { clearTimeout(timer); }
 }
 export async function inspectModel(model: string, signal?: AbortSignal, transport: typeof fetch = fetch) {
   const result = z.object({ capabilities: z.array(z.string()).optional(), remote_model: z.string().optional(), remote_host: z.string().optional() }).safeParse(await ollamaJson('/api/show', { model }, signal, transport));

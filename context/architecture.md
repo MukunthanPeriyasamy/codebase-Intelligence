@@ -121,3 +121,13 @@ The evidence-confidence heuristic is 95 for a verified unique definition locatio
 ## Provider failure diagnostics
 
 The bounded completion adapter accepts nullable cost metadata and distinguishes HTTP rejection, transport/timeout failure, response-size/JSON/envelope failure, truncation, refusal, empty output and document-schema rejection. Diagnostics contain fixed text, schema issue codes and numeric token limits/usage; raw provider bodies and secret-bearing validation values never cross IPC. Documentation records reported cost even when provider output fails validation. Existing notification persistence retains failure summaries; paid calls are never retried automatically.
+
+
+## Gemini schema compatibility — 2026-10-10
+
+OpenRouter Gemini requests use a transport projection of the Zod schema: omit the dialect marker, move string bounds/patterns into descriptions, translate positive integer bounds to inclusive minimum and nullable unions to type arrays. Required fields, object closure and array bounds remain. Full original Zod and citation validation still gate publication. Other providers retain their existing schemas. HTTP 400 bodies are read up to 64 KiB for fixed-text classification; raw errors never reach UI/logs. Unknown rejections do not imply absent model support. No automatic retry is added.
+
+
+## Ollama timeout correction — 2026-10-10
+
+Local requests now use a dedicated Undici dispatcher with independent header/body deadlines disabled; an owned, cleared abort timer bounds the complete request and body read. Socket connection remains bounded to 10 seconds. Generation permits 30 minutes, metadata 60 seconds and catalog traversal two minutes. Chat allows two generation windows plus one minute. Stop propagates cancellation; errors distinguish deadline, connect timeout, interrupted/offline transport and cancellation. No automatic retry, credential access or endpoint changes. This supersedes the earlier 10-minute inference/20-second metadata/30-second catalog limits. Undici is pinned to 7.30.0.

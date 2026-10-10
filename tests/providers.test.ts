@@ -5,9 +5,10 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { CredentialStore } from '../src/main/credentials';
 import { completionRouter } from '../src/main/providers';
+import { completionSchema } from '../src/main/provider-schema';
 import { listOpenRouterModels } from '../src/main/openrouter';
 import { ProviderError } from '../src/main/ollama';
-import { defaultDocSettings } from '../src/shared/documentation';
+import { defaultDocSettings, generatedSchema } from '../src/shared/documentation';
 import { temporary } from './helpers';
 
 test('keys are encrypted, replaceable and removable without returning plaintext in status', async () => {
@@ -63,5 +64,44 @@ test('OpenRouter catalogs use separate fixed endpoints without inference', async
     assert.equal((await listOpenRouterModels('chat', 'fake-key')).models[0]?.structured, true);
     await listOpenRouterModels('embedding', 'fake-key');
     assert.deepEqual(paths, ['https://openrouter.ai/api/v1/models', 'https://openrouter.ai/api/v1/embeddings/models']);
+  } finally { globalThis.fetch = original; }
+});
+
+
+test('Gemini wire schema uses supported constraints and still validates full model output', async () => {
+  const wire = JSON.stringify(completionSchema(generatedSchema, 'google/gemini-2.5-flash'));
+  assert.equal(wire.includes('"exclusiveMinimum":'), false);
+  assert.equal(wire.includes('"minLength":'), false);
+  assert.equal(wire.includes('"pattern":'), false);
+  assert.equal(wire.includes('"anyOf":'), false);
+  assert.ok(wire.includes('"minimum":1'));
+  assert.ok(wire.includes('"type":["string","null"]'));
+  assert.ok(wire.includes('"additionalProperties":false'));
+  assert.ok(JSON.stringify(completionSchema(generatedSchema, 'other/model')).includes('"exclusiveMinimum":'));
+  const chatWire = JSON.stringify(completionSchema(z.object({ content: generatedSchema.nullable() }).strict(), 'google/gemini-2.5-flash'));
+  assert.ok(chatWire.includes('"type":["object","null"]'));
+  assert.equal(chatWire.includes('"exclusiveMinimum":'), false);
+  const original = globalThis.fetch; let calls = 0;
+  try {
+    globalThis.fetch = async () => { calls++; return Response.json({ model: 'google/gemini-2.5-flash', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ title: '', sections: [], gaps: [] }) } }] }); };
+    const complete = completionRouter(async () => 'fixture-key');
+    await assert.rejects(complete({ ...defaultDocSettings, provider: 'openrouter', model: 'google/gemini-2.5-flash' }, generatedSchema, '', {}, new AbortController().signal), /document-schema/);
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = original; }
+});
+
+test('HTTP 400 diagnostics classify bounded errors without leaking provider content or retrying', async () => {
+  const original = globalThis.fetch; let calls = 0;
+  const complete = completionRouter(async () => 'fixture-secret');
+  try {
+    for (const [body, expected] of [
+      [JSON.stringify({ error: { message: 'Provider error', metadata: { raw: 'responseSchema exclusiveMinimum rejected fixture-secret private-source' } } }), /involving exclusiveMinimum/],
+      [JSON.stringify({ error: { message: 'fixture-secret private-source' } }), /cause could not be identified/],
+      ['x'.repeat(65537), /cause could not be identified/],
+    ] as const) {
+      globalThis.fetch = async () => { calls++; return new Response(body, { status: 400 }); };
+      await assert.rejects(complete({ ...defaultDocSettings, provider: 'openrouter', model: 'google/gemini-2.5-flash' }, generatedSchema, '', {}, new AbortController().signal), error => error instanceof Error && expected.test(error.message) && !/fixture-secret|private-source/.test(error.message));
+    }
+    assert.equal(calls, 3);
   } finally { globalThis.fetch = original; }
 });

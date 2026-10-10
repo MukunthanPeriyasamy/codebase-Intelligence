@@ -1,5 +1,13 @@
 # Progress Tracker
 
+## Ollama timeout correction — 2026-10-10
+
+Added a dedicated local HTTP dispatcher to avoid independent five-minute header/body limits, with a cleared 30-minute generation deadline, 60-second metadata deadline, two-minute catalog bound and aligned chat deadline. Cancellation remains available; generation timeout and connection failures have separate diagnostics. Build, 42 service tests, an additional real delayed-HTTP regression and the Electron dual-provider scenario passed. No model inference was run: the local Ollama server was unreachable during the connection probe. Live performance remains to be checked after starting Ollama. OpenRouter remains available.
+
+## Gemini structured-output compatibility — 2026-10-10
+
+Adapted Gemini wire schemas to its documented subset while retaining full local output/citation validation. Replaced misleading HTTP 400 model-support diagnosis with bounded, sanitized error classification. Build and all 40 service tests passed; targeted provider checks also cover nullable chat schemas, unchanged other-provider schemas and no automatic retries. No paid inference or live Gemini success is claimed. The prior rejected response body was discarded, so its precise cause remains unconfirmed. Restart the built app and explicitly resume to verify the live endpoint.
+
 ## Current providers — Ollama and OpenRouter (2026-10-10)
 
 Implemented dual Ollama/OpenRouter routing, encrypted remote credentials, provider-specific catalogs and model profiles, explicit active-provider labels, provider-scoped caches/jobs and automatic-generation reset on provider switch. Existing local settings/publications remain readable. Build, all 38 service tests and seven targeted Electron scenarios passed across runs. The dual-provider scenario verifies remote documentation/chat, key encryption, return to Ollama and restart persistence. No paid calls. Report: `../validation/dual-providers.md`. This supersedes earlier Ollama-only or OpenRouter-only instructions; historical verification entries remain historical.
