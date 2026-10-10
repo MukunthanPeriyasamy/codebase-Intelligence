@@ -1,5 +1,9 @@
 # Build Phases
 
+## Python compatibility update — 2026-10-10
+
+Python 3.14 is now supported alongside 3.12; this supersedes earlier 3.12-only runtime requirements. Verified CPython 3.14.2 with unchanged pinned RepoWise/dependencies: 34 service tests, four Electron checks and identical parser counts/diagnostics on 61 fixtures across 15 tags compared with 3.12.14. Worker and snapshot gates, IPC validation, UI messages and setup script were updated. Other minor versions are not enabled. Setup and limits: `../validation/python314.md`.
+
 ## Latest provider decision — Ollama (2026-10-09)
 
 The requested provider replacement is local Ollama for documentation/chat and installed embedding-model selection. This changes the runtime provider, not the phase completion claims. Real local-model quality/performance evaluation and embedding execution remain pending. This supersedes earlier OpenRouter-specific runtime instructions; earlier completed-work entries remain historical.

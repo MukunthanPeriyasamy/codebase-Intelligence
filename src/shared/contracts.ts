@@ -55,7 +55,7 @@ export const resultSchema = z.discriminatedUnion('ok', [
 ]);
 export type Result = z.infer<typeof resultSchema>;
 export const workerEventSchema = z.discriminatedUnion('type', [
-  z.object({ v: z.literal(1), type: z.literal('ready'), python: z.string().regex(/^3\.12\.\d+$/), schema: z.literal(1) }).strict(),
+  z.object({ v: z.literal(1), type: z.literal('ready'), python: z.string().regex(/^3\.(12|14)\.\d+$/), schema: z.literal(1) }).strict(),
   z.object({ v: z.literal(1), type: z.literal('pong'), id: z.string().uuid() }).strict(),
   z.object({ v: z.literal(1), type: z.literal('error'), code: z.enum(['RUNTIME_VERSION', 'STORAGE_INIT', 'REQUEST_INVALID']) }).strict(),
 ]);

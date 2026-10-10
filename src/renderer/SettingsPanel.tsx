@@ -8,7 +8,7 @@ export function SettingsPanel({ status, busy, act }: { status: DesktopStatus | n
         <section className="panel" aria-labelledby="service-title">
           <div className="panel-heading"><div><span className="section-number">02 / LOCAL ENGINE</span><h2 id="service-title">Analysis service</h2></div><span className={`status ${worker?.state ?? 'starting'}`} data-testid="worker-state">{worker?.state ?? 'connecting'}</span></div>
           <p>The Python worker runs separately, keeping your workspace responsive during analysis.</p>
-          <div className="facts"><div><span>RUNTIME</span><strong>{worker?.python ? `Python ${worker.python}` : 'Python 3.12 required'}</strong></div><div><span>LOCAL STORAGE</span><strong>{worker?.storageReady ? 'SQLite · Ready' : 'Waiting for service'}</strong></div></div>
+          <div className="facts"><div><span>RUNTIME</span><strong>{worker?.python ? `Python ${worker.python}` : 'Python 3.12 / 3.14 required'}</strong></div><div><span>LOCAL STORAGE</span><strong>{worker?.storageReady ? 'SQLite · Ready' : 'Waiting for service'}</strong></div></div>
           {worker?.error && <div role="alert" className="error">{worker.error.message}</div>}
           <div className="actions"><button disabled={pending || !status} onClick={() => void act(() => window.desktop.restartWorker())}>{worker?.state === 'ready' ? 'Restart service' : 'Start service'}</button><button className="quiet" disabled={pending || worker?.state !== 'ready'} onClick={() => void act(() => window.desktop.stopWorker())}>Stop service</button></div>
         </section>

@@ -1,5 +1,9 @@
 # Architecture Context
 
+## Python compatibility update — 2026-10-10
+
+Python 3.14 is now supported alongside 3.12; this supersedes earlier 3.12-only runtime requirements. Verified CPython 3.14.2 with unchanged pinned RepoWise/dependencies: 34 service tests, four Electron checks and identical parser counts/diagnostics on 61 fixtures across 15 tags compared with 3.12.14. Worker and snapshot gates, IPC validation, UI messages and setup script were updated. Other minor versions are not enabled. Setup and limits: `../validation/python314.md`.
+
 ## Latest provider decision — Ollama (2026-10-09)
 
 The host uses fixed http://127.0.0.1:11434 endpoints: GET /api/tags, POST /api/show for capabilities/local-only verification, and POST /api/chat with JSON-schema format, stream=false, num_ctx=32768, saved num_predict, temperature=0 and think=false for thinking-capable models. Redirects and Ollama cloud models are rejected. Catalog responses and completions are bounded to 2 MiB; catalog traversal is limited to 100 models/30 seconds and inference to 10 minutes. Chat allows 21 minutes for two bounded calls. Credential bridge/storage code is removed; old encrypted files are left unused. Legacy settings are backed up to settings.before-ollama.json, reset to manual local setup with no selected model, and retain historical accounting and publications. New job/cache identities include Ollama. Old Markdown/citations remain readable. This supersedes earlier OpenRouter-specific runtime instructions; earlier completed-work entries remain historical.

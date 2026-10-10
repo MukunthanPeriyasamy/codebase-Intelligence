@@ -1,4 +1,4 @@
-param([string]$Python = '3.12')
+param([ValidateSet('3.12', '3.14')][string]$Python = '3.12', [string]$Environment = '.research/venv')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location -LiteralPath $projectRoot
@@ -22,14 +22,17 @@ try {
         @{name=$name; owner=$pin.owner; ref=$pin.version; commit=$pin.commit} |
             ConvertTo-Json | Set-Content -LiteralPath (Join-Path '.research' ($name + '-pin.json')) -Encoding utf8
     }
-    if (-not (Test-Path -LiteralPath '.research/venv/Scripts/python.exe')) {
-        & uv --cache-dir .research/uv-cache venv --python $Python .research/venv
+    $environmentPython = Join-Path $Environment 'Scripts/python.exe'
+    if (-not (Test-Path -LiteralPath $environmentPython)) {
+        & uv --cache-dir .research/uv-cache venv --python $Python $Environment
         if ($LASTEXITCODE -ne 0) { throw 'Could not create validation environment.' }
     }
-    & uv --cache-dir .research/uv-cache pip install --python .research/venv/Scripts/python.exe -r validation/phase1-requirements.txt
+    $actualVersion = & $environmentPython -c 'import sys; print("%d.%d" % sys.version_info[:2])'
+    if ($LASTEXITCODE -ne 0 -or $actualVersion -ne $Python) { throw 'Existing environment uses a different Python version. Choose another -Environment directory.' }
+    & uv --cache-dir .research/uv-cache pip install --python $environmentPython -r validation/phase1-requirements.txt
     if ($LASTEXITCODE -ne 0) { throw 'Could not install pinned validation dependencies.' }
     $backendPath = Join-Path '.research' ('repowise-' + $pins.repowise.commit)
-    & uv --cache-dir .research/uv-cache pip install --python .research/venv/Scripts/python.exe --no-deps $backendPath
+    & uv --cache-dir .research/uv-cache pip install --python $environmentPython --no-deps $backendPath
     if ($LASTEXITCODE -ne 0) { throw 'Could not install pinned RepoWise source.' }
 } finally {
     Pop-Location

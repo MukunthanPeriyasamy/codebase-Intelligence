@@ -15,3 +15,9 @@ test('only the exact application main frame can call host services', () => {
   assert.equal(trustedSender(1, 1, false, APP_URL), false);
   for (const url of ['https://app/index.html', 'codebase://attacker/index.html', APP_URL + '?x', 'file:///index.html']) assert.equal(trustedSender(1, 1, true, url), false);
 });
+
+
+test('worker handshake accepts only explicitly supported Python minor versions', () => {
+  for (const python of ['3.12.14', '3.14.2']) assert.equal(workerEventSchema.safeParse({ v: 1, type: 'ready', python, schema: 1 }).success, true);
+  for (const python of ['3.11.9', '3.13.0', '3.15.0', '4.0.0']) assert.equal(workerEventSchema.safeParse({ v: 1, type: 'ready', python, schema: 1 }).success, false);
+});

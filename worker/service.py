@@ -37,7 +37,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=Path, required=True)
     args = parser.parse_args()
-    if sys.version_info[:2] != (3, 12):
+    if sys.version_info[:2] not in ((3, 12), (3, 14)):
         emit({"type": "error", "code": "RUNTIME_VERSION"})
         return 1
     try:

@@ -251,7 +251,7 @@ def build(request):
 
 if __name__ == '__main__':
     try:
-        if sys.version_info[:2] != (3, 12): raise Failure('RUNTIME')
+        if sys.version_info[:2] not in ((3, 12), (3, 14)): raise Failure('RUNTIME')
         line = sys.stdin.buffer.readline(65537)
         if len(line) > 65536: raise Failure('INVALID')
         build(json.loads(line))

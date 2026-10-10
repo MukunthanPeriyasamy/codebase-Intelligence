@@ -1,5 +1,9 @@
 # UI Context
 
+## Python compatibility update — 2026-10-10
+
+Python 3.14 is now supported alongside 3.12; this supersedes earlier 3.12-only runtime requirements. Verified CPython 3.14.2 with unchanged pinned RepoWise/dependencies: 34 service tests, four Electron checks and identical parser counts/diagnostics on 61 fixtures across 15 tags compared with 3.12.14. Worker and snapshot gates, IPC validation, UI messages and setup script were updated. Other minor versions are not enabled. Setup and limits: `../validation/python314.md`.
+
 ## Latest provider decision — Ollama (2026-10-09)
 
 Settings now provides Connect Ollama with a Test Ollama connection button, fixed local endpoint and installation instructions. Chat/document and embedding pickers show installed capability-filtered models; API-key and provider-price controls are removed. Saved output limits appear in Settings and Documentation. Defaults for new/migrated settings are manual generation, one request/run, 20/day and 8000 output tokens; maximum is 16384. Local model inference may take up to 10 minutes per request. This supersedes earlier OpenRouter-specific runtime instructions; earlier completed-work entries remain historical.

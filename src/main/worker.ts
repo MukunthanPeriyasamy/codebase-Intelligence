@@ -58,7 +58,7 @@ export class WorkerService {
           } else if (event.type === 'pong' && this.status.state === 'ready' && event.id === this.awaitingPong) {
             clearTimeout(this.timer); this.awaitingPong = null;
           } else if (event.type === 'error') {
-            const messages = { RUNTIME_VERSION: 'Python 3.12 is required. Set CODEBASE_INTELLIGENCE_PYTHON and relaunch.', STORAGE_INIT: 'Local storage could not be opened. Check disk access and restart.', REQUEST_INVALID: 'The worker rejected a request. Restart the service.' };
+            const messages = { RUNTIME_VERSION: 'Python 3.12 or 3.14 is required. Set CODEBASE_INTELLIGENCE_PYTHON and relaunch.', STORAGE_INIT: 'Local storage could not be opened. Check disk access and restart.', REQUEST_INVALID: 'The worker rejected a request. Restart the service.' };
             this.fail(event.code, messages[event.code]); return;
           } else { throw new Error('Unexpected event'); }
         } catch { this.fail('WORKER_PROTOCOL', 'The worker sent an invalid response. Restart the service.'); return; }
@@ -67,7 +67,7 @@ export class WorkerService {
     // Drain stderr but never forward arbitrary worker output or source into UI/logs.
     child.stderr.resume();
     child.stdin.on('error', () => { if (this.status.state === 'ready') this.fail('WORKER_EXIT', 'The worker connection closed. Restart the service.'); });
-    child.on('error', () => this.fail('WORKER_START', 'Python could not start. Set CODEBASE_INTELLIGENCE_PYTHON to a Python 3.12 executable and relaunch.'));
+    child.on('error', () => this.fail('WORKER_START', 'Python could not start. Set CODEBASE_INTELLIGENCE_PYTHON to a Python 3.12 or 3.14 executable and relaunch.'));
     child.on('close', () => {
       if (this.child !== child) return;
       this.child = null; this.clearTimers();

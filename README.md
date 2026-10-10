@@ -1,3 +1,17 @@
+# Python runtime compatibility
+
+Python 3.14 is now supported alongside 3.12. Verified on Windows with CPython 3.14.2, RepoWise 0.55.0 and the existing pinned dependencies. Python 3.13 and 3.15+ are not enabled because they were not validated in this change.
+
+For a separate Python 3.14 environment, run these commands in **PowerShell from the project root** (requires `uv`):
+
+```powershell
+./validation/setup_phase1.ps1 -Python 3.14 -Environment .research/venv314
+$env:CODEBASE_INTELLIGENCE_PYTHON = (Resolve-Path .research/venv314/Scripts/python.exe).Path
+npm run dev
+```
+
+The environment must include the pinned analysis dependencies, not just Python itself. The environment variable applies to this terminal session; set it again when launching from another session. Existing development `.research/venv` selection is unchanged. The setup script rejects reusing an environment with a different Python minor version.
+
 # Local Ollama setup
 
 OpenRouter has been replaced with local Ollama. Existing documents and workspace data are preserved; old provider settings are backed up and generation returns to manual setup.
@@ -16,7 +30,7 @@ Internal Electron workspace for commit-grounded repository documentation and cit
 
 ## Development
 
-Requires Node.js 22.12+ (validated with 24.15), npm, Git on PATH and Python **3.12**. Dependencies are pinned in `package-lock.json`.
+Requires Node.js 22.12+ (validated with 24.15), npm, Git on PATH and Python **3.12 or 3.14**. Dependencies are pinned in `package-lock.json`.
 
 ```powershell
 npm ci
