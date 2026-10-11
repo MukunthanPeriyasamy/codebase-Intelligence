@@ -131,3 +131,8 @@ OpenRouter Gemini requests use a transport projection of the Zod schema: omit th
 ## Ollama timeout correction — 2026-10-10
 
 Local requests now use a dedicated Undici dispatcher with independent header/body deadlines disabled; an owned, cleared abort timer bounds the complete request and body read. Socket connection remains bounded to 10 seconds. Generation permits 30 minutes, metadata 60 seconds and catalog traversal two minutes. Chat allows two generation windows plus one minute. Stop propagates cancellation; errors distinguish deadline, connect timeout, interrupted/offline transport and cancellation. No automatic retry, credential access or endpoint changes. This supersedes the earlier 10-minute inference/20-second metadata/30-second catalog limits. Undici is pinned to 7.30.0.
+
+
+## Chat without documents — 2026-10-11
+
+Chat checks for published documentation matching the queried repository and commit. When absent it skips document lookup and continues existing graph/source retrieval; answers retain document status and cache version is chat-v5-document-fallback. Stale documents do not count. This is not the pending semantic-vector retrieval pipeline.

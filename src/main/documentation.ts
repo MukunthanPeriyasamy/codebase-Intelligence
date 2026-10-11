@@ -236,6 +236,9 @@ export class DocumentationService {
     const manifest = this.published;
     return digest(JSON.stringify(manifest?.ref.repoId === ref.repoId && manifest.ref.commit === ref.commit ? [manifest.key, manifest.entries] : null));
   }
+  hasDocuments(ref: SnapshotRef): boolean {
+    return this.published?.ref.repoId === ref.repoId && this.published.ref.commit === ref.commit && this.published.entries.length > 0;
+  }
   async retrieveEvidence(ref: SnapshotRef, question: string): Promise<Evidence[]> {
     const manifest = this.published;
     if (!manifest || manifest.ref.repoId !== ref.repoId || manifest.ref.commit !== ref.commit) return [];

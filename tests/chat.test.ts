@@ -46,6 +46,8 @@ test('insufficient answers expand once; chat preempts documentation, shares limi
     await docs.initialize(); await docs.configure({ ...defaultDocSettings, model: 'test/model', requestsPerRun: 2 });
     docs.start(); await until(() => docStarted);
     chat.start('Explain fixture'); await chat.settle(); assert.equal(docs.status.phase, 'cancelled'); assert.equal(chat.status.phase, 'ready', chat.status.error ?? '');
+    assert.equal(chat.status.answers[0]!.documentStatus, 'unavailable');
+    assert.ok(chat.status.answers[0]!.evidence.length > 0);
     assert.equal(calls, 2); assert.equal(chat.status.answers[0]!.expanded, true); assert.equal(docs.status.requestsToday, 3); assert.equal(docs.status.unknownCostRequests, 1);
     await chat.clear(); block = true; chat.start('Explain another fixture'); await until(() => calls === 3);
     assert.equal(docs.start(), false); await assert.rejects(docs.configure(docs.status.settings), /chat/);

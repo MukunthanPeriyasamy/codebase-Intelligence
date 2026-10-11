@@ -1,5 +1,14 @@
 # UI Context
 
+## Full interface redesign — 2026-10-11
+
+The current design supersedes the earlier dark/mint theme. `src/renderer/redesign.css` layers the new visual system over existing component layout styles: light gray workspace (#f5f7fb), white surfaces, slate sidebar (#17243b), blue primary actions (#315ee7), dark readable text (#1b2940), muted text (#607086), subtle borders and consistent rounded controls. Navigation uses labeled outline icons and a clear active state. The repository/branch header stays at the top; job/request status is a compact bottom bar. Redundant section numbers and promotional heading text are removed.
+
+Repository and documentation use simpler cards and clearer action hierarchy. Settings opens with model selection and limits, provides in-page section shortcuts, then connection controls and the analysis engine. Chat has a centered reading column, quiet user bubbles, a fixed composer, collapsed answer metadata and visible evidence/confidence. The graph uses light mode. Source dialogs and notifications follow the new theme. The layout adapts at narrow desktop widths; keyboard focus, native controls, preserved drafts and citations remain intact.
+
+Verification: build and Electron graph, provider-switching and complete-workspace scenarios passed, including 780px layouts and automatic background sync. Screenshots are generated under test-results. Earlier visual specifications below describe historical phases.
+
+
 ## Current providers — Ollama and OpenRouter (2026-10-10)
 
 Settings offers both Connect Ollama and Connect OpenRouter (save/remove encrypted key), plus a Model provider selector in Generation settings. Model catalogs, labels and prices match the selected draft provider; Save applies it. Model and embedding selections are remembered separately per provider. Active provider is visible in documentation/chat, output caps remain explicit, and switching provider disables automatic generation. Unsaved key input clears when leaving Settings. This supersedes earlier Ollama-only or OpenRouter-only instructions; historical verification entries remain historical.
@@ -103,3 +112,8 @@ Repository overview includes Choose workspace folder, the remembered path, Open 
 Every answer has a footer with Confidence N/100 (evidence estimate) and Document/Codebase/KG badges for retained evidence. Expand Score and source details for exact paths/lines and score reasons. Insufficient answers score zero; no evidence displays None. Cached answers retain their original score/provenance. The score is explicitly heuristic, not a correctness probability. Document and KG labels describe retrieval guidance; answers still cite captured source.
 
 Documentation failures now appear in a bordered alert with recovery instructions, a Review generation settings action and expandable selectable Debug context (model, commit, output limit, completed pages and sanitized error). Truncation explicitly directs users to Output tokens per request.
+
+
+## Chat without documents — 2026-10-11
+
+Chat shows Document not found for this commit during retrieval and in an evidence trail beneath the answer. The trail distinguishes missing documents, no matches, direct lookup and matched documents, and shows retained code excerpts with KG guidance only when evidenced. The empty state explains that documentation is optional.

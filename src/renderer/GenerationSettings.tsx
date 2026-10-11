@@ -31,6 +31,6 @@ export function GenerationSettings({ docs, chatRunning, act }: { docs?: DocStatu
         <button type="submit">Save generation settings</button>
       </fieldset>
     </form>
-    <p className="muted">{provider === 'openrouter' ? 'Bounded source excerpts are sent to OpenRouter. Paid requests use shared daily limits; request limits are not a dollar cap. Set a spending limit on your key. Each request allows two minutes.' : 'Generation uses local Ollama with a 32K context and up to 10 minutes per request. No provider API charges.'} Save changed limits before generating.</p>
+    <p className="muted">{provider === 'openrouter' ? 'Bounded source excerpts are sent to OpenRouter. Paid requests use shared daily limits; request limits are not a dollar cap. Set a spending limit on your key. Each request allows two minutes.' : 'Generation uses local Ollama with a 32K context and up to 30 minutes per request. No provider API charges.'} Save changed limits before generating.</p>
   </section>;
 }

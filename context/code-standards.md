@@ -93,3 +93,6 @@ Graph checkpoints are read-only visual previews; only complete published snapsho
 Use native host-side folder selection and canonical paths; do not accept arbitrary paths through IPC. Create unique project and version directories, reject linked output subdirectories and publish the Markdown entry point last. Source copies and generated docs must never overwrite existing source versions or personal notes. Keep clone staging on its destination volume, enable Git long paths on Windows, and preserve compatibility with repository settings lacking workspace fields.
 
 Confidence labels must distinguish heuristic evidence support from calibrated accuracy. Derive source badges from retained evidence provenance rather than candidate counts or route names; preserve metadata on exact-cache reuse and version caches when the policy changes.
+
+
+The 2026-10-11 redesign in `redesign.css` supplies current light/slate/blue tokens; earlier dark/mint rules are historical. Preserve labeled icon navigation, visible focus, readable contrast, narrow-window behavior and stable component drafts when changing styles. Keep technical answer metadata collapsed by default, while evidence and confidence remain visible.

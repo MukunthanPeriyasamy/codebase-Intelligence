@@ -137,3 +137,19 @@ Update this file after every meaningful implementation change.
 - Fixed rejection of valid OpenRouter responses with null cost; added actionable sanitized generation diagnostics and visible error/debug context. Failed document responses now retain provider-reported cost. Verified build/typecheck, 34/34 service tests and both targeted Electron documentation/chat scenarios, including truncation followed by explicit successful resume. No paid requests; the original screenshot failure cannot be identified retrospectively because the earlier implementation discarded its cause. Report: `../validation/generation-errors.md`.
 
 - Ollama verification complete: build/typecheck, 33/33 service tests and all 10 Electron scenarios passed across targeted runs. Inspected installed-model Settings UI. Real local inference was not run because the server was unreachable on port 11434; no model was downloaded. Setup and limitations: `../validation/ollama.md`.
+
+
+## Chat without documents — 2026-10-11
+
+Implemented explicit no-document fallback reporting and chat evidence trail; created a committed Python shop demo under examples/shop-demo and questions/expected answers in examples/TESTING.md outside the repository. Build and three chat service regressions passed. Live Ollama probe failed, including outside the sandbox; Ollama was not found on PATH or at its usual per-user install location. Live model verification remains blocked; fixture tests do not establish semantic answer quality.
+
+Electron verification also passed: chat answered through the Ollama fixture with zero published documents, displayed the missing-document trail, and retained citations. Screenshot: test-results/chat-document-fallback.png.
+
+
+## Full UI redesign — 2026-10-11
+
+Replaced the dense dark presentation with a light/slate/blue visual system across repository, documentation, chat, settings, notifications, source dialogs and graph. Added icon navigation, moved status to a compact footer, reorganized Settings around models first with section shortcuts, reduced repeated headings and collapsed chat metadata. Build passed. Three Electron scenarios passed covering graph publication, provider switching, navigation/drafts, source citations, responsive chat and automatic background sync. Visual review covered desktop and 780px chat. The final graph and provider scenarios also passed after the light-graph update; Settings, Documentation and graph screenshots were visually inspected. No provider inference was used.
+
+## Example cleanup — 2026-10-11
+
+Removed the user-requested shop demo, its nested Git repository and examples/TESTING.md. Earlier demo creation entries are historical; those files are no longer available. Application regression fixtures remain unchanged.

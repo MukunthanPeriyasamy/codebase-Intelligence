@@ -37,7 +37,7 @@ export function DocumentationPanel({ docs, repoId, configured, chatRunning, act,
   const filtered = catalog.filter(item => `${item.title} ${item.path}`.toLowerCase().includes(search.toLowerCase()));
   return <section className="panel" aria-labelledby="documentation-title">
     <div className="panel-heading"><div><span className="section-number">04 / COMMITTED KNOWLEDGE</span><h2 id="documentation-title">Documentation</h2></div><span className="status" data-testid="docs-state">{docs?.phase ?? 'idle'}</span></div>
-    <p>Generate module, function and workflow descriptions with source citations. Claims are model interpretations; matching a citation does not prove the interpretation is correct.</p>
+    <p>Turn committed code into a browsable reference, with source citations for every claim.</p>
     {(!configured || !docs?.settings.model) && <div className="setup-hint"><p>Configure your provider and model in Settings to generate documentation.</p><button onClick={onSettings}>Configure model access</button></div>}
     <p className="muted">{docs?.settings.provider === 'openrouter' ? 'OpenRouter' : 'Ollama'} · {docs?.settings.model || 'No model selected'} · Output limit: {docs?.settings.maxOutputTokens ?? 8000} tokens · {docs?.settings.autoGenerate ? 'Automatic generation enabled' : 'Manual generation'} <button className="text-button" onClick={onSettings}>Edit settings</button></p>
     <div className="actions"><button className="primary" disabled={running || chatRunning || !configured || !docs?.sourceCommit || !docs.settings.model} onClick={() => void act(() => window.desktop.generateDocs())}>Generate / resume documentation</button><button disabled={!running} onClick={() => void act(() => window.desktop.cancelDocs())}>Stop generation</button></div>

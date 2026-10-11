@@ -38,7 +38,7 @@ export class ChatService {
     if (containsSecret(question)) throw new RepoError('The question appears to contain a secret. Remove it before asking.');
     this.controller = new AbortController(); const signal = this.controller.signal;
     const deadline = setTimeout(() => this.controller?.abort(), 2 * OLLAMA_GENERATION_TIMEOUT_MS + 60000);
-    this.update({ phase: 'retrieving', error: null });
+    this.update({ phase: 'retrieving', error: null, retrievalNote: '' });
     this.running = this.answer(ref, question, signal).catch(error => {
       this.update({ phase: signal.aborted ? 'cancelled' : 'error', error: signal.aborted ? 'Question stopped. Remote requests may have been billed.' : error instanceof RepoError ? error.message : 'The answer could not be verified. Retry with a file or symbol name.' });
     }).finally(() => { clearTimeout(deadline); this.running = null; this.controller = null; this.options.changed(); });
@@ -72,8 +72,10 @@ export class ChatService {
         signal.throwIfAborted();
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new RepoError('Cached answer failed validation. Start a new question after restoring or removing the damaged cache.');
       }
+      const hasDocuments = this.options.docs.hasDocuments(ref);
+      if (!hasDocuments) this.update({ retrievalNote: 'Document not found for this commit. Searching indexed graph and codebase evidence…' });
       let retrieval = await this.options.reader.retrieve(ref, question, false, signal);
-      let documents = retrieval.exact ? [] : await this.options.docs.retrieveEvidence(ref, question);
+      let documents = retrieval.exact || !hasDocuments ? [] : await this.options.docs.retrieveEvidence(ref, question);
       const documentIds = new Set<string>();
       let evidence = await this.options.reader.pack(ref, retrieval, documents, signal, documentIds);
       let expanded = false;
@@ -82,7 +84,7 @@ export class ChatService {
         const effective = [...previousQuestions, question].join('\n');
         retrieval = await this.options.reader.retrieve(ref, effective, true, signal);
         retrieval.exact = false;
-        documents = await this.options.docs.retrieveEvidence(ref, effective);
+        documents = hasDocuments ? await this.options.docs.retrieveEvidence(ref, effective) : [];
         documentIds.clear();
         evidence = await this.options.reader.pack(ref, retrieval, documents, signal, documentIds);
       };
@@ -115,7 +117,7 @@ export class ChatService {
         }
       } else gaps.push('No safe supporting evidence was retrieved. Try an exact file or symbol name.');
       if (containsSecret(JSON.stringify({ content, gaps }))) throw new RepoError('The response may contain sensitive content and was not displayed.');
-      const answer = answerSchema.parse({ provider: settings.provider ?? 'ollama', id: randomUUID(), repoId: ref.repoId, commit: ref.commit, question, mode, cached: false, model: mode === 'model' ? settings.model : '', servedModel, content, evidence, gaps: gaps.slice(0, 20), route: retrieval.route, expanded, documents: documents.length, quality: answerQuality(mode, content, evidence, gaps, retrieval, documentIds), created: new Date().toISOString(), cost, fingerprint });
+      const answer = answerSchema.parse({ documentStatus: !hasDocuments ? 'unavailable' : retrieval.exact ? 'not-needed' : documents.length ? 'matched' : 'no-match', provider: settings.provider ?? 'ollama', id: randomUUID(), repoId: ref.repoId, commit: ref.commit, question, mode, cached: false, model: mode === 'model' ? settings.model : '', servedModel, content, evidence, gaps: gaps.slice(0, 20), route: retrieval.route, expanded, documents: documents.length, quality: answerQuality(mode, content, evidence, gaps, retrieval, documentIds), created: new Date().toISOString(), cost, fingerprint });
       await this.verify(ref, answer, signal); signal.throwIfAborted();
       if (mode !== 'insufficient') {
         await mkdir(dirname(cache), { recursive: true }); const temporary = cache + '.' + randomUUID() + '.tmp';
@@ -143,7 +145,7 @@ export class ChatService {
     if (source.blocked.length || !source.text.includes(selected.quote)) throw new RepoError('Citation source failed verification.');
     return source;
   }
-  async clear() { await this.cancel(); this.refs.clear(); this.update({ phase: 'idle', error: null, answers: [] }); }
+  async clear() { await this.cancel(); this.refs.clear(); this.update({ phase: 'idle', error: null, retrievalNote: '', answers: [] }); }
   contextChanged() { if (this.activeRepo !== this.options.snapshot()?.repoId) { this.controller?.abort(); this.refs.clear(); this.state.answers = []; } }
   async cancel() { this.controller?.abort(); await this.running; }
   async settle() { await this.running; }

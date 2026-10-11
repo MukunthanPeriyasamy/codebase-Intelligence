@@ -8,6 +8,7 @@ import { SettingsPanel } from './SettingsPanel';
 import { Notifications } from './Notifications';
 import { SourceViewer, type SourceSelection } from './SourceViewer';
 import './styles.css';
+import './redesign.css';
 
 declare global { interface Window { desktop: DesktopBridge } }
 const views = ['Repository', 'Documentation', 'Chat', 'Settings'] as const;
@@ -50,26 +51,26 @@ function App() {
   function inspectSource(next: SourceSelection) { if (currentView.current === (next.origin === 'chat' ? 'Chat' : 'Documentation')) setSource(next); }
   return <div className="workspace">
     <aside className="sidebar">
-      <div className="brand"><span className="brand-mark" aria-hidden="true">ci</span><span>Codebase<br />Intelligence</span></div>
-      <div className="sidebar-label">YOUR WORKSPACE</div>
-      <nav className="workspace-nav" aria-label="Workspace">{views.map((item, i) => <button key={item} aria-current={view === item ? 'page' : undefined} onClick={() => navigate(item)}><span className="nav-number" aria-hidden="true">0{i + 1}</span>{item}{(item === 'Chat' && chatRunning || item === 'Documentation' && docsRunning || item === 'Repository' && syncRunning) && <span className="activity-dot" aria-label="Working" />}</button>)}</nav>
-      <div className="sidebar-note"><span className="dot" /> Local workspace<p>Read-only source.<br />Knowledge tied to commits.</p></div>
+      <div className="brand"><span className="brand-mark" aria-hidden="true">⌘</span><span>Codebase<span className="brand-subtitle">Intelligence workspace</span></span></div>
+      <div className="sidebar-label">WORKSPACE</div>
+      <nav className="workspace-nav" aria-label="Workspace">{views.map((item) => <button key={item} aria-current={view === item ? 'page' : undefined} onClick={() => navigate(item)}><svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d={item === 'Repository' ? 'M3 7h7l2 2h9v11H3z M3 7V4h7l2 3' : item === 'Documentation' ? 'M6 3h9l4 4v14H6z M14 3v5h5 M9 12h7 M9 16h7' : item === 'Chat' ? 'M4 4h16v12H9l-5 4z M8 8h8 M8 12h5' : 'M4 6h16 M4 12h16 M4 18h16 M8 3v6 M16 9v6 M10 15v6'} /></svg>{item}{(item === 'Chat' && chatRunning || item === 'Documentation' && docsRunning || item === 'Repository' && syncRunning) && <span className="activity-dot" aria-label="Working" />}</button>)}</nav>
+      <div className="sidebar-note"><span className="dot" /> Local workspace<p>Your source stays yours.<br />Every answer has a reference.</p></div>
       <div className="sidebar-footer">INTERNAL · MVP <span>0.1</span></div>
     </aside>
     <main>
       <header><div className="workspace-identity"><strong title={repository?.name}>{repository?.name ?? 'No repository connected'}</strong><span>{repository?.branch || 'Connect a Git repository to begin'}</span></div><div className="top-actions"><span className="badge" title={snapshot?.commit}>{snapshot ? `Commit ${snapshot.commit.slice(0, 8)}` : 'Awaiting snapshot'}</span><Notifications notices={status?.sync.notices ?? []} act={act} /></div></header>
       <div className="workspace-status" aria-label="Workspace status"><button onClick={() => navigate('Repository')}>Sync <strong>{status?.sync.phase ?? 'connecting'}</strong>{repository && <span> · {repository.autoSync ? 'Auto on' : 'Paused'}</span>}</button><button onClick={() => navigate('Documentation')}>Docs <strong>{status?.docs.phase ?? 'idle'}</strong>{status?.docs.commit && status.docs.commit !== snapshot?.commit && <span className="stale"> · Older commit</span>}</button><button onClick={() => navigate('Chat')}>Chat <strong>{status?.chat.phase ?? 'idle'}</strong></button><button onClick={() => navigate('Settings')}>Today <strong>{status?.docs.requestsToday ?? 0}/{status?.docs.settings.requestsPerDay ?? 20}</strong> requests</button></div>
       <div className={`content ${view === 'Chat' ? 'chat-content' : ''}`} ref={scroll}>
-        <div className="view-heading" hidden={view === 'Chat'}><div className="eyebrow">YOUR CODE. IN CONTEXT.</div><h1>{view}</h1><p className="intro">{descriptions[view]}</p></div>
+        <div className="view-heading" hidden={view === 'Chat'}><h1>{view}</h1><p className="intro">{descriptions[view]}</p></div>
         {error && <div role="alert" className="error global-message">{error}<button className="text-button" onClick={() => setError('')}>Dismiss</button></div>}
         {notice && <p role="status" className="notice global-message">{notice}</p>}
         {view !== 'Settings' && hostError && <div role="alert" className="error global-message">{hostError}<button onClick={() => navigate('Settings')}>Open settings</button></div>}
         <div hidden={view !== 'Repository'} className="workspace-view">
           <RepositoryPanel active={view === 'Repository'} sync={status?.sync} act={act} busy={pending > 0} />
-          <section className="panel journey" aria-labelledby="journey-title"><span className="section-number">NEXT STEPS</span><h2 id="journey-title">From source to understanding</h2><div className="journey-grid">
-            <button onClick={() => navigate('Settings')}><span className="step-label">01 / MODEL ACCESS</span><strong>{modelReady ? 'Model configured' : 'Choose your model'}</strong><span>{modelReady ? status?.docs.settings.model : 'Choose Ollama or OpenRouter and a model.'}</span></button>
-            <button onClick={() => navigate('Documentation')}><span className="step-label">02 / DOCUMENTATION</span><strong>{status?.docs.completed ? `${status.docs.completed} pages available` : 'Build your documentation'}</strong><span>{snapshot ? 'Generate manually, then inspect the citations.' : 'Available after the first snapshot.'}</span></button>
-            <button onClick={() => navigate('Chat')}><span className="step-label">03 / EXPLORE</span><strong>Ask your repository</strong><span>Local symbol lookups work without a model key.</span></button>
+          <section className="panel journey" aria-labelledby="journey-title"><h2 id="journey-title">Explore your repository</h2><div className="journey-grid">
+            <button onClick={() => navigate('Settings')}><span className="step-label">SET UP</span><strong>{modelReady ? 'Model configured' : 'Choose your model'}</strong><span>{modelReady ? status?.docs.settings.model : 'Choose Ollama or OpenRouter and a model.'}</span></button>
+            <button onClick={() => navigate('Documentation')}><span className="step-label">READ</span><strong>{status?.docs.completed ? `${status.docs.completed} pages available` : 'Build your documentation'}</strong><span>{snapshot ? 'Generate manually, then inspect the citations.' : 'Available after the first snapshot.'}</span></button>
+            <button onClick={() => navigate('Chat')}><span className="step-label">ASK</span><strong>Ask your repository</strong><span>Local symbol lookups work without a model key.</span></button>
           </div></section>
         </div>
         <div hidden={view !== 'Documentation'} className="workspace-view"><DocumentationPanel docs={status?.docs} repoId={repository?.id} configured={modelReady} chatRunning={chatRunning} act={act} onSettings={() => navigate('Settings')} onSource={inspectSource} onAsk={askAbout} /></div>
