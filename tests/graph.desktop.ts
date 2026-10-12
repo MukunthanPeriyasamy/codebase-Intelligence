@@ -17,6 +17,11 @@ test('live graph renders indexed relationships, refreshes on publication and cha
   try {
     const page = await app.firstWindow(); const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
     await app.evaluate(({ dialog }, path) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] }); }, source);
+    await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Settings', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Build / resume code index' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Check RepoWise setup' }).click();
+    await expect(page.getByText('Connected \u00b7 MCP', { exact: true })).toBeVisible({ timeout: 30000 });
+    await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Repository', exact: true }).click();
     await page.getByRole('button', { name: 'Choose repository folder' }).click();
     await page.getByRole('button', { name: 'Knowledge Graph', exact: true }).click();
     await expect(page.locator('.react-flow__node')).toHaveCount(4, { timeout: 30000 });

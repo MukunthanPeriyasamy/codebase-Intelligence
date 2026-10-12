@@ -18,7 +18,7 @@ export const workerStatusSchema = z.object({
   error: failureSchema.nullable(),
 }).strict();
 export type WorkerStatus = z.infer<typeof workerStatusSchema>;
-export const desktopStatusSchema = z.object({ repowise: z.object({ connected: z.boolean(), error: z.string().max(300).nullable() }).strict().optional(), worker: workerStatusSchema, credential: z.object({ available: z.boolean(), configured: z.boolean(), error: z.string().max(300).nullable() }).strict(), ollama: z.object({ connected: z.boolean(), error: z.string().max(300).nullable() }).strict(), sync: repositoryStatusSchema, docs: docStatusSchema, chat: chatStatusSchema }).strict();
+export const desktopStatusSchema = z.object({ vectors: z.object({ phase: z.enum(['idle', 'indexing', 'ready', 'error', 'cancelled']), completed: z.number().int().nonnegative(), total: z.number().int().nonnegative(), error: z.string().max(500).nullable(), commit: z.string().nullable() }).strict().optional(), repowise: z.object({ connected: z.boolean(), error: z.string().max(300).nullable() }).strict().optional(), worker: workerStatusSchema, credential: z.object({ available: z.boolean(), configured: z.boolean(), error: z.string().max(300).nullable() }).strict(), ollama: z.object({ connected: z.boolean(), error: z.string().max(300).nullable() }).strict(), sync: repositoryStatusSchema, docs: docStatusSchema, chat: chatStatusSchema }).strict();
 export type DesktopStatus = z.infer<typeof desktopStatusSchema>;
 export const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('chat.ask'), question: questionSchema }).strict(),
@@ -40,6 +40,8 @@ export const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('credential.clear') }).strict(),
   z.object({ type: z.literal('ollama.test') }).strict(),
   z.object({ type: z.literal('repowise.test') }).strict(),
+  z.object({ type: z.literal('vectors.index') }).strict(),
+  z.object({ type: z.literal('vectors.cancel') }).strict(),
   z.object({ type: z.literal('status') }).strict(),
   z.object({ type: z.literal('worker.restart') }).strict(),
   z.object({ type: z.literal('worker.stop') }).strict(),
@@ -65,6 +67,8 @@ export const workerEventSchema = z.discriminatedUnion('type', [
 export interface DesktopBridge {
   saveCredential(key: string): Promise<Result>;
   clearCredential(): Promise<Result>;
+  indexCode(): Promise<Result>;
+  cancelIndex(): Promise<Result>;
   testRepoWise(): Promise<Result>;
   testOllama(): Promise<Result>;
   chooseWorkspace(): Promise<Result>;

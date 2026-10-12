@@ -1,3 +1,4 @@
+import { VectorService, VectorStore, embeddingProvider } from './vectors';
 import { CredentialStore } from './credentials';
 import { listOpenRouterModels } from './openrouter';
 import { completionRouter, RoutedDocumentationProvider } from './providers';
@@ -35,13 +36,14 @@ let quitting = false;
 let repositories: RepositoryService;
 let documentation: DocumentationService;
 let chat: ChatService;
+let vectors: VectorService;
 let selectingRepository = false;
 let graphReader: GraphReader;
 let graphBusy = false;
 const graphController = new AbortController();
 
 function status(): DesktopStatus {
-  return { repowise: repowiseStatus, worker: worker?.status ?? { state: 'stopped', error: null, python: null, storageReady: false }, ollama: ollamaStatus, credential: credentialStatus,
+  return { vectors: vectors?.status, repowise: repowiseStatus, worker: worker?.status ?? { state: 'stopped', error: null, python: null, storageReady: false }, ollama: ollamaStatus, credential: credentialStatus,
     docs: documentation.status, chat: chat.status, sync: repositories?.status ?? { repository: null, phase: 'idle', processed: 0, total: 0, error: null, notices: [] } };
 }
 function publish() {
@@ -79,6 +81,8 @@ async function dispatch(input: unknown): Promise<Result> {
   const parsed = actionSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: { code: 'REQUEST_INVALID', message: 'The request is invalid.' } };
   const action = parsed.data;
+  if (action.type === 'vectors.index') vectors.start();
+  if (action.type === 'vectors.cancel') await vectors.cancel();
   if (action.type === 'repowise.test') {
     if (repowiseChecking) throw new RepoError('RepoWise setup check is already running.');
     repowiseChecking = true;
@@ -176,9 +180,10 @@ else {
     worker = new WorkerService({ python, script: join(__dirname, 'worker', 'service.py'), dataDir: join(app.getPath('userData'), 'knowledge') }, publish);
     repowiseReader = new EvidenceReader(python, join(__dirname, 'worker', 'mcp_client.py'));
     graphReader = new GraphReader(python, join(__dirname, 'worker', 'graph.py'));
-    repositories = new RepositoryService({ directory: join(app.getPath('userData'), 'knowledge'), python, script: join(__dirname, 'worker', 'snapshot.py') }, () => { chat?.contextChanged(); void documentation?.refreshContext(); publish(); });
+    repositories = new RepositoryService({ directory: join(app.getPath('userData'), 'knowledge'), python, script: join(__dirname, 'worker', 'snapshot.py') }, () => { chat?.contextChanged(); void documentation?.refreshContext(); void vectors?.contextChanged(); publish(); });
     documentation = new DocumentationService({ generationPaused: true, provider: new RoutedDocumentationProvider(complete), knowledgeDirectory: join(app.getPath('userData'), 'knowledge'), reader: new EvidenceReader(python, join(__dirname, 'worker', 'evidence.py')), snapshot: () => repositories.getSnapshot(), workspaceProject: id => repositories.workspaceProject(id), changed: publish, notify: (kind, title, body) => repositories.notifyDocumentation(kind, title, body) });
-    chat = new ChatService({ useDocuments: false, provider: new OllamaChatProvider(complete), directory: join(app.getPath('userData'), 'knowledge'), snapshot: () => repositories.getSnapshot(), reader: new RetrievalReader(python, join(__dirname, 'worker', 'evidence.py'), repowiseReader), docs: documentation, changed: publish });
+    vectors = new VectorService({ snapshot: () => repositories.getSnapshot(), docs: documentation, reader: new EvidenceReader(python, join(__dirname, 'worker', 'evidence.py')), store: new VectorStore(python, join(__dirname, 'worker', 'vector_bridge.py')), embed: embeddingProvider(documentation, () => credentials.read()), busy: () => chat?.status.phase === 'retrieving' || chat?.status.phase === 'answering', changed: publish });
+    chat = new ChatService({ useDocuments: false, provider: new OllamaChatProvider(complete), directory: join(app.getPath('userData'), 'knowledge'), snapshot: () => repositories.getSnapshot(), reader: new RetrievalReader(python, join(__dirname, 'worker', 'evidence.py'), repowiseReader, vectors), docs: documentation, changed: publish });
     await documentation.initialize();
     await repositories.initialize();
     await documentation.refreshContext();
@@ -196,6 +201,6 @@ else {
     if (quitting) return;
     event.preventDefault(); quitting = true;
     graphController.abort();
-    void Promise.all([worker?.stop(), repositories?.close(), chat?.close(), documentation?.close()]).finally(() => app.quit());
+    void Promise.all([worker?.stop(), repositories?.close(), chat?.close(), vectors?.cancel(), documentation?.close()]).finally(() => app.quit());
   });
 }

@@ -60,7 +60,7 @@ export class ChatService {
       for (const item of this.state.answers.filter(item => item.repoId === ref.repoId && item.commit === ref.commit).slice(-3).reverse()) {
         if (Buffer.byteLength(JSON.stringify([item.question, ...previousQuestions])) <= 3500) previousQuestions.unshift(item.question);
       }
-      const fingerprint = digest(JSON.stringify([CHAT_VERSION, ref, question, previousQuestions, settings.provider ?? 'ollama', settings.model, settings.maxOutputTokens, this.options.docs.fingerprint(ref), this.options.useDocuments !== false]));
+      const fingerprint = digest(JSON.stringify([CHAT_VERSION, ref, question, previousQuestions, settings.provider ?? 'ollama', settings.model, settings.maxOutputTokens, this.options.docs.fingerprint(ref), this.options.useDocuments !== false, await this.options.reader.identity(ref)]));
       const cache = join(this.options.directory, 'chat', ref.repoId, fingerprint + '.json');
       try {
         if ((await stat(cache)).size > 256 * 1024) throw new Error('limit');

@@ -21,7 +21,7 @@ export function GenerationSettings({ docs, chatRunning, act }: { docs?: DocStatu
         <ModelPicker key={`${provider}-chat`} provider={provider} kind="chat" value={settings.model} onChange={model => setSettings({ ...settings, model })} />
         <p>Saved output limit: <strong>{docs?.settings.maxOutputTokens ?? 8000}</strong> tokens per request. Draft changes apply only after Save generation settings.</p>
         <ModelPicker key={`${provider}-embedding`} provider={provider} kind="embedding" value={settings.embeddingModel ?? ''} onChange={embeddingModel => setSettings({ ...settings, embeddingModel })} />
-        <p className="muted">Embedding selection is saved for document indexing. Vector indexing is not active yet; saving this setting sends no embedding requests.</p>
+        <p className="muted">This model embeds committed code for LanceDB similarity search. Save, then choose Build / resume code index under Code search. Saving alone sends no embedding requests.</p>
         <div className="doc-limits">
           <label>Requests per run<input type="number" min={1} max={20} value={settings.requestsPerRun} onChange={event => setSettings({ ...settings, requestsPerRun: Number(event.target.value) })} required /></label>
           <label>Requests per day (UTC)<input type="number" min={1} max={200} value={settings.requestsPerDay} onChange={event => setSettings({ ...settings, requestsPerDay: Number(event.target.value) })} required /></label>

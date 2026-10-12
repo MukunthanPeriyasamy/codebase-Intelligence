@@ -31,7 +31,7 @@ if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant
 & uv pip install --python $runtime --no-deps $archive
 if ($LASTEXITCODE -ne 0) { throw 'Could not install pinned RepoWise.' }
 foreach ($file in @('server.py', 'analyzer.py')) { Copy-Item -LiteralPath (Join-Path $projectRoot ('tools/repowise-mcp/' + $file)) -Destination (Join-Path $toolRoot $file) -Force }
-foreach ($file in @('evidence.py', 'retrieval.py')) { Copy-Item -LiteralPath (Join-Path $projectRoot ('worker/' + $file)) -Destination (Join-Path $toolRoot $file) -Force }
+foreach ($file in @('evidence.py', 'retrieval.py', 'vector_store.py')) { Copy-Item -LiteralPath (Join-Path $projectRoot ('worker/' + $file)) -Destination (Join-Path $toolRoot $file) -Force }
 $settingsRoot = Join-Path $env:LOCALAPPDATA 'CodebaseIntelligence'
 New-Item -ItemType Directory -Force -Path $settingsRoot | Out-Null
 @{ directory = $toolRoot } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $settingsRoot 'repowise-tool.json') -Encoding utf8

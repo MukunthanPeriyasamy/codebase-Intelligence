@@ -28,7 +28,7 @@ async function rejectionReason(response: Response): Promise<string> {
   finally { await reader.cancel().catch(() => undefined); }
 }
 
-async function request(path: 'chat/completions' | 'models' | 'embeddings/models', key: string, body?: unknown, signal?: AbortSignal) {
+async function request(path: 'chat/completions' | 'models' | 'embeddings/models' | 'embeddings', key: string, body?: unknown, signal?: AbortSignal) {
   const response = await fetch(`https://openrouter.ai/api/v1/${path}`, { method: body === undefined ? 'GET' : 'POST', redirect: 'error', signal: AbortSignal.any([AbortSignal.timeout(body === undefined ? 20000 : 120000), ...(signal ? [signal] : [])]), headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   if (!response.ok) {
     const detail = response.status === 400 ? await rejectionReason(response) : '';
@@ -70,4 +70,12 @@ export async function listOpenRouterModels(kind: 'chat' | 'embedding', key: stri
     const payload = z.object({ data: z.array(row).max(10000) }).parse(await request(kind === 'chat' ? 'models' : 'embeddings/models', key));
     return modelCatalogSchema.parse({ kind, fetched: new Date().toISOString(), models: payload.data.filter(item => !item.architecture || (item.architecture.input_modalities.includes('text') && item.architecture.output_modalities.includes(kind === 'chat' ? 'text' : 'embeddings'))).map(item => ({ id: item.id, name: item.name, context: item.context_length ?? null, inputPrice: item.pricing?.prompt ?? null, outputPrice: item.pricing?.completion ?? null, structured: item.supported_parameters?.includes('structured_outputs') ?? false })) });
   } catch (error) { if (error instanceof ProviderError) throw error; throw new ProviderError('OpenRouter catalog is unavailable. Check your key and connection, then refresh.', 0); }
+}
+
+export async function openRouterEmbedding(model: string, input: string[], key: string, signal: AbortSignal) {
+  const raw = await request('embeddings', key, { model, input, encoding_format: 'float' }, signal);
+  const parsed = z.object({ data: z.array(z.object({ index: z.number().int().nonnegative(), embedding: z.array(z.number().finite()).min(1).max(8192) })), usage: z.object({ cost: z.number().nonnegative().nullable().optional() }).optional() }).parse(raw);
+  const data = parsed.data.sort((a,b) => a.index - b.index);
+  if (data.length !== input.length || data.some((row,index) => row.index !== index)) throw new ProviderError('Embedding response indices do not match inputs.', null);
+  return { vectors: data.map(row => row.embedding), cost: parsed.usage?.cost ?? null };
 }

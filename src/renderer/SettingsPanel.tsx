@@ -6,8 +6,16 @@ export function SettingsPanel({ status, busy, active, act }: { status: DesktopSt
   const worker = status?.worker;
   const pending = busy || worker?.state === 'starting' || worker?.state === 'stopping';
   return <div className="settings-layout">
-    <nav className="settings-index" aria-label="Settings sections"><strong>Preferences</strong>{[['repowise-title', 'RepoWise tool'], ['generation-settings-title', 'Models & limits'], ['model-title', 'Ollama connection'], ['remote-settings', 'OpenRouter access'], ['service-title', 'Analysis engine']].map(([id, title]) => <button key={id} onClick={() => document.getElementById(id!)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{title}</button>)}</nav>
+    <nav className="settings-index" aria-label="Settings sections"><strong>Preferences</strong>{[['vectors-title', 'Code search'], ['repowise-title', 'RepoWise tool'], ['generation-settings-title', 'Models & limits'], ['model-title', 'Ollama connection'], ['remote-settings', 'OpenRouter access'], ['service-title', 'Analysis engine']].map(([id, title]) => <button key={id} onClick={() => document.getElementById(id!)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{title}</button>)}</nav>
     <div className="settings-sections">
+    <section className="panel" aria-labelledby="vectors-title">
+      <div className="panel-heading"><h2 id="vectors-title">Code search · LanceDB</h2><span className="status">{status?.vectors?.phase ?? 'idle'}</span></div>
+      <p>Save an embedding model in Models &amp; limits, then build the code index. Chat combines similarity search with RepoWise graph expansion and verified source snippets.</p>
+      <p>{status?.vectors?.completed ?? 0} / {status?.vectors?.total ?? 0} source sections processed{status?.vectors?.commit ? ` · commit ${status.vectors.commit.slice(0, 8)}` : ''}</p>
+      <p className="muted">Unchanged embeddings are reused on resume and new commits. After the first completed local index, future commits update automatically. OpenRouter indexing is manual and uses the shared paid-request budget. A different embedding model requires a new index.</p>
+      <div className="actions"><button disabled={busy || !status || status.vectors?.phase === 'indexing' || status.chat.phase === 'retrieving' || status.chat.phase === 'answering'} onClick={() => void act(() => window.desktop.indexCode())}>Build / resume code index</button><button disabled={status?.vectors?.phase !== 'indexing'} onClick={() => void act(() => window.desktop.cancelIndex())}>Stop indexing</button></div>
+      {status?.vectors?.error && <p role="status">{status.vectors.error}</p>}
+    </section>
     <section className="panel" aria-labelledby="repowise-title">
       <div className="panel-heading"><h2 id="repowise-title">RepoWise tool</h2><span className="status">{status?.repowise?.connected ? 'Connected · MCP' : 'Setup required / not checked'}</span></div>
       <p>RepoWise runs as a separate local tool. On each Windows computer, install uv and run this once from the application project folder:</p>

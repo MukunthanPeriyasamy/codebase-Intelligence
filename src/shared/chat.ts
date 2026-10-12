@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { digestSchema, evidenceSchema, generatedSchema, unitSchema } from './documentation';
 
-export const CHAT_VERSION = 'chat-v7-mcp-search';
+export const CHAT_VERSION = 'chat-v8-lancedb';
 export const questionSchema = z.string().trim().min(1).max(2000);
 export const retrievalSchema = z.object({
-  units: z.array(unitSchema).max(12), exact: z.boolean(), route: z.enum(['symbol', 'source', 'graph']),
+  units: z.array(unitSchema).max(12), exact: z.boolean(), route: z.enum(['symbol', 'source', 'graph', 'hybrid']),
   gaps: z.array(z.string().max(500)).max(20), scanned: z.number().int().nonnegative(),
   edges: z.array(z.object({ path: z.string().max(4096), line: z.number().int().positive(), target: z.string().max(1000), resolution: z.literal('unresolved') }).strict()).max(24),
 }).strict();
@@ -15,7 +15,7 @@ export const answerSchema = z.object({ provider: z.enum(['ollama', 'openrouter']
   model: z.string().max(150), servedModel: z.string().max(150), content: generatedSchema.nullable(),
   evidence: z.array(evidenceSchema).max(6), gaps: z.array(z.string().max(500)).max(20),
   documentStatus: z.enum(['paused', 'unavailable', 'no-match', 'matched', 'not-needed']).optional(),
-  route: z.enum(['symbol', 'source', 'graph']), expanded: z.boolean(), documents: z.number().int().nonnegative(),
+  route: z.enum(['symbol', 'source', 'graph', 'hybrid']), expanded: z.boolean(), documents: z.number().int().nonnegative(),
   quality: z.object({ score: z.number().int().min(0).max(100), reasons: z.array(z.string().max(300)).max(5), sources: z.array(z.object({ evidenceId: digestSchema, path: z.string().max(4096), start: z.number().int().positive(), end: z.number().int().positive(), document: z.boolean(), codebase: z.boolean(), kg: z.boolean() }).strict()).max(6) }).strict(),
   created: z.string().datetime(), cost: z.number().nonnegative().nullable(), fingerprint: digestSchema,
 }).strict();

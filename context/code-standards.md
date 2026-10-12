@@ -1,5 +1,13 @@
 # Code Standards
 
+## Code-vector RAG and separate RepoWise tool (2026-10-12)
+
+The current implementation keeps RepoWise 0.55.0 behind a separately installed local MCP adapter for parsing and graph evidence. Setup is per computer, outside the application runtime. This supersedes the older pending-deployment-choice notes below. It is our adapter, not the complete upstream MCP/chat server.
+
+Code embeddings now run through Ollama or OpenRouter and are stored in LanceDB. Settings > Code search builds/resumes/cancels the index after saving an embedding model. Chat merges semantic matches, lexical retrieval and graph expansion, then supplies verified source excerpts and bounded relationships. Provider/model/commit identities are isolated; unchanged embeddings are reused and deleted files are absent from newer snapshot searches. Completed local indexing opts the repository into indexing future commits; remote indexing stays manual and shares the daily request budget. Documentation generation remains paused. Embedding selection alone sends no requests.
+
+Upstream RepoWise does implement hybrid retrieval, context hydration and answer synthesis, largely over wiki pages; those full pipelines have not been imported into the app. Existing graph links remain unresolved name matches, and vector retrieval does not guarantee answer correctness. Live model-quality evaluation is still pending. Architecture, setup, limits and audit: `../validation/code-vector-rag.md`.
+
 ## Current providers — Ollama and OpenRouter (2026-10-10)
 
 Verify both provider routes and encrypted-key lifecycle with fixtures, including key isolation from Ollama, nullable cost, truncation diagnostics, shared budget preservation, profile persistence and provider-separated job/cache identities. No paid calls in automated tests. Retain explicit source/schema validation on both providers. This supersedes earlier Ollama-only or OpenRouter-only instructions; historical verification entries remain historical.
