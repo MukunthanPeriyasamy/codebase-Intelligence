@@ -11,3 +11,5 @@ await cp('worker/evidence.py', 'dist/worker/evidence.py');
 await cp('worker/retrieval.py', 'dist/worker/retrieval.py');
 
 await cp('worker/graph.py', 'dist/worker/graph.py');
+
+await cp('worker/mcp_client.py', 'dist/worker/mcp_client.py');

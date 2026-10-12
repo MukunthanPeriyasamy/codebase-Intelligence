@@ -162,3 +162,19 @@ test('provider switching preserves profiles and accounting, disables automation 
     assert.equal(docs.status.settings.provider, 'openrouter'); assert.equal(docs.status.settings.profiles?.ollama?.model, 'same/model'); assert.equal(docs.status.requestsToday, 2);
   } finally { await docs.close(); }
 });
+
+
+test('paused generation blocks manual and automatic jobs without reserving requests', async () => {
+  const directory = await temporary('docs-paused-');
+  const repoId = randomUUID(); const commit = 'a'.repeat(40);
+  const ref = { repoId, repoName: 'fixture', commit, analyzer: 'fixture', directory: join(directory, 'repositories', repoId, 'snapshots', `${commit}-${randomUUID()}`) };
+  let calls = 0;
+  const options = { generationPaused: true, knowledgeDirectory: directory, reader: new FixtureReader(), snapshot: () => ref, changed: () => {}, notify: async () => {}, provider: { async generate() { calls++; throw new Error('must not generate'); } } };
+  let docs = new DocumentationService(options);
+  await docs.initialize(); await docs.configure({ ...defaultDocSettings, model: 'test/model', autoGenerate: true });
+  assert.throws(() => docs.start(), /generation is paused/);
+  assert.equal(docs.start(true), false);
+  await docs.close(); docs = new DocumentationService(options); await docs.initialize(); await docs.settle();
+  assert.equal(docs.status.generationPaused, true); assert.equal(docs.status.requestsToday, 0); assert.equal(calls, 0);
+  await docs.close();
+});

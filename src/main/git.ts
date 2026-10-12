@@ -7,7 +7,7 @@ export class RepoError extends Error {
 }
 export function childEnvironment(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'Never', GIT_OPTIONAL_LOCKS: '0', PYTHONIOENCODING: 'utf-8', DO_NOT_TRACK: '1' };
-  for (const name of ['SystemRoot', 'WINDIR', 'PATH', 'TEMP', 'TMP', 'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'PROGRAMFILES', 'SSH_AUTH_SOCK', 'LANG']) if (process.env[name]) env[name] = process.env[name];
+  for (const name of ['SystemRoot', 'WINDIR', 'PATH', 'TEMP', 'TMP', 'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'PROGRAMFILES', 'SSH_AUTH_SOCK', 'LANG', 'CODEBASE_INTELLIGENCE_REPOWISE_HOME']) if (process.env[name]) env[name] = process.env[name];
   return env;
 }
 export async function git(args: string[], signal?: AbortSignal): Promise<string> {

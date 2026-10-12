@@ -38,6 +38,12 @@ test('live graph renders indexed relationships, refreshes on publication and cha
     expect(bounds && main && Math.abs(bounds.width - main.width) < 2).toBe(true);
     await expect(page.getByRole('button', { name: 'Ask repository', exact: true })).toBeInViewport();
     await page.screenshot({ path: 'test-results/full-chat-narrow.png' });
+    await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Documentation', exact: true }).click();
+    await expect(page.getByText('Documentation generation is paused', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Generate / resume documentation', exact: true })).toBeDisabled();
+    await page.getByRole('button', { name: 'Go to Chat', exact: true }).click();
+    await expect(page.getByLabel('Repository question', { exact: true })).toBeVisible();
+
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); expect(errors).toEqual([]);
   } finally { await app.close(); }
 });

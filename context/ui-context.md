@@ -1,5 +1,9 @@
 # UI Context
 
+## Current direction — code/KG chat and external RepoWise MCP (2026-10-11)
+
+User paused documentation generation and requested RepoWise as an external MCP tool rather than an application dependency. Production host now blocks manual/automatic document generation, preserves existing documents and excludes documentation from chat retrieval. Chat continues using committed source and existing graph evidence. Build and targeted pause/retrieval tests passed. RepoWise MCP availability is verified, but migration is NOT implemented: server location (separate local tool or remote server), index lifecycle and commit-bound evidence validation must be resolved before replacing the current adapter. Existing Python/RepoWise analysis remains in place until a tested replacement is ready. Do not describe MCP as active or remove the working index prematurely. This supersedes earlier active-generation scope.
+
 ## Full interface redesign — 2026-10-11
 
 The current design supersedes the earlier dark/mint theme. `src/renderer/redesign.css` layers the new visual system over existing component layout styles: light gray workspace (#f5f7fb), white surfaces, slate sidebar (#17243b), blue primary actions (#315ee7), dark readable text (#1b2940), muted text (#607086), subtle borders and consistent rounded controls. Navigation uses labeled outline icons and a clear active state. The repository/branch header stays at the top; job/request status is a compact bottom bar. Redundant section numbers and promotional heading text are removed.
@@ -117,3 +121,8 @@ Documentation failures now appear in a bordered alert with recovery instructions
 ## Chat without documents — 2026-10-11
 
 Chat shows Document not found for this commit during retrieval and in an evidence trail beneath the answer. The trail distinguishes missing documents, no matches, direct lookup and matched documents, and shows retained code excerpts with KG guidance only when evidenced. The empty state explains that documentation is optional.
+
+
+## Broad repository questions — 2026-10-12
+
+Chat now invites questions about the entire codebase: purpose, setup, behavior, problems and improvements. Empty/insufficient states ask for a feature or observed behavior instead of requiring file/symbol names. Documentation stays paused.

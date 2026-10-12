@@ -1,5 +1,9 @@
 # Build Phases
 
+## Current direction — code/KG chat and external RepoWise MCP (2026-10-11)
+
+User paused documentation generation and requested RepoWise as an external MCP tool rather than an application dependency. Production host now blocks manual/automatic document generation, preserves existing documents and excludes documentation from chat retrieval. Chat continues using committed source and existing graph evidence. Build and targeted pause/retrieval tests passed. RepoWise MCP availability is verified, but migration is NOT implemented: server location (separate local tool or remote server), index lifecycle and commit-bound evidence validation must be resolved before replacing the current adapter. Existing Python/RepoWise analysis remains in place until a tested replacement is ready. Do not describe MCP as active or remove the working index prematurely. This supersedes earlier active-generation scope.
+
 ## Current providers — Ollama and OpenRouter (2026-10-10)
 
 Dual-provider configuration/routing restores OpenRouter beside Ollama for documentation/chat and model catalogs. This does not complete the pending embedding lifecycle, sequential retrieval or live model-quality evaluation. This supersedes earlier Ollama-only or OpenRouter-only instructions; historical verification entries remain historical.

@@ -35,6 +35,7 @@ export const catalogEntrySchema = z.object({ id: digestSchema, title: z.string()
 export const catalogSchema = z.array(catalogEntrySchema).max(2000);
 export type DocCatalog = z.infer<typeof catalogSchema>;
 export const docStatusSchema = z.object({
+  generationPaused: z.boolean().optional(),
   settings: docSettingsSchema, phase: z.enum(['idle', 'planning', 'generating', 'partial', 'ready', 'cancelled', 'error']),
   commit: z.string().nullable(), sourceCommit: z.string().nullable(), completed: z.number().int().nonnegative(), total: z.number().int().nonnegative(),
   remaining: z.number().int().nonnegative(), omitted: z.number().int().nonnegative(), requestsToday: z.number().int().nonnegative(),

@@ -25,5 +25,5 @@ export type RepositoryStatus = z.infer<typeof repositoryStatusSchema>;
 export const snapshotEventSchema = z.discriminatedUnion('type', [
   z.object({ v: z.literal(1), type: z.literal('progress'), processed: count, total: count }).strict(),
   z.object({ v: z.literal(1), type: z.literal('complete'), snapshot: snapshotSchema }).strict(),
-  z.object({ v: z.literal(1), type: z.literal('failure'), code: z.enum(['GIT', 'STORAGE', 'LIMIT', 'RUNTIME', 'INVALID']) }).strict(),
+  z.object({ v: z.literal(1), type: z.literal('failure'), code: z.enum(['GIT', 'STORAGE', 'LIMIT', 'RUNTIME', 'INVALID', 'MCP']) }).strict(),
 ]);

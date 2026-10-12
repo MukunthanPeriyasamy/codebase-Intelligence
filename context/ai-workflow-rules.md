@@ -1,5 +1,9 @@
 # AI Workflow Rules
 
+## Current direction — code/KG chat and external RepoWise MCP (2026-10-11)
+
+User paused documentation generation and requested RepoWise as an external MCP tool rather than an application dependency. Production host now blocks manual/automatic document generation, preserves existing documents and excludes documentation from chat retrieval. Chat continues using committed source and existing graph evidence. Build and targeted pause/retrieval tests passed. RepoWise MCP availability is verified, but migration is NOT implemented: server location (separate local tool or remote server), index lifecycle and commit-bound evidence validation must be resolved before replacing the current adapter. Existing Python/RepoWise analysis remains in place until a tested replacement is ready. Do not describe MCP as active or remove the working index prematurely. This supersedes earlier active-generation scope.
+
 ## Current providers — Ollama and OpenRouter (2026-10-10)
 
 The latest user request restores OpenRouter alongside Ollama; neither replaces the other. Preserve existing local profiles, manual-generation default, commit/citation invariants and historical documents. Provider switching must not trigger paid calls or reuse answers from another provider. Embedding selection is configuration only until the vector pipeline is implemented. This supersedes earlier Ollama-only or OpenRouter-only instructions; historical verification entries remain historical.

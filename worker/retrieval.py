@@ -17,15 +17,49 @@ def terms(text):
     return result[:24]
 
 
+# Intent hints expand ordinary language into repository vocabulary. They only
+# rank captured evidence; they never assert that a feature exists.
+INTENTS = [
+    (r'architect|overview|summari[sz]e|purpose|improv|refactor|recommend|what.*(?:project|repo|application|codebase).*(?:do|about)|how.*(?:project|application|system).*work|structure|tech.?stack',
+     ['readme', 'package.json', 'pyproject.toml', 'cargo.toml', 'go.mod', 'main', 'index', 'app', 'server'], True),
+    (r'install|setup|set up|start|launch|run.*(?:app|project)|deploy|build',
+     ['readme', 'docker', 'compose', 'package.json', 'pyproject.toml', 'makefile', 'scripts', 'main', 'server'], False),
+    (r'config|environment|setting|port|timeout',
+     ['config', 'settings', 'environ', 'getenv', 'process.env', 'timeout', 'port', 'readme'], False),
+    (r'security|secure|vulnerab|auth|permission|login|sign.?in|password|credential',
+     ['auth', 'security', 'permission', 'token', 'password', 'session', 'login', 'middleware'], False),
+    (r'test|coverage|verify|validation',
+     ['test', 'spec', 'assert', 'pytest', 'vitest', 'jest', 'playwright'], False),
+    (r'database|persist|stor(?:e|age)|saving|saved',
+     ['database', 'sqlite', 'schema', 'migration', 'repository', 'storage', 'write', 'save'], False),
+    (r'bug|error|fail|crash|exception|debug|wrong',
+     ['error', 'except', 'catch', 'throw', 'raise', 'retry', 'validate', 'test'], False),
+    (r'performance|slow|speed|optimi|bottleneck|cache',
+     ['cache', 'batch', 'async', 'await', 'timeout', 'pool', 'limit', 'query'], False),
+    (r'dependen|librar|framework|package',
+     ['package.json', 'requirements', 'pyproject.toml', 'cargo.toml', 'go.mod', 'import', 'require'], False),
+]
+
+
+def plan(question):
+    hints = []; overview = False
+    for pattern, words, broad in INTENTS:
+        if re.search(pattern, question, re.I):
+            hints.extend(word for word in words if word not in hints)
+            overview = overview or broad
+    return hints[:32], overview
+
+
 def retrieve(db, root, request, read_source):
     question = request['question']
     if not isinstance(question, str) or not 1 <= len(question) <= 8000: raise ValueError('question')
     expanded = request.get('expanded') is True
     tokens = terms(question)
+    hints, overview = plan(question)
     route = 'graph' if re.search(r'\b(call|calls|caller|callers|workflow|flow|depend|depends)\b', question, re.I) else 'source'
     quoted = re.findall(r'`([^`]+)`', question)
     target = quoted[0] if len(quoted) == 1 else (tokens[0] if len(tokens) == 1 else None)
-    lookup = bool(re.match(r'^\s*(where\s+(?:is|are)|find|locate|definition\s+of)\b', question, re.I))
+    lookup = not hints and bool(re.match(r'^\s*(where\s+(?:is|are)|find|locate|definition\s+of)\b', question, re.I))
     rows = []; symbol_count = 0; limited = False
     for row in db.execute('SELECT path,hash,size,status,symbols,calls FROM files WHERE hash IS NOT NULL ORDER BY path LIMIT 10001'):
         if len(rows) == 10000 or symbol_count > 100000:
@@ -43,7 +77,7 @@ def retrieve(db, root, request, read_source):
             weakest = min(candidates, key=lambda key: candidates[key][0]); del candidates[weakest]
 
     for row in rows:
-        path_score = sum(4 for token in tokens if token in row['path'].lower())
+        path_score = sum(4 for token in tokens if token in row['path'].lower()) + sum(7 for token in hints if token in row['path'].lower())
         if path_score: add(row, 1, path_score)
         for symbol in row['symbols']:
             name = symbol['name']
@@ -80,7 +114,7 @@ def retrieve(db, root, request, read_source):
                         frontier.add(symbol['id']); add(row, symbol['start'], 60)
         gaps.append('Graph expansion is limited to two hops and 24 unresolved name-matched call sites; imports, dispatch and runtime relationships may be missing or ambiguous.')
     # Search metadata-ranked files first, then a bounded full-inventory source fallback.
-    ranked = sorted(rows, key=lambda row: (-sum(token in row['path'].lower() for token in tokens), row['path']))
+    ranked = sorted(rows, key=lambda row: (-sum(2 if token in hints else 1 for token in [*tokens, *hints] if token in row['path'].lower()), row['path']))
     scanned = 0; byte_count = 0; max_files = 2000 if expanded else 256; max_bytes = (32 if expanded else 8) * 1024 * 1024
     for row in ranked:
         if scanned >= max_files or byte_count + row['size'] > max_bytes:
@@ -88,21 +122,25 @@ def retrieve(db, root, request, read_source):
         lines = read_source(root, row); scanned += 1; byte_count += row['size']
         matches = 0
         for index, line in enumerate(lines):
-            score = sum(2 for token in tokens if token in line.lower())
+            score = sum(2 for token in tokens if token in line.lower()) + sum(1 for token in hints if token in line.lower())
             if score:
                 add(row, index + 1, score); matches += 1
                 if matches == 8: break
-    selected = []; ranges = []
+    if overview:
+        gaps.append('Repository overview uses a bounded sample of entry points, manifests and matching source; it is not a complete audit.')
+    selected = []; ranges = []; file_counts = {}
     for (path, line), (_, row) in sorted(candidates.items(), key=lambda pair: (-pair[1][0], pair[0])):
         if len(selected) >= (12 if expanded else 6): break
+        if file_counts.get(path, 0) >= (1 if hints else 2): continue
         lines = read_source(root, row)
         start = max(1, line - 3); end = min(start + 39, max(1, len(lines)))
         if any(p == path and not (end < a or start > b) for p, a, b in ranges): continue
+        file_counts[path] = file_counts.get(path, 0) + 1
         ranges.append((path, start, end)); selected.append(unit(row, start, end))
     if limited: gaps.append('Retrieval reached its file, symbol or source-byte limit; absence of a match does not prove absence from the repository.')
     excluded = db.execute("SELECT count(*) FROM files WHERE hash IS NULL OR status != 'parsed'").fetchone()[0]
     if excluded: gaps.append(f'{excluded} files have excluded or incomplete structural coverage; retained text remains searchable within limits.')
-    if not selected: gaps.append('No matching source evidence was found. Name a file or symbol, or ask a more specific question.')
+    if not selected: gaps.append('No matching source evidence was found. Describe the feature, observed behavior, or area you want to investigate.')
     return {'units': selected, 'exact': False, 'route': route, 'gaps': gaps, 'scanned': scanned, 'edges': edges}
 
 

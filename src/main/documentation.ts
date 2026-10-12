@@ -14,6 +14,7 @@ type Job = z.infer<typeof jobSchema>;
 const manifestSchema = z.object({ key: digestSchema, ref: snapshotRefSchema, entries: catalogSchema, total: z.number().int().nonnegative(), remaining: z.number().int().nonnegative(), omitted: z.number().int().nonnegative(), gaps: z.array(z.string().max(500)).max(20) }).strict();
 type Manifest = z.infer<typeof manifestSchema>;
 interface Options {
+  generationPaused?: boolean;
   knowledgeDirectory: string; reader: EvidenceReader; snapshot: () => SnapshotRef | null;
   changed: () => void;
   notify: (kind: 'success' | 'error', title: string, body: string) => Promise<void>;
@@ -47,7 +48,7 @@ export class DocumentationService {
   private readonly root: string;
   private readonly provider: DocumentationProvider;
   constructor(private readonly options: Options) { this.root = join(options.knowledgeDirectory, 'documentation'); this.provider = options.provider ?? new OllamaProvider(); }
-  get status(): DocStatus { return { ...this.state, settings: this.ledger.settings, sourceCommit: this.options.snapshot()?.commit ?? null, requestsToday: this.ledger.day === day() ? this.ledger.requests : 0, reportedCost: this.ledger.day === day() ? this.ledger.cost : 0, unknownCostRequests: this.ledger.day === day() ? this.ledger.unknown : 0 }; }
+  get status(): DocStatus { return { ...this.state, generationPaused: this.options.generationPaused ?? false, settings: this.ledger.settings, sourceCommit: this.options.snapshot()?.commit ?? null, requestsToday: this.ledger.day === day() ? this.ledger.requests : 0, reportedCost: this.ledger.day === day() ? this.ledger.cost : 0, unknownCostRequests: this.ledger.day === day() ? this.ledger.unknown : 0 }; }
   private update(values: Partial<DocStatus>) { Object.assign(this.state, values); this.options.changed(); }
   private validateRef(ref: SnapshotRef) {
     snapshotRefSchema.parse(ref);
@@ -106,11 +107,12 @@ export class DocumentationService {
         const remaining = job.plan.units.length - Object.keys(job.done).length - Object.keys(job.skipped).length;
         if (remaining > 0) this.update({ phase: 'partial', total: job.plan.units.length, completed: Object.keys(job.done).length, remaining, error: job.inFlight ? 'An earlier local request was interrupted. Resume explicitly to retry.' : null });
       } catch (error) { if (!missing(error)) this.update({ phase: 'error', error: 'Saved documentation progress could not be loaded.' }); }
-      if (!this.broken && this.ledger.settings.autoGenerate && this.ledger.settings.model && this.published?.ref.commit !== ref.commit) this.start(true);
+      if (!this.options.generationPaused && !this.broken && this.ledger.settings.autoGenerate && this.ledger.settings.model && this.published?.ref.commit !== ref.commit) this.start(true);
     });
     return this.refresh;
   }
   start(automatic = false): boolean {
+    if (this.options.generationPaused) { if (automatic) return false; throw new RepoError('Documentation generation is paused. Use Chat with codebase and graph evidence.'); }
     const ref = this.options.snapshot();
     if (this.closed || this.running || this.broken || this.configuring || this.interactive) return false;
     if (!ref) throw new RepoError('Connect and sync a repository before generating documentation.');

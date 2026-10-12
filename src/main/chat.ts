@@ -13,7 +13,7 @@ import { RepoError } from './git';
 import { OllamaChatProvider, chatCompletionSchema, type ChatInput, type ChatProvider } from './chat-provider';
 
 const savedSchema = z.object({ version: z.literal(CHAT_VERSION), ref: snapshotRefSchema, answer: answerSchema }).strict();
-interface Options { directory: string; snapshot: () => SnapshotRef | null; reader: RetrievalReader; docs: DocumentationService; changed: () => void; provider?: ChatProvider }
+interface Options { useDocuments?: boolean; directory: string; snapshot: () => SnapshotRef | null; reader: RetrievalReader; docs: DocumentationService; changed: () => void; provider?: ChatProvider }
 export class ChatService {
   private state: ChatStatus = { phase: 'idle', error: null, answers: [] };
   private running: Promise<void> | null = null;
@@ -60,7 +60,7 @@ export class ChatService {
       for (const item of this.state.answers.filter(item => item.repoId === ref.repoId && item.commit === ref.commit).slice(-3).reverse()) {
         if (Buffer.byteLength(JSON.stringify([item.question, ...previousQuestions])) <= 3500) previousQuestions.unshift(item.question);
       }
-      const fingerprint = digest(JSON.stringify([CHAT_VERSION, ref, question, previousQuestions, settings.provider ?? 'ollama', settings.model, settings.maxOutputTokens, this.options.docs.fingerprint(ref)]));
+      const fingerprint = digest(JSON.stringify([CHAT_VERSION, ref, question, previousQuestions, settings.provider ?? 'ollama', settings.model, settings.maxOutputTokens, this.options.docs.fingerprint(ref), this.options.useDocuments !== false]));
       const cache = join(this.options.directory, 'chat', ref.repoId, fingerprint + '.json');
       try {
         if ((await stat(cache)).size > 256 * 1024) throw new Error('limit');
@@ -72,16 +72,19 @@ export class ChatService {
         signal.throwIfAborted();
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new RepoError('Cached answer failed validation. Start a new question after restoring or removing the damaged cache.');
       }
-      const hasDocuments = this.options.docs.hasDocuments(ref);
-      if (!hasDocuments) this.update({ retrievalNote: 'Document not found for this commit. Searching indexed graph and codebase evidenceâ€¦' });
-      let retrieval = await this.options.reader.retrieve(ref, question, false, signal);
+      const hasDocuments = this.options.useDocuments !== false && this.options.docs.hasDocuments(ref);
+      if (!hasDocuments) this.update({ retrievalNote: this.options.useDocuments === false ? 'Documentation is paused. Searching graph and codebase evidenceâ€¦' : 'Document not found for this commit. Searching indexed graph and codebase evidenceâ€¦' });
+      const followUp = /\b(it|that|those|these|they|this|also|instead)\b/i.test(question) && previousQuestions.length > 0;
+      const searchQuestion = followUp ? [...previousQuestions.slice(-1), question].join('\n') : question;
+      let retrieval = await this.options.reader.retrieve(ref, searchQuestion, false, signal);
+      if (followUp) retrieval.exact = false;
       let documents = retrieval.exact || !hasDocuments ? [] : await this.options.docs.retrieveEvidence(ref, question);
       const documentIds = new Set<string>();
       let evidence = await this.options.reader.pack(ref, retrieval, documents, signal, documentIds);
       let expanded = false;
-      const expand = async () => {
+      const expand = async (query?: string) => {
         expanded = true;
-        const effective = [...previousQuestions, question].join('\n');
+        const effective = query ?? [...previousQuestions, question].join('\n');
         retrieval = await this.options.reader.retrieve(ref, effective, true, signal);
         retrieval.exact = false;
         documents = hasDocuments ? await this.options.docs.retrieveEvidence(ref, effective) : [];
@@ -98,26 +101,29 @@ export class ChatService {
           content = { title: 'Symbol location', sections: [{ title: 'Captured definition', kind: 'module', symbolId: null, claims: [{ text: `The matching definition is in ${item.path.slice(0, 500)}, starting at line ${item.start}.`, basis: 'inferred', citations: [{ evidenceId: item.id, start: item.start + offset, end: item.start + offset, quote: item.text.split('\n')[offset]!.slice(0, 200) }] }] }], gaps: ['This is a direct structural lookup, not a behavioral explanation.'] };
           mode = 'direct';
         }
-      } else if (evidence.length) {
+      } else if (evidence.length || !/^where\b.*\bdefined\??$/i.test(question)) {
         for (let attempt = 0; attempt < Math.min(2, settings.requestsPerRun); attempt++) {
           signal.throwIfAborted();
-          const input: ChatInput = { question, previousQuestions, evidence, gaps: retrieval.gaps };
-          while (Buffer.byteLength(JSON.stringify(input)) > 16000 && evidence.length) evidence.pop();
-          if (!evidence.length) { gaps.push('No safe evidence fits the question and conversation budget.'); break; }
+          const input: ChatInput = { question, previousQuestions, previousAnswers: this.state.answers.filter(item => item.repoId === ref.repoId && item.commit === ref.commit).slice(-2).map(item => JSON.stringify(item.content).slice(0, 800)), searchesRemaining: Math.min(2, settings.requestsPerRun) - attempt - 1, evidence, gaps: retrieval.gaps, relationships: retrieval.edges.filter(edge => !containsSecret(JSON.stringify(edge)) && evidence.some(item => item.path === edge.path && edge.line >= item.start && edge.line <= item.end)).slice(0, 12) };
+          while (Buffer.byteLength(JSON.stringify(input)) > 16000 && evidence.length) { evidence.pop(); input.relationships = input.relationships?.filter(edge => evidence.some(item => item.path === edge.path && edge.line >= item.start && edge.line <= item.end)); }
+          if (Buffer.byteLength(JSON.stringify(input)) > 16000) { gaps.push('The question and conversation exceed the input budget.'); break; }
           this.update({ phase: 'answering' });
           const response = await this.options.docs.requestInteractive((savedSettings) => this.provider.answer(savedSettings, input, signal), signal);
           const result = chatCompletionSchema.parse(response.content);
           cost = cost === null || response.cost === null ? null : cost + response.cost; servedModel = response.servedModel;
           if (result.sufficient && result.content) { content = result.content; validateClaims(content, evidence); mode = 'model'; gaps = [...retrieval.gaps, ...result.gaps]; break; }
           gaps = [...retrieval.gaps, ...result.gaps, 'The available evidence is insufficient for a supported answer.'];
-          if (expanded || attempt + 1 >= settings.requestsPerRun) break;
+          const requestedQuery = result.searchQuery;
+          if (requestedQuery && containsSecret(requestedQuery)) throw new RepoError('The requested search may contain sensitive data.');
+          if ((expanded && !requestedQuery) || attempt + 1 >= Math.min(2, settings.requestsPerRun)) break;
           if (this.options.docs.status.requestsToday >= settings.requestsPerDay) { gaps.push('The shared daily budget prevents another model request.'); break; }
-          const before = digest(JSON.stringify(evidence)); await expand();
+          const before = digest(JSON.stringify(evidence)); this.update({ phase: 'retrieving', retrievalNote: requestedQuery ? 'The model requested a focused codebase search…' : 'Expanding graph and codebase evidence…' });
+          await expand(requestedQuery ?? undefined);
           if (before === digest(JSON.stringify(evidence))) break;
         }
-      } else gaps.push('No safe supporting evidence was retrieved. Try an exact file or symbol name.');
+      }
       if (containsSecret(JSON.stringify({ content, gaps }))) throw new RepoError('The response may contain sensitive content and was not displayed.');
-      const answer = answerSchema.parse({ documentStatus: !hasDocuments ? 'unavailable' : retrieval.exact ? 'not-needed' : documents.length ? 'matched' : 'no-match', provider: settings.provider ?? 'ollama', id: randomUUID(), repoId: ref.repoId, commit: ref.commit, question, mode, cached: false, model: mode === 'model' ? settings.model : '', servedModel, content, evidence, gaps: gaps.slice(0, 20), route: retrieval.route, expanded, documents: documents.length, quality: answerQuality(mode, content, evidence, gaps, retrieval, documentIds), created: new Date().toISOString(), cost, fingerprint });
+      const answer = answerSchema.parse({ documentStatus: this.options.useDocuments === false ? 'paused' : !hasDocuments ? 'unavailable' : retrieval.exact ? 'not-needed' : documents.length ? 'matched' : 'no-match', provider: settings.provider ?? 'ollama', id: randomUUID(), repoId: ref.repoId, commit: ref.commit, question, mode, cached: false, model: mode === 'model' ? settings.model : '', servedModel, content, evidence, gaps: gaps.slice(0, 20), route: retrieval.route, expanded, documents: documents.length, quality: answerQuality(mode, content, evidence, gaps, retrieval, documentIds), created: new Date().toISOString(), cost, fingerprint });
       await this.verify(ref, answer, signal); signal.throwIfAborted();
       if (mode !== 'insufficient') {
         await mkdir(dirname(cache), { recursive: true }); const temporary = cache + '.' + randomUUID() + '.tmp';

@@ -23,6 +23,9 @@ app.setName('Codebase Intelligence');
 // A host-only override keeps integration tests isolated from real application data.
 if (!app.isPackaged && process.env.CODEBASE_INTELLIGENCE_DATA_DIR) app.setPath('userData', resolve(process.env.CODEBASE_INTELLIGENCE_DATA_DIR));
 let window: BrowserWindow | null = null;
+let repowiseStatus = { connected: false, error: null as string | null };
+let repowiseReader: EvidenceReader;
+let repowiseChecking = false;
 let worker: WorkerService | null = null;
 let ollamaStatus: DesktopStatus['ollama'] = { connected: false, error: null };
 let credentials: CredentialStore;
@@ -38,7 +41,7 @@ let graphBusy = false;
 const graphController = new AbortController();
 
 function status(): DesktopStatus {
-  return { worker: worker?.status ?? { state: 'stopped', error: null, python: null, storageReady: false }, ollama: ollamaStatus, credential: credentialStatus,
+  return { repowise: repowiseStatus, worker: worker?.status ?? { state: 'stopped', error: null, python: null, storageReady: false }, ollama: ollamaStatus, credential: credentialStatus,
     docs: documentation.status, chat: chat.status, sync: repositories?.status ?? { repository: null, phase: 'idle', processed: 0, total: 0, error: null, notices: [] } };
 }
 function publish() {
@@ -76,6 +79,13 @@ async function dispatch(input: unknown): Promise<Result> {
   const parsed = actionSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: { code: 'REQUEST_INVALID', message: 'The request is invalid.' } };
   const action = parsed.data;
+  if (action.type === 'repowise.test') {
+    if (repowiseChecking) throw new RepoError('RepoWise setup check is already running.');
+    repowiseChecking = true;
+    try { await repowiseReader.checkTool(); repowiseStatus = { connected: true, error: null }; }
+    catch { repowiseStatus = { connected: false, error: 'Run scripts/setup-repowise.ps1 on this computer, then check again. The separate tool must use the supported adapter version.' }; }
+    finally { repowiseChecking = false; publish(); }
+  }
   if (action.type === 'workspace.choose') {
     if (!window || selectingRepository) throw new RepoError('A folder picker is already open.');
     if (['planning', 'generating'].includes(documentation.status.phase)) throw new RepoError('Stop documentation generation before changing its workspace.');
@@ -164,10 +174,11 @@ else {
     const developmentPython = join(app.getAppPath(), '.research', 'venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
     const python = process.env.CODEBASE_INTELLIGENCE_PYTHON ?? (!app.isPackaged && existsSync(developmentPython) ? developmentPython : 'python');
     worker = new WorkerService({ python, script: join(__dirname, 'worker', 'service.py'), dataDir: join(app.getPath('userData'), 'knowledge') }, publish);
+    repowiseReader = new EvidenceReader(python, join(__dirname, 'worker', 'mcp_client.py'));
     graphReader = new GraphReader(python, join(__dirname, 'worker', 'graph.py'));
     repositories = new RepositoryService({ directory: join(app.getPath('userData'), 'knowledge'), python, script: join(__dirname, 'worker', 'snapshot.py') }, () => { chat?.contextChanged(); void documentation?.refreshContext(); publish(); });
-    documentation = new DocumentationService({ provider: new RoutedDocumentationProvider(complete), knowledgeDirectory: join(app.getPath('userData'), 'knowledge'), reader: new EvidenceReader(python, join(__dirname, 'worker', 'evidence.py')), snapshot: () => repositories.getSnapshot(), workspaceProject: id => repositories.workspaceProject(id), changed: publish, notify: (kind, title, body) => repositories.notifyDocumentation(kind, title, body) });
-    chat = new ChatService({ provider: new OllamaChatProvider(complete), directory: join(app.getPath('userData'), 'knowledge'), snapshot: () => repositories.getSnapshot(), reader: new RetrievalReader(python, join(__dirname, 'worker', 'evidence.py')), docs: documentation, changed: publish });
+    documentation = new DocumentationService({ generationPaused: true, provider: new RoutedDocumentationProvider(complete), knowledgeDirectory: join(app.getPath('userData'), 'knowledge'), reader: new EvidenceReader(python, join(__dirname, 'worker', 'evidence.py')), snapshot: () => repositories.getSnapshot(), workspaceProject: id => repositories.workspaceProject(id), changed: publish, notify: (kind, title, body) => repositories.notifyDocumentation(kind, title, body) });
+    chat = new ChatService({ useDocuments: false, provider: new OllamaChatProvider(complete), directory: join(app.getPath('userData'), 'knowledge'), snapshot: () => repositories.getSnapshot(), reader: new RetrievalReader(python, join(__dirname, 'worker', 'evidence.py'), repowiseReader), docs: documentation, changed: publish });
     await documentation.initialize();
     await repositories.initialize();
     await documentation.refreshContext();

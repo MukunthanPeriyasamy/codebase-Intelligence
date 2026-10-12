@@ -5,7 +5,6 @@ Source bytes live in hash-named files; symlinks/submodules are never followed.
 """
 import contextlib
 import hashlib
-import importlib.metadata
 import json
 import os
 from pathlib import Path
@@ -51,57 +50,38 @@ def git(mirror, *args):
 
 class Analyzer:
     def __init__(self):
-        self.version = POLICY + '/source-only'
-        self.ready = False
+        from_mcp = Path(__file__).with_name('mcp_client.py')
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('mcp_client', from_mcp)
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
         try:
-            if importlib.metadata.version('repowise') != '0.55.0':
-                return
-            with contextlib.redirect_stdout(sys.stderr):
-                from repowise.core.ingestion import ASTParser, FileInfo
-                from repowise.core.ingestion.languages.registry import REGISTRY
-                from repowise.core.ingestion.parser import _get_language, grammar_tag_for, SPECIAL_HANDLER_LANGUAGES
-            self.parser = ASTParser()
-            self.info = FileInfo
-            self.registry = REGISTRY
-            self.grammar = _get_language
-            self.tag = grammar_tag_for
-            self.special = SPECIAL_HANDLER_LANGUAGES
-            self.version = POLICY + '/repowise-0.55.0'
+            self.client = module.Client()
+            self.version = 'snapshot-v2-mcp/repowise-0.55.0'
             self.ready = True
         except Exception:
-            pass
+            raise Failure('MCP')
 
     def parse(self, path, source, blob):
-        ext = Path(path).suffix.lower()
-        if not self.ready:
-            return ('document-only' if ext in DOC_EXT else 'unsupported', 'Structural adapter unavailable', ext or 'unknown', [], [])
-        language = self.registry.from_extension(ext)
-        if language not in self.registry.code_languages() and language not in self.special:
-            return ('document-only' if ext in DOC_EXT else 'unsupported', 'Source retained; no structural parser', language or 'unknown', [], [])
+        import base64
         try:
-            with contextlib.redirect_stdout(sys.stderr):
-                if language not in self.special and self.grammar(self.tag(language, path)) is None:
-                    return ('unsupported', 'Grammar unavailable; source retained', language, [], [])
-                info = self.info(path=path, abs_path=path, language=language, size_bytes=len(source), git_hash=blob,
-                                 last_modified=datetime(2000, 1, 1, tzinfo=timezone.utc), is_test=False,
-                                 is_config=False, is_api_contract=False, is_entry_point=False)
-                parsed = self.parser.parse_file(info, source)
+            result = self.client.call('parse_source', {'path': path, 'source': base64.b64encode(source).decode('ascii'), 'blob': blob})
+            if result['hash'] != hashlib.sha256(source).hexdigest(): raise ValueError('Hash')
+            record = result['record']
+            if not isinstance(record, list) or len(record) != 5: raise ValueError('Record')
+            status, reason, language, symbols, calls = record
+            if status not in ('parsed', 'failed', 'unsupported', 'document-only'): raise ValueError('Status')
+            if not isinstance(reason, str) or not isinstance(language, str): raise ValueError('Language')
             lines = len(source.splitlines())
-            if parsed.content_hash != hashlib.sha256(source).hexdigest():
-                raise ValueError('Hash mismatch')
-            symbols = [{'id': s.id, 'name': s.name, 'kind': s.kind, 'start': s.start_line, 'end': s.end_line}
-                       for s in parsed.symbols if 1 <= s.start_line <= s.end_line <= lines]
-            if len(symbols) != len(parsed.symbols):
-                raise ValueError('Span mismatch')
-            calls = [{'target': c.target_name, 'caller': c.caller_symbol_id, 'line': c.line, 'resolution': 'unresolved'}
-                     for c in parsed.calls if 1 <= c.line <= lines]
-            if parsed.parse_errors:
-                return ('failed', 'Parser reported errors; source retained', language, symbols, calls)
-            if not symbols:
-                return ('unsupported', 'No structural symbols extracted; source retained', language, symbols, calls)
-            return ('parsed', 'Structural extraction; dynamic behavior remains unproven', language, symbols, calls)
+            if not isinstance(symbols, list) or not isinstance(calls, list): raise ValueError('Structure')
+            for item in symbols:
+                if set(item) != {'id', 'name', 'kind', 'start', 'end'} or not all(isinstance(item[k], str) for k in ('id','name','kind')): raise ValueError('Symbol')
+                if type(item['start']) is not int or type(item['end']) is not int or not 1 <= item['start'] <= item['end'] <= lines: raise ValueError('Span')
+            for item in calls:
+                if set(item) != {'target', 'caller', 'line', 'resolution'} or item['resolution'] != 'unresolved': raise ValueError('Call')
+                if not isinstance(item['target'],str) or not isinstance(item['caller'],str) or type(item['line']) is not int or not 1 <= item['line'] <= lines: raise ValueError('Call')
+            return tuple(record)
         except Exception:
-            return ('failed', 'Structural extraction failed; source retained', language or 'unknown', [], [])
+            raise Failure('MCP')
 
 
 def changes(mirror, base, commit, entries):
@@ -247,6 +227,7 @@ def build(request):
     finally:
         if previous: previous.close()
         db.close()
+        analyzer.client.close()
 
 
 if __name__ == '__main__':

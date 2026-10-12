@@ -27,7 +27,7 @@ export function GenerationSettings({ docs, chatRunning, act }: { docs?: DocStatu
           <label>Requests per day (UTC)<input type="number" min={1} max={200} value={settings.requestsPerDay} onChange={event => setSettings({ ...settings, requestsPerDay: Number(event.target.value) })} required /></label>
           <label>Output tokens per request<input type="number" min={512} max={16384} value={settings.maxOutputTokens} onChange={event => setSettings({ ...settings, maxOutputTokens: Number(event.target.value) })} required /></label>
         </div>
-        <label className="auto-sync"><input type="checkbox" checked={settings.autoGenerate} onChange={event => setSettings({ ...settings, autoGenerate: event.target.checked })} /> Automatically generate on future commits ({provider === 'openrouter' ? 'uses paid requests' : 'uses local compute'})</label>
+        <label className="auto-sync"><input type="checkbox" disabled={docs?.generationPaused} checked={!docs?.generationPaused && settings.autoGenerate} onChange={event => setSettings({ ...settings, autoGenerate: event.target.checked })} /> {docs?.generationPaused ? 'Documentation generation paused — automatic generation disabled' : 'Automatically generate on future commits'} ({provider === 'openrouter' ? 'uses paid requests' : 'uses local compute'})</label>
         <button type="submit">Save generation settings</button>
       </fieldset>
     </form>

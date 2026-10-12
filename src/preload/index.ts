@@ -9,6 +9,7 @@ async function invoke(action: Action): Promise<Result> {
 const bridge: DesktopBridge = {
   saveCredential: key => invoke({ type: 'credential.save', key }),
   clearCredential: () => invoke({ type: 'credential.clear' }),
+  testRepoWise: () => invoke({ type: 'repowise.test' }),
   testOllama: () => invoke({ type: 'ollama.test' }),
   chooseWorkspace: () => invoke({ type: 'workspace.choose' }),
   openWorkspace: () => invoke({ type: 'workspace.open' }),

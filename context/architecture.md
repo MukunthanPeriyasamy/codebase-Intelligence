@@ -1,5 +1,9 @@
 # Architecture Context
 
+## Current direction — code/KG chat and external RepoWise MCP (2026-10-11)
+
+User paused documentation generation and requested RepoWise as an external MCP tool rather than an application dependency. Production host now blocks manual/automatic document generation, preserves existing documents and excludes documentation from chat retrieval. Chat continues using committed source and existing graph evidence. Build and targeted pause/retrieval tests passed. RepoWise MCP availability is verified, but migration is NOT implemented: server location (separate local tool or remote server), index lifecycle and commit-bound evidence validation must be resolved before replacing the current adapter. Existing Python/RepoWise analysis remains in place until a tested replacement is ready. Do not describe MCP as active or remove the working index prematurely. This supersedes earlier active-generation scope.
+
 ## Current providers — Ollama and OpenRouter (2026-10-10)
 
 The host completion router dispatches by saved provider: fixed local Ollama endpoints or fixed HTTPS OpenRouter endpoints. OpenRouter JSON-schema generation enforces the saved output cap, 16KB evidence, 2MiB response and two-minute timeout without automatic retries/fallback; catalog GETs are capped at 16MiB and 20 seconds. OS-encrypted OpenRouter keys are host-only; no plaintext fallback. Credentials are never read/sent by the Ollama route. Provider identity scopes document jobs and chat caches; new artifacts record provider provenance. Model/embedding profiles persist per provider; limits/accounting are shared and never reset on switch. A provider switch disables automatic generation. Existing Ollama settings and documents remain intact. This supersedes earlier Ollama-only or OpenRouter-only instructions; historical verification entries remain historical.
@@ -136,3 +140,8 @@ Local requests now use a dedicated Undici dispatcher with independent header/bod
 ## Chat without documents — 2026-10-11
 
 Chat checks for published documentation matching the queried repository and commit. When absent it skips document lookup and continues existing graph/source retrieval; answers retain document status and cache version is chat-v5-document-fallback. Stale documents do not count. This is not the pending semantic-vector retrieval pipeline.
+
+
+## Broad repository questions — 2026-10-12
+
+Chat retrieval v6 expands natural-language intent into relevant manifest, entry point, config, security, persistence, test and implementation terms. Broad queries diversify excerpts across files. Pronoun-based follow-ups include the preceding question during initial retrieval; exact lookups remain local for unambiguous location questions. The model receives up to 12 unresolved graph relationships only where their path/line overlaps retained evidence, with secret filtering and the existing total input bound. These edges are hints, not verified runtime relationships. This is heuristic retrieval, not semantic/vector search or external MCP integration.

@@ -6,8 +6,16 @@ export function SettingsPanel({ status, busy, active, act }: { status: DesktopSt
   const worker = status?.worker;
   const pending = busy || worker?.state === 'starting' || worker?.state === 'stopping';
   return <div className="settings-layout">
-    <nav className="settings-index" aria-label="Settings sections"><strong>Preferences</strong>{[['generation-settings-title', 'Models & limits'], ['model-title', 'Ollama connection'], ['remote-settings', 'OpenRouter access'], ['service-title', 'Analysis engine']].map(([id, title]) => <button key={id} onClick={() => document.getElementById(id!)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{title}</button>)}</nav>
+    <nav className="settings-index" aria-label="Settings sections"><strong>Preferences</strong>{[['repowise-title', 'RepoWise tool'], ['generation-settings-title', 'Models & limits'], ['model-title', 'Ollama connection'], ['remote-settings', 'OpenRouter access'], ['service-title', 'Analysis engine']].map(([id, title]) => <button key={id} onClick={() => document.getElementById(id!)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{title}</button>)}</nav>
     <div className="settings-sections">
+    <section className="panel" aria-labelledby="repowise-title">
+      <div className="panel-heading"><h2 id="repowise-title">RepoWise tool</h2><span className="status">{status?.repowise?.connected ? 'Connected · MCP' : 'Setup required / not checked'}</span></div>
+      <p>RepoWise runs as a separate local tool. On each Windows computer, install uv and run this once from the application project folder:</p>
+      <pre>powershell -ExecutionPolicy Bypass -File scripts/setup-repowise.ps1</pre>
+      <p>The tool is installed under your local application data, outside this app. It reads captured commits, builds structural graph evidence and searches the codebase. It does not generate documents or call a model.</p>
+      <button disabled={busy || !status} onClick={() => void act(() => window.desktop.testRepoWise())}>Check RepoWise setup</button>
+      {status?.repowise?.error && <p className="error" role="alert">{status.repowise.error}</p>}
+    </section>
     <GenerationSettings docs={status?.docs} chatRunning={status?.chat.phase === 'retrieving' || status?.chat.phase === 'answering'} act={act} />
         <section className="panel" aria-labelledby="model-title">
           <div className="panel-heading"><div><span className="section-number">03 / LOCAL MODEL ACCESS</span><h2 id="model-title">Connect Ollama</h2></div><span className="status" data-testid="ollama-state">{status?.ollama.connected ? 'Connected' : 'Not checked'}</span></div>

@@ -25,7 +25,7 @@ export function buildSnapshot(python: string, script: string, request: SnapshotR
           if (event.type === 'progress') progress(event.processed, event.total);
           else if (event.type === 'complete') result = event.snapshot;
           else {
-            const messages = { GIT: 'Committed source could not be read. Retry repository sync.', STORAGE: 'Snapshot storage could not be read or written. Check disk space and access.', LIMIT: 'Repository exceeds snapshot limits (100,000 files or 512 MiB of eligible source).', RUNTIME: 'Snapshot indexing requires Python 3.12.', INVALID: 'Snapshot validation failed. The previous version remains active.' };
+            const messages = { GIT: 'Committed source could not be read. Retry repository sync.', STORAGE: 'Snapshot storage could not be read or written. Check disk space and access.', LIMIT: 'Repository exceeds snapshot limits (100,000 files or 512 MiB of eligible source).', MCP: 'RepoWise tool is unavailable or returned invalid data. Open Settings > RepoWise tool and check setup, then retry sync.', RUNTIME: 'Snapshot indexing requires Python 3.12 or 3.14.', INVALID: 'Snapshot validation failed. The previous version remains active.' };
             stop(messages[event.code]);
           }
         } catch { stop('The snapshot worker sent an invalid response. The previous version remains active.'); return; }

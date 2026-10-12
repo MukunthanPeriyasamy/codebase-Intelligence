@@ -98,7 +98,7 @@ test('real snapshot chat routes symbols, source, docs and unresolved calls; cach
     assert.equal(graph.route, 'graph'); assert.ok(graph.edges.length > 0); assert.ok(graph.edges.every(edge => edge.resolution === 'unresolved'));
     const ambiguous = await reader.retrieve(firstRef, 'Where is repeated defined?', false, new AbortController().signal);
     assert.equal(ambiguous.exact, false); assert.ok(ambiguous.gaps.some(gap => gap.includes('ambiguous')));
-    const config = await reader.retrieve(firstRef, 'timeout settings.toml', false, new AbortController().signal); assert.ok(config.units.some(unit => unit.path === 'settings.toml'));
+    const config = await reader.retrieve(firstRef, 'How do I configure timeouts?', false, new AbortController().signal); assert.ok(config.units.some(unit => unit.path === 'settings.toml'));
     await docs.configure({ ...defaultDocSettings, model: 'test/model', requestsPerRun: 10, requestsPerDay: 20 });
     docs.start(); await docs.settle(); assert.ok((await docs.retrieveEvidence(firstRef, 'main.py')).length);
     await chat.clear(); const answer = await ask('Explain helper in main.py'); assert.equal(answer.mode, 'model'); assert.equal(calls, 1);
@@ -125,4 +125,54 @@ test('real snapshot chat routes symbols, source, docs and unresolved calls; cach
     await writeFile(join(repos.getSnapshot()!.directory, 'blobs', last.evidence[0]!.hash), 'tampered');
     chat.start('Where is replacement defined?'); await chat.settle(); assert.equal(chat.status.phase, 'error'); assert.match(chat.status.error!, /Cached answer/);
   } finally { await chat.close(); await docs.close(); await repos.close(); }
+});
+
+
+test('code and graph mode skips document retrieval while allowing cited model answers', async () => {
+  const directory = await temporary('chat-no-documents-'); const repoId = randomUUID(); const commit = 'a'.repeat(40);
+  const ref = { repoId, repoName: 'fixture', commit, analyzer: 'fixture', directory: join(directory, 'repositories', repoId, 'snapshots', `${commit}-${randomUUID()}`) };
+  const reader = new FixtureReader();
+  const docs = new DocumentationService({ generationPaused: true, knowledgeDirectory: directory, reader, snapshot: () => ref, changed: () => {}, notify: async () => {} });
+  docs.retrieveEvidence = async () => { throw new Error('Document retrieval must be skipped'); };
+  docs.hasDocuments = () => true;
+  const chat = new ChatService({ useDocuments: false, directory, snapshot: () => ref, reader, docs, changed: () => {}, provider: { async answer(_settings, input) { return { content: { sufficient: true, content: content(input), gaps: [] }, cost: 0, servedModel: 'fixture' }; } } });
+  try {
+    await docs.initialize(); await docs.configure({ ...defaultDocSettings, model: 'fixture' });
+    chat.start('Explain fixture'); await chat.settle();
+    assert.equal(chat.status.phase, 'ready', chat.status.error ?? '');
+    assert.equal(chat.status.answers[0]?.documentStatus, 'paused');
+    assert.equal(chat.status.answers[0]?.mode, 'model');
+    assert.equal(chat.status.answers[0]?.documents, 0);
+    const originalRetrieve = reader.retrieve.bind(reader); const searches: string[] = [];
+    reader.retrieve = async (ref, query, expanded) => { searches.push(query); return originalRetrieve(ref, query, expanded); };
+    chat.start('Why does it fail?'); await chat.settle();
+    assert.equal(chat.status.phase, 'ready', chat.status.error ?? '');
+    assert.ok(searches[0]?.includes('Explain fixture'));
+    assert.ok(searches[0]?.includes('Why does it fail?'));
+
+  } finally { await chat.close(); await docs.close(); }
+});
+
+
+test('model-requested search retrieves new context within the two-request budget', async () => {
+  const directory = await temporary('chat-tool-loop-'); const repoId = randomUUID(); const commit = 'a'.repeat(40);
+  const ref = { repoId, repoName: 'fixture', commit, analyzer: 'fixture', directory: join(directory, 'repositories', repoId, 'snapshots', `${commit}-${randomUUID()}`) };
+  const reader = new FixtureReader(); const queries: string[] = [];
+  const retrieve = reader.retrieve.bind(reader);
+  reader.retrieve = async (ref, question, expanded) => { queries.push(question); return retrieve(ref, question, expanded); };
+  const docs = new DocumentationService({ generationPaused: true, knowledgeDirectory: directory, reader, snapshot: () => ref, changed: () => {}, notify: async () => {} });
+  let requests = 0;
+  const chat = new ChatService({ useDocuments: false, directory, snapshot: () => ref, reader, docs, changed: () => {}, provider: { async answer(_settings, input) {
+    requests++;
+    assert.equal(input.searchesRemaining, 2 - requests);
+    return { content: requests === 1 ? { sufficient: false, searchQuery: 'retry timeout configuration', content: null, gaps: ['Need configuration evidence.'] } : { sufficient: true, searchQuery: null, content: content(input), gaps: [] }, cost: 0, servedModel: 'fixture' };
+  } } });
+  try {
+    await docs.initialize(); await docs.configure({ ...defaultDocSettings, model: 'fixture', requestsPerRun: 2 });
+    chat.start('How can I improve recovery?'); await chat.settle();
+    assert.equal(chat.status.phase, 'ready', chat.status.error ?? '');
+    assert.equal(chat.status.answers[0]?.mode, 'model');
+    assert.equal(requests, 2); assert.equal(docs.status.requestsToday, 2);
+    assert.ok(queries.includes('retry timeout configuration'));
+  } finally { await chat.close(); await docs.close(); }
 });

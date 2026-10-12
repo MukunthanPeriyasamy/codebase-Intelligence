@@ -47,6 +47,8 @@ export class EvidenceReader {
       if (signal?.aborted) abort();
     });
   }
+  async checkTool() { return this.request({ directory: '', commit: '' } as SnapshotRef, { operation: 'health' }); }
+  async retrieveTool(ref: SnapshotRef, question: string, expanded: boolean, signal: AbortSignal) { return this.request(ref, { operation: 'retrieve', question, expanded }, signal); }
   async plan(ref: SnapshotRef, signal?: AbortSignal) { return planSchema.parse(await this.request(ref, { operation: 'plan' }, signal)); }
   async read(ref: SnapshotRef, unit: DocUnit, signal?: AbortSignal): Promise<Evidence> {
     const raw = z.object({ text: z.string().max(1500000), blocked: z.array(z.number().int()), symbols: z.array(symbolSchema).max(100) }).strict().parse(await this.request(ref, { operation: 'source', path: unit.path, hash: unit.hash, start: unit.start, end: unit.end }, signal));

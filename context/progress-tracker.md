@@ -1,5 +1,9 @@
 # Progress Tracker
 
+## Current direction — code/KG chat and external RepoWise MCP (2026-10-11)
+
+User paused documentation generation and requested RepoWise as an external MCP tool rather than an application dependency. Production host now blocks manual/automatic document generation, preserves existing documents and excludes documentation from chat retrieval. Chat continues using committed source and existing graph evidence. Build and targeted pause/retrieval tests passed. RepoWise MCP availability is verified, but migration is NOT implemented: server location (separate local tool or remote server), index lifecycle and commit-bound evidence validation must be resolved before replacing the current adapter. Existing Python/RepoWise analysis remains in place until a tested replacement is ready. Do not describe MCP as active or remove the working index prematurely. This supersedes earlier active-generation scope.
+
 ## Ollama timeout correction — 2026-10-10
 
 Added a dedicated local HTTP dispatcher to avoid independent five-minute header/body limits, with a cleared 30-minute generation deadline, 60-second metadata deadline, two-minute catalog bound and aligned chat deadline. Cancellation remains available; generation timeout and connection failures have separate diagnostics. Build, 42 service tests, an additional real delayed-HTTP regression and the Electron dual-provider scenario passed. No model inference was run: the local Ollama server was unreachable during the connection probe. Live performance remains to be checked after starting Ollama. OpenRouter remains available.
@@ -153,3 +157,8 @@ Replaced the dense dark presentation with a light/slate/blue visual system acros
 ## Example cleanup — 2026-10-11
 
 Removed the user-requested shop demo, its nested Git repository and examples/TESTING.md. Earlier demo creation entries are historical; those files are no longer available. Application regression fixtures remain unchanged.
+
+
+## Broad repository questions — 2026-10-12
+
+Implemented broader natural-language retrieval, cross-file candidate diversity, contextual follow-up retrieval, explicit bounded graph relationship context and broader evidence-grounded answer instructions. Build and eight deterministic retrieval cases passed, covering overview, launch, configuration, security, dependencies, storage, tests and missing features. All 46 service tests and the Electron graph/chat/pause scenario passed. Final targeted retrieval/follow-up checks passed after the last adjustments. Live Ollama semantic quality remains unverified; this does not complete the pending external RepoWise MCP migration.

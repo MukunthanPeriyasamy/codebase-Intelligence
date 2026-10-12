@@ -3,13 +3,14 @@ import { CHAT_VERSION, retrievalSchema, type Retrieval } from '../shared/chat';
 import type { SnapshotRef, Evidence } from '../shared/documentation';
 
 export class RetrievalReader extends EvidenceReader {
+  constructor(python: string, script: string, private readonly mcp?: EvidenceReader) { super(python, script); }
   private cache = new Map<string, Retrieval>();
   async retrieve(ref: SnapshotRef, question: string, expanded: boolean, signal: AbortSignal): Promise<Retrieval> {
     signal.throwIfAborted();
     const key = digest(JSON.stringify([CHAT_VERSION, ref, question, expanded]));
     const cached = this.cache.get(key);
     if (cached) return structuredClone(cached);
-    const result = retrievalSchema.parse(await this.request(ref, { operation: 'retrieve', question, expanded }, signal));
+    const result = retrievalSchema.parse(await (this.mcp ? this.mcp.retrieveTool(ref, question, expanded, signal) : this.request(ref, { operation: 'retrieve', question, expanded }, signal)));
     this.cache.set(key, result);
     if (this.cache.size > 32) this.cache.delete(this.cache.keys().next().value!);
     return structuredClone(result);
