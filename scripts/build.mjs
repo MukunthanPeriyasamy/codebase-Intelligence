@@ -15,3 +15,4 @@ await cp('worker/graph.py', 'dist/worker/graph.py');
 await cp('worker/mcp_client.py', 'dist/worker/mcp_client.py');
 
 await cp('worker/vector_bridge.py', 'dist/worker/vector_bridge.py');
+await cp('worker/deepwiki_bridge.py', 'dist/worker/deepwiki_bridge.py');

@@ -1,5 +1,11 @@
 # AI Workflow Rules
 
+## DeepWiki backend migration — 2026-10-13
+
+The latest user-approved scope replaces backend indexing/retrieval/context with adapted DeepWiki components; preserve the interface and commit/citation invariants. Do not describe this as the unmodified upstream service: host Git/provider/accounting and RepoWise/LanceDB adapters remain intentional. Do not treat old vector manifests as ready for the new profile. Use pinned setup per computer and distinguish fixture checks from live model quality.
+
+This supersedes older backend-selection notes below. Details: `../validation/deepwiki-pipeline.md`.
+
 ## Code-vector RAG and separate RepoWise tool (2026-10-12)
 
 The current implementation keeps RepoWise 0.55.0 behind a separately installed local MCP adapter for parsing and graph evidence. Setup is per computer, outside the application runtime. This supersedes the older pending-deployment-choice notes below. It is our adapter, not the complete upstream MCP/chat server.

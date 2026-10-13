@@ -1,3 +1,26 @@
+# DeepWiki backend (current)
+
+The Electron interface now uses an adapted, pinned DeepWiki pipeline with LanceDB
+and RepoWise graph enrichment. Documentation generation remains paused.
+
+On each computer, run from this project folder (Git and uv required):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/setup-repowise.ps1
+powershell -ExecutionPolicy Bypass -File scripts/setup-deepwiki.ps1 -ToolDirectory "D:\CodebaseIntelligenceTools\DeepWiki"
+npm run dev
+```
+
+Choose a drive with sufficient free space. DeepWiki uses its own Python 3.12 runtime;
+your app worker/system Python does not need to change. After restarting, save your
+chat and embedding models, then select **Settings → Code search → Build / resume code
+index**. This first rebuild is required even if the old index was ready. Later local
+commit updates reuse unchanged embeddings. OpenRouter indexing remains manual.
+
+Existing clones, documents and indexes are preserved. The UI is unchanged. See
+[backend ownership, verification and limits](validation/deepwiki-pipeline.md).
+Earlier setup instructions below are historical where they conflict with this section.
+
 # Choose Ollama or OpenRouter
 
 Both providers are supported. Restart the rebuilt app, open Settings and select **Model provider** under Generation settings.
@@ -6,7 +29,7 @@ Both providers are supported. Restart the rebuilt app, open Settings and select 
 - **OpenRouter:** save your API key in Connect OpenRouter, select OpenRouter, refresh the chat and embedding catalogs and choose model IDs.
 - Click **Save generation settings**. Chat and documentation share the selected chat model. Model selections are remembered separately for each provider. Switching provider turns off automatic generation; enable it explicitly only if wanted.
 - Output defaults to 8000 tokens. Requests/day and requests/run are shared across providers. OpenRouter incurs provider charges; saving settings and refreshing catalogs do not run inference.
-- Embedding selection is available for both providers, but vector indexing remains pending.
+- Code embeddings are supported for both providers through the DeepWiki/LanceDB backend described above.
 
 Keys are OS-encrypted and never sent to Ollama. Existing documents, workspace data and Python 3.12/3.14 support are preserved. Earlier provider-exclusive descriptions below are historical.
 

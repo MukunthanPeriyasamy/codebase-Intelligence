@@ -35,7 +35,7 @@ export class VectorStore extends EvidenceReader {
   private child?: ChildProcessWithoutNullStreams;
   private receive?: (value?: string) => void;
   private idle?: NodeJS.Timeout;
-  constructor(private engine: string, private bridge: string) { super(engine, bridge); }
+  constructor(private engine: string, private bridge: string, private failureMessage = 'LanceDB storage failed. Check disk space and rerun RepoWise setup to install vector dependencies; resume indexing to reuse saved embeddings.') { super(engine, bridge); }
   close() { clearTimeout(this.idle); const child = this.child; this.child = undefined; if (child) stopOwnedProcess(child); this.receive?.(); }
   async operation(ref: SnapshotRef, input: Record<string, unknown>, signal: AbortSignal): Promise<unknown> {
     signal.throwIfAborted();
@@ -62,22 +62,27 @@ export class VectorStore extends EvidenceReader {
       this.receive = line => {
         this.receive = undefined; clearTimeout(timer); signal.removeEventListener('abort', abort);
         this.idle = setTimeout(() => this.close(), 30000); this.idle.unref();
-        try { if (!line) throw new Error('Closed'); resolve(z.object({ ok: z.literal(true), data: z.unknown() }).strict().parse(JSON.parse(line)).data); }
-        catch { reject(new RepoError('LanceDB storage failed. Check disk space and rerun RepoWise setup to install vector dependencies; resume indexing to reuse saved embeddings.')); }
+        try {
+          if (!line) throw new Error('Closed');
+          const response: unknown = JSON.parse(line);
+          const failure = z.object({ ok: z.literal(false), error: z.string().max(400) }).strict().safeParse(response);
+          if (failure.success && !containsSecret(failure.data.error)) { reject(new RepoError(failure.data.error)); return; }
+          resolve(z.object({ ok: z.literal(true), data: z.unknown() }).strict().parse(response).data);
+        } catch { reject(new RepoError(this.failureMessage)); }
       };
       signal.addEventListener('abort', abort, { once: true }); this.child!.stdin.write(payload);
       if (signal.aborted) abort();
     });
   }
 }
-interface Options { snapshot: () => SnapshotRef | null; docs: DocumentationService; reader: EvidenceReader; store: VectorStore; embed: Embed; changed: () => void; busy?: () => boolean }
+interface Options { snapshot: () => SnapshotRef | null; docs: DocumentationService; reader: EvidenceReader; store: VectorStore; embed: Embed; changed: () => void; busy?: () => boolean; version?: string }
 export class VectorService {
   status: VectorStatus = { phase: 'idle', completed: 0, total: 0, error: null, commit: null };
   private controller?: AbortController;
   private running?: Promise<void>;
   private enabled = new Set<string>();
   constructor(private options: Options) {}
-  private profile(settings = this.options.docs.status.settings) { return digest(JSON.stringify(['code-vectors-v1', settings.provider ?? 'ollama', settings.embeddingModel])); }
+  private profile(settings = this.options.docs.status.settings) { return digest(JSON.stringify([this.options.version ?? 'code-vectors-v1', settings.provider ?? 'ollama', settings.embeddingModel])); }
   private manifest(ref: SnapshotRef, profile: string) { return join(dirname(dirname(ref.directory)), 'vectors', `${digest(ref.directory + profile)}.json`); }
   async ready(ref: SnapshotRef, settings = this.options.docs.status.settings) {
     try { return manifestSchema.parse(JSON.parse(await readFile(this.manifest(ref, this.profile(settings)), 'utf8'))).key === this.profile(settings); } catch { return false; }

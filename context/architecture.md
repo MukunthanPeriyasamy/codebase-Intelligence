@@ -1,5 +1,11 @@
 # Architecture Context
 
+## DeepWiki backend migration — 2026-10-13
+
+Production backend now uses pinned DeepWiki components through a separate process: line-tracked chunking, LanceDB-backed RAG retrieval and context construction. Git snapshots, provider/budget transports and citation validation remain host-owned; RepoWise remains the KG adapter. This is an adapted component pipeline, not the unmodified upstream HTTP/research_chat server. New vector profiles prevent reuse of old chunk indexes. See `../validation/deepwiki-pipeline.md` for ownership, setup and limits.
+
+This supersedes older backend-selection notes below. Details: `../validation/deepwiki-pipeline.md`.
+
 ## Code-vector RAG and separate RepoWise tool (2026-10-12)
 
 The current implementation keeps RepoWise 0.55.0 behind a separately installed local MCP adapter for parsing and graph evidence. Setup is per computer, outside the application runtime. This supersedes the older pending-deployment-choice notes below. It is our adapter, not the complete upstream MCP/chat server.

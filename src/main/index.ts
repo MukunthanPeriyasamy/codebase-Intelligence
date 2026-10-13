@@ -1,14 +1,13 @@
-import { VectorService, VectorStore, embeddingProvider } from './vectors';
+import { VectorService, embeddingProvider } from './vectors';
+import { DEEPWIKI_VERSION, DeepWikiStore, DeepWikiEvidenceReader, DeepWikiRetrievalReader, DeepWikiChatProvider } from './deepwiki';
 import { CredentialStore } from './credentials';
 import { listOpenRouterModels } from './openrouter';
 import { completionRouter, RoutedDocumentationProvider } from './providers';
-import { OllamaChatProvider } from './chat-provider';
 import { GraphReader } from './graph';
 import { listModels } from './models';
 import { DocumentationService } from './documentation';
 import { EvidenceReader } from './evidence';
 import { ChatService } from './chat';
-import { RetrievalReader } from './retrieval';
 import { app, BrowserWindow, dialog, ipcMain, protocol, safeStorage, session, shell } from 'electron';
 import { existsSync } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
@@ -182,8 +181,9 @@ else {
     graphReader = new GraphReader(python, join(__dirname, 'worker', 'graph.py'));
     repositories = new RepositoryService({ directory: join(app.getPath('userData'), 'knowledge'), python, script: join(__dirname, 'worker', 'snapshot.py') }, () => { chat?.contextChanged(); void documentation?.refreshContext(); void vectors?.contextChanged(); publish(); });
     documentation = new DocumentationService({ generationPaused: true, provider: new RoutedDocumentationProvider(complete), knowledgeDirectory: join(app.getPath('userData'), 'knowledge'), reader: new EvidenceReader(python, join(__dirname, 'worker', 'evidence.py')), snapshot: () => repositories.getSnapshot(), workspaceProject: id => repositories.workspaceProject(id), changed: publish, notify: (kind, title, body) => repositories.notifyDocumentation(kind, title, body) });
-    vectors = new VectorService({ snapshot: () => repositories.getSnapshot(), docs: documentation, reader: new EvidenceReader(python, join(__dirname, 'worker', 'evidence.py')), store: new VectorStore(python, join(__dirname, 'worker', 'vector_bridge.py')), embed: embeddingProvider(documentation, () => credentials.read()), busy: () => chat?.status.phase === 'retrieving' || chat?.status.phase === 'answering', changed: publish });
-    chat = new ChatService({ useDocuments: false, provider: new OllamaChatProvider(complete), directory: join(app.getPath('userData'), 'knowledge'), snapshot: () => repositories.getSnapshot(), reader: new RetrievalReader(python, join(__dirname, 'worker', 'evidence.py'), repowiseReader, vectors), docs: documentation, changed: publish });
+    const pipeline = new DeepWikiStore(python, join(__dirname, 'worker', 'deepwiki_bridge.py'));
+    vectors = new VectorService({ version: DEEPWIKI_VERSION, snapshot: () => repositories.getSnapshot(), docs: documentation, reader: new DeepWikiEvidenceReader(python, join(__dirname, 'worker', 'evidence.py'), pipeline), store: pipeline, embed: embeddingProvider(documentation, () => credentials.read()), busy: () => chat?.status.phase === 'retrieving' || chat?.status.phase === 'answering', changed: publish });
+    chat = new ChatService({ useDocuments: false, provider: new DeepWikiChatProvider(pipeline, () => repositories.getSnapshot(), complete), directory: join(app.getPath('userData'), 'knowledge'), snapshot: () => repositories.getSnapshot(), reader: new DeepWikiRetrievalReader(python, join(__dirname, 'worker', 'evidence.py'), repowiseReader, vectors), docs: documentation, changed: publish });
     await documentation.initialize();
     await repositories.initialize();
     await documentation.refreshContext();

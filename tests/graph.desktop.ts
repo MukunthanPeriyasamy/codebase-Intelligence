@@ -20,6 +20,8 @@ test('live graph renders indexed relationships, refreshes on publication and cha
     await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Settings', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Build / resume code index' })).toBeEnabled();
     await page.getByRole('button', { name: 'Check RepoWise setup' }).click();
+    await expect.poll(async () => { const result = await page.evaluate(() => window.desktop.status()); return result.ok && result.status.repowise?.connected; }, { timeout: 30000 }).toBe(true);
+    await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Settings', exact: true }).click();
     await expect(page.getByText('Connected \u00b7 MCP', { exact: true })).toBeVisible({ timeout: 30000 });
     await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('button', { name: 'Repository', exact: true }).click();
     await page.getByRole('button', { name: 'Choose repository folder' }).click();

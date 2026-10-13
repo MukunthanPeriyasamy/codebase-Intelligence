@@ -1,5 +1,11 @@
 # Code Standards
 
+## DeepWiki backend migration — 2026-10-13
+
+Keep DeepWiki source unmodified and pinned; integrate through `tools/deepwiki/pipeline.py` and `src/main/deepwiki.ts`. The stdlib app worker discovers a separately installed tool runtime. Retain host-side redaction, paid-request accounting, cancellation and schema/citation validation. Test real upstream components with synthetic model responses, plus new-commit/delete/profile isolation and source-line coverage.
+
+This supersedes older backend-selection notes below. Details: `../validation/deepwiki-pipeline.md`.
+
 ## Code-vector RAG and separate RepoWise tool (2026-10-12)
 
 The current implementation keeps RepoWise 0.55.0 behind a separately installed local MCP adapter for parsing and graph evidence. Setup is per computer, outside the application runtime. This supersedes the older pending-deployment-choice notes below. It is our adapter, not the complete upstream MCP/chat server.

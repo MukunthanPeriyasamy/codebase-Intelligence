@@ -1,5 +1,11 @@
 # Build Phases
 
+## DeepWiki backend migration — 2026-10-13
+
+Requested backend replacement now targets the adapted DeepWiki pipeline before Phase 7. Verify actual upstream chunking/RAG/context components, LanceDB persistence, commit/profile isolation and Electron chat/citations. Live-provider quality evaluation and packaging remain Phase 7; a new integration fixture does not complete those phases.
+
+This supersedes older backend-selection notes below. Details: `../validation/deepwiki-pipeline.md`.
+
 ## Code-vector RAG and separate RepoWise tool (2026-10-12)
 
 The current implementation keeps RepoWise 0.55.0 behind a separately installed local MCP adapter for parsing and graph evidence. Setup is per computer, outside the application runtime. This supersedes the older pending-deployment-choice notes below. It is our adapter, not the complete upstream MCP/chat server.

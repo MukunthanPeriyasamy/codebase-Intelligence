@@ -1,5 +1,15 @@
 # Progress Tracker
 
+## DeepWiki backend migration — 2026-10-13
+
+Implemented and wired the adapted DeepWiki backend into production Electron without changing renderer layouts. Pinned upstream `d92819a9c9f3b99416e3580ff235fc9d3adf8b89`; added separate-runtime setup, frozen dependencies, tokenizer cache and per-computer discovery. Native line-tracked chunking, LanceDB-backed RAG document retrieval and DeepWiki context construction now feed the existing host provider/citation contract. RepoWise KG, Git cloning/commit-only snapshots, provider configuration/accounting, cancellation and paused documentation remain.
+
+This is not the unmodified upstream HTTP/research_chat pipeline. The intentional component boundaries and limits are documented in `../validation/deepwiki-pipeline.md`. Existing indexes are preserved under their original profile; build the new code index once after restarting. General questions require a ready index; unique definition lookups remain free. Corrected a cache validation bug that compared snapshot property order instead of normalized schema values.
+
+Verification complete: `npm run build` passed; all 52 service tests passed; actual Electron DeepWiki indexing/chat/citation/dirty-source/KG integration and existing graph/setup/new-commit/full-chat regression both passed. Real upstream components and LanceDB were exercised with synthetic embeddings and completions. Unicode/overlap coverage, resume/cache reuse, changed/deleted source, old snapshots, model/profile isolation, secret exclusion and cancellation passed. Windows Electron runtime read/execute ACL was restored to allow sandboxed-renderer tests; renderer sandbox remains enabled.
+
+The tool is installed and registered on this computer at `D:\office-project\codebase-intelligence\.local\deepwiki-tool`. Live Ollama was unavailable at `127.0.0.1:11434`; no live-model quality or user-repository embedding success is claimed. Start Ollama, restart the built application, and use Settings → Code search → Build / resume code index. Phase 7 live quality evaluation and packaging remain pending.
+
 ## Code-vector RAG and separate RepoWise tool (2026-10-12)
 
 Verification: build, the full 50-test service suite, additional embedding/vector-to-chat checks, and the Electron graph/setup workflow passed. Real LanceDB was exercised with synthetic embeddings; live Ollama was unreachable. The user must build the initial repository index after saving an embedding model.
