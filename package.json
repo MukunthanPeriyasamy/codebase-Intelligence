@@ -1,36 +1,42 @@
 {
-  "name": "codebase-intelligence",
+  "name": "deepwiki-open",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal, commit-grounded repository intelligence desktop",
-  "type": "module",
-  "main": "dist/main.cjs",
   "scripts": {
-    "build": "tsc --noEmit && node scripts/build.mjs",
-    "start": "electron .",
-    "dev": "npm run build && npm start",
-    "test": "tsx --test tests/*.test.ts",
-    "test:desktop": "npm run build && playwright test"
-  },
-  "engines": {
-    "node": ">=22.12"
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-deepwiki.ps1",
+    "build": "next build",
+    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-deepwiki.ps1",
+    "lint": "eslint src",
+    "dev:ui": "next dev --turbopack --port 3000 --hostname 127.0.0.1",
+    "start:ui": "next start --hostname 127.0.0.1"
   },
   "dependencies": {
-    "@xyflow/react": "12.12.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "undici": "7.30.0",
-    "zod": "4.6.5"
+    "mermaid": "^11.4.1",
+    "next": "^15.5.27",
+    "next-intl": "^4.1.0",
+    "next-themes": "^0.4.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.1",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "svg-pan-zoom": "^3.6.2"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0",
-    "@types/node": "26.6.4",
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "electron": "44.6.0",
-    "esbuild": "0.28.2",
-    "tsx": "4.23.15",
-    "typescript": "7.0.2",
-    "vite": "8.3.3"
-  }
+    "@eslint/eslintrc": "^3.3.7",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.27",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

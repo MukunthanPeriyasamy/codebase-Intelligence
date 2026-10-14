@@ -1,5 +1,11 @@
 # Build Phases
 
+## Current direction: complete DeepWiki — 2026-10-14
+
+Current milestone: replace the active Electron source with full DeepWiki, retain Ollama, provide Windows setup/start commands, and verify native indexing-to-chat plus frontend startup. Previous phase completions describe the retired implementation and must not be treated as validation of this replacement.
+
+This decision supersedes conflicting historical implementation notes below. See `../README.md` and `../validation/full-deepwiki.md`.
+
 ## DeepWiki backend migration — 2026-10-13
 
 Requested backend replacement now targets the adapted DeepWiki pipeline before Phase 7. Verify actual upstream chunking/RAG/context components, LanceDB persistence, commit/profile isolation and Electron chat/citations. Live-provider quality evaluation and packaging remain Phase 7; a new integration fixture does not complete those phases.

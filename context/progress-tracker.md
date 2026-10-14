@@ -1,5 +1,11 @@
 # Progress Tracker
 
+## Current direction: complete DeepWiki — 2026-10-14
+
+Full DeepWiki replacement is complete. Production build, 40 targeted backend tests, combined Windows startup, and the browser configuration flow passed. Live model quality remains unverified because Ollama was not running. Electron source and its custom adapter were removed from active use. Full frontend/backend imported from AsyncFuncAI/deepwiki-open at d92819a9c9f3b99416e3580ff235fc9d3adf8b89. Ollama defaults, model-tag compatibility, configurable inference timeout and separate local storage are added. Final verification results are recorded in validation/full-deepwiki.md.
+
+This decision supersedes conflicting historical implementation notes below. See `../README.md` and `../validation/full-deepwiki.md`.
+
 ## DeepWiki backend migration — 2026-10-13
 
 Implemented and wired the adapted DeepWiki backend into production Electron without changing renderer layouts. Pinned upstream `d92819a9c9f3b99416e3580ff235fc9d3adf8b89`; added separate-runtime setup, frozen dependencies, tokenizer cache and per-computer discovery. Native line-tracked chunking, LanceDB-backed RAG document retrieval and DeepWiki context construction now feed the existing host provider/citation contract. RepoWise KG, Git cloning/commit-only snapshots, provider configuration/accounting, cancellation and paused documentation remain.

@@ -1,5 +1,11 @@
 # Codebase Intelligence
 
+## Current direction: complete DeepWiki — 2026-10-14
+
+The user approved replacing the old Electron application with full DeepWiki and explicitly retaining Ollama. Ollama is the default for generation and embeddings. The native wiki and chat UI is now the product baseline. Existing Electron data remains on disk and is not migrated automatically. Future modifications belong in the full DeepWiki source.
+
+This decision supersedes conflicting historical implementation notes below. See `../README.md` and `../validation/full-deepwiki.md`.
+
 ## DeepWiki backend migration — 2026-10-13
 
 The user approved replacing the backend with the recommended DeepWiki-based pipeline, preserving the Electron interface. The adapted pipeline keeps LanceDB, RepoWise KG, Ollama/OpenRouter configuration and committed-only ingestion. Documentation remains paused. General chat requires the new code index; a first manual rebuild is necessary.

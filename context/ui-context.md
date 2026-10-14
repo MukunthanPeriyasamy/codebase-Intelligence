@@ -1,5 +1,11 @@
 # UI Context
 
+## Current direction: complete DeepWiki — 2026-10-14
+
+Use the complete upstream DeepWiki browser interface: repository setup, generated wiki, diagrams, repository chat and research. The old Electron navigation and custom controls were removed. The default local URL is http://127.0.0.1:3000. Ollama is selected by default; model selection remains available in the native configuration interface.
+
+This decision supersedes conflicting historical implementation notes below. See `../README.md` and `../validation/full-deepwiki.md`.
+
 ## DeepWiki backend migration — 2026-10-13
 
 This migration changes backend wiring only; existing navigation, chat, graph, settings and citation UI remain. Settings → Code search → Build / resume code index builds the new DeepWiki/LanceDB profile. Missing setup/index errors give recovery instructions. No new wiki-generation interface is introduced; documentation remains paused.

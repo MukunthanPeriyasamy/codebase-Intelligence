@@ -1,5 +1,11 @@
 # Code Standards
 
+## Current direction: complete DeepWiki — 2026-10-14
+
+Use the native Next.js/TypeScript and FastAPI/Python module structure. Retain the upstream MIT license and provenance. Test changes against native routes and the indexing/retrieval/chat pipeline. Windows setup uses an isolated Python runtime and npm lockfile. Python 3.12 is the verified runtime; the old Electron Python 3.14 result is not proof for this dependency stack.
+
+This decision supersedes conflicting historical implementation notes below. See `../README.md` and `../validation/full-deepwiki.md`.
+
 ## DeepWiki backend migration — 2026-10-13
 
 Keep DeepWiki source unmodified and pinned; integrate through `tools/deepwiki/pipeline.py` and `src/main/deepwiki.ts`. The stdlib app worker discovers a separately installed tool runtime. Retain host-side redaction, paid-request accounting, cancellation and schema/citation validation. Test real upstream components with synthetic model responses, plus new-commit/delete/profile isolation and source-line coverage.

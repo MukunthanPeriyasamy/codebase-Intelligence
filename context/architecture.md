@@ -1,5 +1,11 @@
 # Architecture Context
 
+## Current direction: complete DeepWiki — 2026-10-14
+
+The active application is the complete DeepWiki Next.js frontend and FastAPI backend. Native cloning, line-tracked chunking, Ollama embeddings, FAISS retrieval, context construction, wiki generation and streaming chat replace the Electron/RepoWise/LanceDB adapter. API and frontend bind to loopback. Data defaults to .local/deepwiki-data, configurable through DEEPWIKI_DATA_DIR. Native indexes are repository caches; old commit-isolated incremental sync guarantees do not apply.
+
+This decision supersedes conflicting historical implementation notes below. See `../README.md` and `../validation/full-deepwiki.md`.
+
 ## DeepWiki backend migration — 2026-10-13
 
 Production backend now uses pinned DeepWiki components through a separate process: line-tracked chunking, LanceDB-backed RAG retrieval and context construction. Git snapshots, provider/budget transports and citation validation remain host-owned; RepoWise remains the KG adapter. This is an adapted component pipeline, not the unmodified upstream HTTP/research_chat server. New vector profiles prevent reuse of old chunk indexes. See `../validation/deepwiki-pipeline.md` for ownership, setup and limits.

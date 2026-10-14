@@ -1,5 +1,11 @@
 # AI Workflow Rules
 
+## Current direction: complete DeepWiki — 2026-10-14
+
+Follow the full DeepWiki application direction. Do not restore the old Electron shell or custom RepoWise/LanceDB adapter unless requested. Keep Ollama working without paid API keys. Preserve user data and distinguish deterministic fixture verification from live model quality. Earlier Electron-specific restrictions and the documentation pause are superseded by the user request for complete DeepWiki.
+
+This decision supersedes conflicting historical implementation notes below. See `../README.md` and `../validation/full-deepwiki.md`.
+
 ## DeepWiki backend migration — 2026-10-13
 
 The latest user-approved scope replaces backend indexing/retrieval/context with adapted DeepWiki components; preserve the interface and commit/citation invariants. Do not describe this as the unmodified upstream service: host Git/provider/accounting and RepoWise/LanceDB adapters remain intentional. Do not treat old vector manifests as ready for the new profile. Use pinned setup per computer and distinguish fixture checks from live model quality.
