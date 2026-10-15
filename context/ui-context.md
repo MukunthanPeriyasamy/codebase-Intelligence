@@ -1,5 +1,10 @@
 # UI Context
 
+## Approved chat editing and persistent history — 2026-10-15
+
+Edit code is a response-mode option below the composer. During proposal/review, chat and the right diff panel each occupy 50% of the modal. The diff panel shows destination, file changes, status and a fixed Accept/Reject footer. Chat history sits immediately beside the mode dropdown, supports New chat and restoring prior conversations/drafts. Proposal links reopen server-authoritative review status; restoring never applies changes.
+
+
 ## Current direction: complete DeepWiki — 2026-10-14
 
 Use the complete upstream DeepWiki browser interface: repository setup, generated wiki, diagrams, repository chat and research. The old Electron navigation and custom controls were removed. The default local URL is http://127.0.0.1:3000. Ollama is selected by default; model selection remains available in the native configuration interface.

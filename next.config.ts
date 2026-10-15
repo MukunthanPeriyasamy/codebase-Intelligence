@@ -17,20 +17,8 @@ const nextConfig: NextConfig = {
         fs: false,
       };
     }
-    // Optimize bundle size
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      },
-    };
+    // Preserve Next's chunk groups: a catch-all vendor group also captures
+    // extracted CSS and can emit a stylesheet as a script in the app shell.
     return config;
   },
   async rewrites() {

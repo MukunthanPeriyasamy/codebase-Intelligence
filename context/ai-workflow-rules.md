@@ -1,5 +1,10 @@
 # AI Workflow Rules
 
+## Approved chat editing and persistent history — 2026-10-15
+
+The user explicitly approved implementing code modification capabilities with an Accept/Reject diff review. The old prohibition on modifying analyzed repositories is superseded only for user-accepted proposals. Generation/research/chat alone must never mutate source. Keep current DeepWiki architecture and Ollama support. Document and verify review boundaries and persistent conversation behavior.
+
+
 ## Current direction: complete DeepWiki — 2026-10-14
 
 Follow the full DeepWiki application direction. Do not restore the old Electron shell or custom RepoWise/LanceDB adapter unless requested. Keep Ollama working without paid API keys. Preserve user data and distinguish deterministic fixture verification from live model quality. Earlier Electron-specific restrictions and the documentation pause are superseded by the user request for complete DeepWiki.

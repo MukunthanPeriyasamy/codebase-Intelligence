@@ -1,5 +1,10 @@
 # Progress Tracker
 
+## Approved chat editing and persistent history — 2026-10-15
+
+Implemented Edit code proposals, server-stored reviews, explicit Accept/Reject, stale-content checks, bounded text-file edits, embedding-cache invalidation, and a 50/50 diff panel. Added browser-local repository-scoped chat sessions, draft/turn restoration, proposal reopening and the Chat history control beside response mode. Production build, 60 backend tests, headless Edge review/history regressions and the real Next-to-FastAPI approval smoke test passed. Live model edit quality remains unverified. Verification details and limitations are tracked in validation/chat-editing.md.
+
+
 ## Current direction: complete DeepWiki — 2026-10-14
 
 Full DeepWiki replacement is complete. Production build, 40 targeted backend tests, combined Windows startup, and the browser configuration flow passed. Live model quality remains unverified because Ollama was not running. Electron source and its custom adapter were removed from active use. Full frontend/backend imported from AsyncFuncAI/deepwiki-open at d92819a9c9f3b99416e3580ff235fc9d3adf8b89. Ollama defaults, model-tag compatibility, configurable inference timeout and separate local storage are added. Final verification results are recorded in validation/full-deepwiki.md.

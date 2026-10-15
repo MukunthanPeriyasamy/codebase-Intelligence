@@ -12,7 +12,7 @@ load_dotenv()
 # ruff: noqa: E402
 
 from api.logger import get_logger, setup_logging
-from api.routers import auth, chat, codemap, repo, system, wiki
+from api.routers import auth, chat, changes, codemap, repo, system, wiki
 
 # Configure logging
 setup_logging()
@@ -67,6 +67,7 @@ for module in (
     repo,
     wiki,
     chat,
+    changes,
     codemap,
 ):
     app.include_router(module.router)

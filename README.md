@@ -19,6 +19,14 @@ Keep Ollama running. Open **http://127.0.0.1:3000**, enter your repository and s
 
 Setup installs frontend and backend dependencies. `npm start` starts both local servers. Backend logs are in `.local/logs/`. Press Ctrl+C to stop. `npm run build` checks the production frontend build. `npm run dev:ui` starts only the frontend.
 
+## Chat editing and history
+
+Choose **Edit code** below the chat input to request a code change. The same native retrieval pipeline finds relevant source; the model proposes exact replacements against current file contents. Chat and the diff occupy equal halves of the panel. Review every file, then choose **Accept** to apply the whole proposal or **Reject** to leave files unchanged. Chat answers and model output never directly write files.
+
+The diff shows the destination folder. Local repositories are edited in their original folder; remote repositories are edited in DeepWiki's local clone, without committing or pushing. Changed files are checked again on acceptance; conflicts require a fresh proposal. Accepted changes invalidate the repository embedding cache, which rebuilds on the next query. Existing wiki pages must be regenerated separately. Tests are not run automatically. Text-file replacements, additions and explicit deletions are supported, bounded to 12 edits and 100 KB per file; binary files, linked paths and Git metadata cannot be edited.
+
+**Chat history**, beside the response-mode menu, saves separate conversations and drafts in this browser for each repository. **New chat** preserves the previous conversation, and selecting it restores its turns for follow-up context. History also retains research stages, codemaps and links to proposals. Interrupted answers are marked incomplete. Browser storage failures are displayed; clearing browser data removes this history. Proposals and their review status are stored separately in `DEEPWIKI_DATA_DIR/changes.sqlite3` and are rechecked when reopened.
+
 ## Configuration and storage
 
 Copy `.env.example` to `.env` if setup has not done so. No paid provider key is needed for Ollama. Other native DeepWiki providers remain available when explicitly configured.

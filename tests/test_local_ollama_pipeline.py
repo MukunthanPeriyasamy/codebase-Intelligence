@@ -35,8 +35,12 @@ def ollama_server(monkeypatch):
                     texts = [texts]
                 self.send_json({"model": body["model"], "embeddings": [[1., 0., 0., 0.] for _ in texts]})
             elif self.path == "/api/chat":
+                content = "The input is read by load_input in source.py."
+                if "repository coding assistant preparing changes" in body["messages"][0]["content"]:
+                    content = json.dumps({"summary": "Use UTF-8 when reading input.", "edits": [{
+                        "path": "source.py", "old_text": "open(path).read()", "new_text": "open(path, encoding='utf-8').read()"}]})
                 self.send_json({"model": body["model"], "message": {
-                    "role": "assistant", "content": "The input is read by load_input in source.py."}, "done": True})
+                    "role": "assistant", "content": content}, "done": True})
             else:
                 self.send_error(404)
 
@@ -81,6 +85,29 @@ async def test_native_index_retrieve_augment_generate(ollama_server, monkeypatch
     prompts = [body["messages"][0]["content"] for path, body in ollama_server if path == "/api/chat"]
     assert prompts and "source.py" in prompts[-1] and "def load_input" in prompts[-1]
     assert "[lines 1-" in prompts[-1]
+
+
+@pytest.mark.asyncio
+async def test_native_retrieval_to_review_to_accept(ollama_server, monkeypatch, tmp_path, exclude_test_config):
+    from api.config import configs
+    from api.schemas import ChatCompletionRequest
+    from api.services.changes import propose, decide
+    monkeypatch.setenv("DEEPWIKI_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setitem(configs["retriever"], "top_k", 1)
+    source = tmp_path / "repo"
+    source.mkdir()
+    path = source / "source.py"
+    original = b"def load_input(path):\n    return open(path).read()\n"
+    path.write_bytes(original)
+    request = ChatCompletionRequest(repo_url=str(source), type="local", provider="ollama", model="qwen3:8b",
+        messages=[{"role": "user", "content": "Read input using UTF-8"}])
+    proposal = await propose(request)
+    assert path.read_bytes() == original
+    assert "encoding='utf-8'" in proposal["files"][0]["diff"]
+    assert list((tmp_path / "data").rglob("*.pkl"))
+    decide(proposal["id"], "accept")
+    assert b"encoding='utf-8'" in path.read_bytes()
+    assert not list((tmp_path / "data").rglob("*.pkl"))
 
 
 def test_local_defaults_and_timeout(monkeypatch):

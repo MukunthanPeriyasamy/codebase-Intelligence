@@ -1,5 +1,10 @@
 # Architecture Context
 
+## Approved chat editing and persistent history — 2026-10-15
+
+api/services/changes.py uses native RAG then reads bounded current UTF-8 files, validates exact replacements, and persists proposals in DEEPWIKI_DATA_DIR/changes.sqlite3. Separate local review endpoints apply or reject a stored proposal; the model has no write tool. Accept rechecks all originals, rejects path traversal/links/Git metadata, serializes decisions, writes via atomic per-file replacements and rolls back ordinary write failures. Multi-file power-loss atomicity is not claimed. Acceptance invalidates the native embedding cache; wiki regeneration remains explicit. Browser localStorage contains per-repository conversation sessions without configured tokens; proposals stay server-side.
+
+
 ## Current direction: complete DeepWiki — 2026-10-14
 
 The active application is the complete DeepWiki Next.js frontend and FastAPI backend. Native cloning, line-tracked chunking, Ollama embeddings, FAISS retrieval, context construction, wiki generation and streaming chat replace the Electron/RepoWise/LanceDB adapter. API and frontend bind to loopback. Data defaults to .local/deepwiki-data, configurable through DEEPWIKI_DATA_DIR. Native indexes are repository caches; old commit-isolated incremental sync guarantees do not apply.

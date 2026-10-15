@@ -1,5 +1,10 @@
 # Build Phases
 
+## Approved chat editing and persistent history — 2026-10-15
+
+New feature unit: retrieval-grounded edit proposals, 50/50 chat/diff review, explicit acceptance/rejection and persistent per-repository chat history. Validate backend write boundaries and browser restore/follow-up behavior. Live model edit quality remains separate from deterministic integration verification.
+
+
 ## Current direction: complete DeepWiki — 2026-10-14
 
 Current milestone: replace the active Electron source with full DeepWiki, retain Ollama, provide Windows setup/start commands, and verify native indexing-to-chat plus frontend startup. Previous phase completions describe the retired implementation and must not be treated as validation of this replacement.

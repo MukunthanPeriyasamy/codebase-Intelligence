@@ -1150,8 +1150,9 @@ export default function RepoWikiPage() {
               When no codemap citation needs a viewer, the conversation uses the
               full width (same as fast / deep-research modes). ~6:4 when open. */}
           <div className="flex-1 flex min-h-0">
-            <div className={`overflow-y-auto p-4 min-h-0 ${codeViewerOpen ? 'w-3/5' : 'w-full'}`}>
+            <div className={`overflow-hidden pt-10 min-h-0 ${codeViewerOpen ? 'w-3/5' : 'w-full'}`}>
               <Ask
+                key={`${effectiveRepoInfo.type}:${getRepoUrl(effectiveRepoInfo)}`}
                 repoInfo={effectiveRepoInfo}
                 provider={selectedProviderState}
                 model={selectedModelState}

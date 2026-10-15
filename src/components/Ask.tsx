@@ -1,6 +1,8 @@
 'use client';
 
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useMemo} from 'react';
+import ChangeReview, { Proposal, reviewRequest } from './ChangeReview';
+import { useChatHistory } from '@/hooks/useChatHistory';
 import { FaChevronLeft, FaChevronRight, FaBolt, FaMicroscope, FaBook, FaChevronDown, FaCheck } from 'react-icons/fa';
 import Markdown from './Markdown';
 import CodeMap, { PhaseStatus } from './CodeMap';
@@ -32,9 +34,10 @@ const IDLE_PHASES: Record<CodemapPhase, PhaseStatus> = {
 };
 
 // Chat mode selector options (replaces the standalone Deep Research / Codemap toggles).
-type ChatMode = 'fast' | 'deep_research' | 'codemap';
+type ChatMode = 'fast' | 'deep_research' | 'codemap' | 'edit';
 
 const MODES: { id: ChatMode; label: string; description: string; icon: React.ReactNode }[] = [
+  { id: 'edit', label: 'Edit code', description: 'Propose changes to review and accept', icon: <FaBook size={14} /> },
   { id: 'fast', label: 'Fast', description: 'Quick and responsive answers', icon: <FaBolt size={14} /> },
   { id: 'deep_research', label: 'Deep Research', description: 'More thorough investigation', icon: <FaMicroscope size={14} /> },
   { id: 'codemap', label: 'Codemap', description: 'Structured explanation grounded in code', icon: <FaBook size={14} /> },
@@ -78,6 +81,7 @@ interface ChatTurn {
   researchStages?: ResearchStage[];
   // Index of the stage currently shown for this turn.
   stageIndex?: number;
+  proposalId?: string;
 }
 
 // A committed codemap exchange.
@@ -90,6 +94,13 @@ interface CodemapTurn {
 // Unified, ordered conversation entry — chat and codemap turns share one list
 // so they render in the true chronological order they were asked.
 type ConversationTurn = ChatTurn | CodemapTurn;
+
+interface ChatSnapshot {
+  turns: ConversationTurn[];
+  draft: string;
+  mode: ChatMode;
+  proposalId?: string;
+}
 
 interface AskProps {
   repoInfo: RepoInfo;
@@ -119,6 +130,12 @@ const Ask: React.FC<AskProps> = ({
   onCloseCodeViewer,
 }) => {
   const [question, setQuestion] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [deepResearch, setDeepResearch] = useState(false);
@@ -159,6 +176,86 @@ const Ask: React.FC<AskProps> = ({
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const providerRef = useRef(provider);
   const modelRef = useRef(model);
+
+  const savedSnapshot = useMemo<ChatSnapshot>(() => ({
+    turns: [...conversationTurns, ...(currentQuestion ? [{
+      kind: 'chat' as const, question: currentQuestion,
+      response: response + (isLoading ? '\n\n[Response interrupted before completion.]' : ''),
+      mode: deepResearch ? 'deep_research' as const : 'normal' as const,
+      researchStages,
+    }] : []), ...(codemapQuestion ? (codemapData ? [{ kind: 'codemap' as const, question: codemapQuestion, data: codemapData }] : [{
+      kind: 'chat' as const, question: codemapQuestion, response: codemapError || '[Codemap interrupted before completion.]', mode: 'normal' as const,
+    }]) : [])],
+    draft: question, mode: editMode ? 'edit' : codemapMode ? 'codemap' : deepResearch ? 'deep_research' : 'fast',
+    proposalId: proposal?.id,
+  }), [conversationTurns, currentQuestion, response, isLoading, deepResearch, researchStages, codemapQuestion, codemapData, codemapError, question, editMode, codemapMode, proposal?.id]);
+
+  const openProposal = async (id: string) => {
+    setReviewOpen(true);
+    onCloseCodeViewer?.();
+    setReviewBusy(true);
+    setReviewError('');
+    setProposal(null);
+    try { setProposal(await reviewRequest('get', id)); }
+    catch (err) { setReviewError(err instanceof Error ? err.message : 'Could not load proposal'); }
+    finally { setReviewBusy(false); }
+  };
+
+  const history = useChatHistory<ChatSnapshot>(
+    `deepwiki-chat-v1:${repoInfo.type}:${getRepoUrl(repoInfo)}`, savedSnapshot,
+    savedSnapshot.turns[0]?.question.slice(0, 80) || question.slice(0, 80),
+    saved => {
+      if (!Array.isArray(saved.turns)) throw new Error('Invalid saved conversation');
+      setConversationTurns(saved.turns);
+      setQuestion(saved.draft || '');
+      setResponse(''); setCurrentQuestion(''); setConversationHistory([]);
+      setResearchStages([]); setResearchIteration(0); setResearchComplete(true);
+      setCodemapActive(false); setCodemapQuestion(''); setCodemapData(null); setCodemapError(null);
+      setDeepResearch(saved.mode === 'deep_research'); setCodemapMode(saved.mode === 'codemap'); setEditMode(saved.mode === 'edit');
+      setProposal(null); setReviewOpen(false); setReviewError(''); setHistoryOpen(false);
+      onCloseCodeViewer?.();
+      if (saved.proposalId) void openProposal(saved.proposalId);
+    },
+  );
+
+  const handleEdit = async () => {
+    if (proposal?.status === 'pending') {
+      setReviewOpen(true);
+      setReviewError('Accept or reject the pending proposal before requesting another change.');
+      return;
+    }
+    const askedQuestion = question;
+    setQuestion(''); setCurrentQuestion(askedQuestion); setResponse('');
+    setIsLoading(true); setReviewBusy(true); setReviewOpen(true); setReviewError(''); setProposal(null);
+    onCloseCodeViewer?.();
+    try {
+      const result = await reviewRequest('propose', undefined, {
+        repo_url: getRepoUrl(repoInfo), type: repoInfo.type, token: repoInfo.token,
+        provider: selectedProvider, model: isCustomSelectedModel ? customSelectedModel : selectedModel, language,
+        messages: [...buildHistoryFromTurns(), { role: 'user', content: askedQuestion, mode: 'normal' }],
+      });
+      setProposal(result);
+      setConversationTurns(prev => [...prev, { kind: 'chat', question: askedQuestion,
+        response: result.summary + '\n\nChanges are proposed only. Review the diff and choose Accept or Reject.',
+        mode: 'normal', proposalId: result.id }]);
+      setCurrentQuestion('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not prepare changes';
+      setReviewError(message); commitTurn(askedQuestion, message, 'normal');
+    } finally { setIsLoading(false); setReviewBusy(false); }
+  };
+
+  const decideProposal = async (action: 'accept' | 'reject') => {
+    if (!proposal) return;
+    setReviewBusy(true); setReviewError('');
+    try {
+      const result = await reviewRequest(action, proposal.id);
+      setProposal(result);
+      setConversationTurns(prev => prev.map(turn => turn.kind === 'chat' && turn.proposalId === result.id
+        ? { ...turn, response: result.summary + `\n\nProposal ${result.status}.` } : turn));
+    } catch (err) { setReviewError(err instanceof Error ? err.message : 'Review failed'); }
+    finally { setReviewBusy(false); }
+  };
 
   // Focus input on component mount
   useEffect(() => {
@@ -233,6 +330,9 @@ const Ask: React.FC<AskProps> = ({
   }, [provider, model]);
 
   const clearConversation = () => {
+    if (isLoading || reviewBusy) return;
+    history.startNew();
+    setProposal(null); setReviewOpen(false); setReviewError('');
     setQuestion('');
     setResponse('');
     setConversationHistory([]);
@@ -683,7 +783,9 @@ const Ask: React.FC<AskProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!question.trim() || isLoading) return;
+    if (!question.trim() || isLoading || reviewBusy) return;
+
+    if (editMode) { void handleEdit(); return; }
 
     if (codemapMode) {
       handleCodemapAsk();
@@ -715,6 +817,7 @@ const Ask: React.FC<AskProps> = ({
 
   // Ask the parent to open the right-side viewer at a citation's grounded range.
   const handleCitationClick = (citation: CodemapCitation, data: CodemapData | null) => {
+    setReviewOpen(false);
     const files = data ? collectCodemapFiles(data) : [citation.file_path];
     onOpenCodeViewer?.(
       {
@@ -729,6 +832,7 @@ const Ask: React.FC<AskProps> = ({
 
   // Generate a codemap over the WebSocket NDJSON stream.
   const handleCodemapAsk = () => {
+    setReviewOpen(false);
     const askedQuestion = question;
     setIsLoading(true);
     setQuestion('');
@@ -975,7 +1079,8 @@ const Ask: React.FC<AskProps> = ({
   }, [messages.ask?.askButton, isLoading]);
 
   return (
-    <div className="relative flex flex-col min-h-full">
+    <div className="flex h-full min-h-0">
+    <div className={`relative flex flex-col min-h-0 overflow-y-auto ${reviewOpen ? 'w-1/2' : 'w-full'}`}>
       {/* Conversation log: previous turns are preserved and new results
           are appended below as their own sections. */}
       <div className="flex-1 px-4 pt-4 space-y-6">
@@ -1026,7 +1131,8 @@ const Ask: React.FC<AskProps> = ({
                   </div>
                 )}
                 <div className="p-4">
-                  <Markdown content={displayContent} />
+                  <Markdown content={displayContent} allowHtml={false} />
+                  {turn.proposalId && <button type="button" disabled={isLoading || reviewBusy} onClick={() => openProposal(turn.proposalId!)} className="mt-3 border rounded px-3 py-1 text-sm">Review changes</button>}
                 </div>
                 <div className="p-2 flex justify-between items-center border-t border-[var(--border-color)]/40">
                   {/* Stage navigation for deep research */}
@@ -1108,7 +1214,7 @@ const Ask: React.FC<AskProps> = ({
                   ref={responseRef}
                   className="p-4 max-h-[500px] overflow-y-auto"
                 >
-                  <Markdown content={response} />
+                  <Markdown content={response} allowHtml={false} />
                 </div>
 
                 {/* Research navigation and download */}
@@ -1286,9 +1392,10 @@ const Ask: React.FC<AskProps> = ({
             <button
               id="ask-clear-conversation"
               onClick={clearConversation}
+              disabled={isLoading || reviewBusy}
               className="text-xs text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 px-2 py-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
             >
-              Clear conversation
+              New chat
             </button>
           )}
         </div>
@@ -1304,12 +1411,12 @@ const Ask: React.FC<AskProps> = ({
               placeholder={messages.ask?.placeholder || 'What would you like to know about this codebase?'}
               className="block w-full rounded-md border border-[var(--border-color)] bg-[var(--input-bg)] text-[var(--foreground)] px-5 py-3.5 text-base shadow-sm focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/30 focus:outline-none transition-all"
               style={{ paddingRight: `${buttonWidth + 24}px` }}
-              disabled={isLoading}
+              disabled={isLoading || reviewBusy}
             />
             <button
               ref={buttonRef}
               type="submit"
-              disabled={isLoading || !question.trim()}
+              disabled={isLoading || reviewBusy || !question.trim()}
               className={`absolute right-3 top-1/2 transform -translate-y-1/2 px-4 py-2 rounded-md font-medium text-sm ${
                 isLoading || !question.trim()
                   ? 'bg-[var(--button-disabled-bg)] text-[var(--button-disabled-text)] cursor-not-allowed'
@@ -1332,13 +1439,15 @@ const Ask: React.FC<AskProps> = ({
           {/* Chat mode selector (Fast / Deep Research / Codemap) */}
           <div className="mt-2 flex items-center gap-2">
             {(() => {
-              const currentMode: ChatMode = codemapMode
+              const currentMode: ChatMode = editMode ? 'edit' : codemapMode
                 ? 'codemap'
                 : deepResearch
                 ? 'deep_research'
                 : 'fast';
               const current = MODES.find((m) => m.id === currentMode)!;
               const selectMode = (id: ChatMode) => {
+                setEditMode(id === 'edit');
+                if (id === 'edit') { setReviewOpen(true); onCloseCodeViewer?.(); }
                 setDeepResearch(id === 'deep_research');
                 setCodemapMode(id === 'codemap');
                 setModeMenuOpen(false);
@@ -1348,6 +1457,7 @@ const Ask: React.FC<AskProps> = ({
                   <button
                     type="button"
                     onClick={() => setModeMenuOpen((o) => !o)}
+                    disabled={isLoading || reviewBusy}
                     className={`text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors ${
                       currentMode !== 'fast'
                         ? 'bg-purple-600/15 text-purple-600 dark:text-purple-400'
@@ -1389,12 +1499,24 @@ const Ask: React.FC<AskProps> = ({
               );
             })()}
 
+            <div className="relative">
+              <button type="button" disabled={isLoading || reviewBusy} onClick={() => setHistoryOpen(!historyOpen)} aria-expanded={historyOpen} className="text-xs border rounded-md px-3 py-1.5">Chat history</button>
+              {historyOpen && <div className="absolute bottom-full left-0 mb-2 w-72 max-h-72 overflow-auto z-20 border rounded-lg bg-[var(--card-bg)] shadow-xl p-2" aria-label="Saved chats">
+                <p className="text-xs opacity-70 p-2">Saved in this browser for this repository</p>
+                <button type="button" onClick={() => { clearConversation(); setHistoryOpen(false); }} className="w-full text-left rounded p-2 hover:bg-[var(--accent-primary)]/10">+ New chat</button>
+                {history.chats.map(chat => <button key={chat.id} type="button" onClick={() => history.select(chat.id)} className="w-full text-left rounded p-2 hover:bg-[var(--accent-primary)]/10" aria-current={history.activeId === chat.id}>
+                  <span className="block text-sm truncate">{chat.title}</span><span className="block text-xs opacity-60">{new Date(chat.updated).toLocaleString()}</span>
+                </button>)}
+              </div>}
+            </div>
+
             {deepResearch && researchIteration > 0 && (
               <span className="text-xs text-purple-600 dark:text-purple-400">
                 {researchComplete ? '(complete)' : `(iteration ${researchIteration})`}
               </span>
             )}
           </div>
+          {history.error && <p role="alert" className="text-xs text-red-600 mt-2">{history.error}</p>}
         </form>
       </div>
 
@@ -1420,6 +1542,8 @@ const Ask: React.FC<AskProps> = ({
         authRequired={false}
         isAuthLoading={false}
       />
+    </div>
+    {reviewOpen && <div className="w-1/2 min-w-0 min-h-0"><ChangeReview proposal={proposal} busy={reviewBusy || isLoading} error={reviewError} onDecision={decideProposal} onClose={() => setReviewOpen(false)} /></div>}
     </div>
   );
 };

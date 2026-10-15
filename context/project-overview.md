@@ -1,5 +1,10 @@
 # Codebase Intelligence
 
+## Approved chat editing and persistent history — 2026-10-15
+
+Chat now supports user-approved code modifications through Edit code mode, alongside answers/research/codemaps. Retrieval grounds proposals in current source. Only explicit Accept writes files; Reject leaves them unchanged. Local folders are edited directly and remote repositories use their local DeepWiki clone, with no commits or pushes. Browser-local, repository-scoped conversation history persists turns and drafts. This explicitly supersedes the historical read-only scope for accepted proposals.
+
+
 ## Current direction: complete DeepWiki — 2026-10-14
 
 The user approved replacing the old Electron application with full DeepWiki and explicitly retaining Ollama. Ollama is the default for generation and embeddings. The native wiki and chat UI is now the product baseline. Existing Electron data remains on disk and is not migrated automatically. Future modifications belong in the full DeepWiki source.

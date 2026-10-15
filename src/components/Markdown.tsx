@@ -11,9 +11,10 @@ import 'katex/dist/katex.min.css';
 
 interface MarkdownProps {
   content: string;
+  allowHtml?: boolean;
 }
 
-const Markdown: React.FC<MarkdownProps> = ({ content }) => {
+const Markdown: React.FC<MarkdownProps> = ({ content, allowHtml = true }) => {
   // Define markdown components
   const MarkdownComponents: React.ComponentProps<typeof ReactMarkdown>['components'] = {
     p({ children, ...props }: { children?: React.ReactNode }) {
@@ -199,7 +200,8 @@ const Markdown: React.FC<MarkdownProps> = ({ content }) => {
     <div className="prose prose-base dark:prose-invert max-w-none px-2 py-4">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeRaw, rehypeKatex]}
+        rehypePlugins={allowHtml ? [rehypeRaw, rehypeKatex] : [rehypeKatex]}
+        skipHtml={!allowHtml}
         components={MarkdownComponents}
       >
         {content}

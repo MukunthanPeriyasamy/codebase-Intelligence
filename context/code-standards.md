@@ -1,5 +1,10 @@
 # Code Standards
 
+## Approved chat editing and persistent history — 2026-10-15
+
+Editing is permitted only through a stored proposal explicitly accepted by the user. Validate paths and exact original contents on generation and again on acceptance; model output cannot supply executable commands. Test reject/no-write, stale edits, multi-file failure recovery, API origin protection and persistence, using deterministic providers. Preserve fixture-vs-live quality distinctions. Browser histories must remain repository-scoped and never include configuration tokens.
+
+
 ## Current direction: complete DeepWiki — 2026-10-14
 
 Use the native Next.js/TypeScript and FastAPI/Python module structure. Retain the upstream MIT license and provenance. Test changes against native routes and the indexing/retrieval/chat pipeline. Windows setup uses an isolated Python runtime and npm lockfile. Python 3.12 is the verified runtime; the old Electron Python 3.14 result is not proof for this dependency stack.
