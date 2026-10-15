@@ -38,7 +38,7 @@ def ollama_server(monkeypatch):
                 content = "The input is read by load_input in source.py."
                 if "repository coding assistant preparing changes" in body["messages"][0]["content"]:
                     content = json.dumps({"summary": "Use UTF-8 when reading input.", "edits": [{
-                        "path": "source.py", "old_text": "open(path).read()", "new_text": "open(path, encoding='utf-8').read()"}]})
+                        "path": "source.py", "start_line": 2, "end_line": 2, "new_text": "    return open(path, encoding='utf-8').read()"}]})
                 self.send_json({"model": body["model"], "message": {
                     "role": "assistant", "content": content}, "done": True})
             else:
@@ -99,12 +99,15 @@ async def test_native_retrieval_to_review_to_accept(ollama_server, monkeypatch, 
     path = source / "source.py"
     original = b"def load_input(path):\n    return open(path).read()\n"
     path.write_bytes(original)
+    from tests.test_document_first import save_docs
+    save_docs(source, title="Input loading", content="Read input files using the load_input function in source.py.", files=["source.py"])
     request = ChatCompletionRequest(repo_url=str(source), type="local", provider="ollama", model="qwen3:8b",
         messages=[{"role": "user", "content": "Read input using UTF-8"}])
     proposal = await propose(request)
     assert path.read_bytes() == original
     assert "encoding='utf-8'" in proposal["files"][0]["diff"]
-    assert list((tmp_path / "data").rglob("*.pkl"))
+    assert proposal["documents"][0]["title"] == "Input loading"
+    assert not any(url == "/api/embed" for url, _ in ollama_server), "Editing must not bypass documents by indexing source"
     decide(proposal["id"], "accept")
     assert b"encoding='utf-8'" in path.read_bytes()
     assert not list((tmp_path / "data").rglob("*.pkl"))

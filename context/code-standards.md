@@ -1,5 +1,11 @@
 # Code Standards
 
+## Document-first workflow correction — 2026-10-15
+
+This supersedes earlier source-first chat/edit retrieval descriptions. Interactive Fast, Deep Research, Codemap and Edit code first retrieve relevant chunks from the repository's generated wiki in the requested language. Missing, empty, unrelated or wrong-repository documentation stops with `No document Found Generate One`, before source access or inference. Current source is cross-checked only for files referenced by those chunks. Wiki generation retains its source-based bootstrap.
+
+Edit proposals use original numbered source line ranges, validate the resulting diff without writing, and record documentation provenance. Only explicit Accept applies the stored proposal after a stale-source check; Reject leaves current files unchanged. Older proposals lacking document evidence cannot be accepted. One validation-correction attempt is permitted for local Ollama. Chat history remains browser-local and repository-scoped. See `../validation/chat-editing.md` for verification and limitations.
+
 ## Approved chat editing and persistent history — 2026-10-15
 
 Editing is permitted only through a stored proposal explicitly accepted by the user. Validate paths and exact original contents on generation and again on acceptance; model output cannot supply executable commands. Test reject/no-write, stale edits, multi-file failure recovery, API origin protection and persistence, using deterministic providers. Preserve fixture-vs-live quality distinctions. Browser histories must remain repository-scoped and never include configuration tokens.

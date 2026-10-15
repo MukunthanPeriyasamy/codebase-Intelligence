@@ -1,5 +1,11 @@
 # UI Context
 
+## Document-first workflow correction — 2026-10-15
+
+This supersedes earlier source-first chat/edit retrieval descriptions. Interactive Fast, Deep Research, Codemap and Edit code first retrieve relevant chunks from the repository's generated wiki in the requested language. Missing, empty, unrelated or wrong-repository documentation stops with `No document Found Generate One`, before source access or inference. Current source is cross-checked only for files referenced by those chunks. Wiki generation retains its source-based bootstrap.
+
+Edit proposals use original numbered source line ranges, validate the resulting diff without writing, and record documentation provenance. Only explicit Accept applies the stored proposal after a stale-source check; Reject leaves current files unchanged. Older proposals lacking document evidence cannot be accepted. One validation-correction attempt is permitted for local Ollama. Chat history remains browser-local and repository-scoped. See `../validation/chat-editing.md` for verification and limitations.
+
 ## Approved chat editing and persistent history — 2026-10-15
 
 Edit code is a response-mode option below the composer. During proposal/review, chat and the right diff panel each occupy 50% of the modal. The diff panel shows destination, file changes, status and a fixed Accept/Reject footer. Chat history sits immediately beside the mode dropdown, supports New chat and restoring prior conversations/drafts. Proposal links reopen server-authoritative review status; restoring never applies changes.

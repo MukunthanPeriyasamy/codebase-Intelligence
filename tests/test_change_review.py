@@ -20,7 +20,7 @@ def repo(tmp_path, monkeypatch):
 def proposal(repo, edits=None):
     return changes.make_proposal(repo.resolve(), changes.EditPlan(summary="Change value", edits=edits or [
         changes.Edit(path="main.py", old_text="value = 1", new_text="value = 2")
-    ]), {"main.py": "value = 1\r\n"}, str(repo.parent / "data" / "cache.pkl"))
+    ]), {"main.py": "value = 1\r\n"}, str(repo.parent / "data" / "cache.pkl"), [{"page_id": "overview", "title": "Overview", "chunk": 1, "files": ["main.py"]}])
 
 
 def test_generate_reject_and_repeated_accept_never_write(repo):
@@ -73,7 +73,7 @@ def test_not_retrieved_or_ambiguous_edits_rejected(repo):
     (repo / "hidden.py").write_text("private")
     with pytest.raises(ValueError, match="grounded"):
         proposal(repo, [changes.Edit(path="hidden.py", old_text="private", new_text="bad")])
-    with pytest.raises(ValueError, match="exactly one"):
+    with pytest.raises(ValueError, match="matched 0"):
         proposal(repo, [changes.Edit(path="main.py", old_text="missing", new_text="bad")])
 
 
@@ -94,23 +94,19 @@ def test_failed_second_write_rolls_back_first(repo, monkeypatch):
 @pytest.mark.asyncio
 async def test_retrieval_generation_proposes_without_writing(repo, monkeypatch):
     seen = {}
-    class RAG:
-        async def acall(self, query, language):
-            seen["query"] = query
-            return [SimpleNamespace(documents=[SimpleNamespace(meta_data={"file_path": "main.py"})])]
-    async def prepare(request):
-        return RAG()
+    from tests.test_document_first import save_docs
+    save_docs(repo, title="Default value", content="The default value is configured in main.py.", files=["main.py"])
     class Streamer:
         async def respond_stream(self, prompt):
             seen["prompt"] = prompt
-            yield json.dumps({"summary": "Change value", "edits": [{"path": "main.py", "old_text": "value = 1", "new_text": "value = 2"}]})
-    monkeypatch.setattr(changes, "prepare_repo_index", prepare)
+            yield json.dumps({"summary": "Change value", "edits": [{"path": "main.py", "start_line": 1, "end_line": 1, "new_text": "value = 2"}]})
     monkeypatch.setattr(changes.ChatStreamer, "create", lambda **kw: Streamer())
     monkeypatch.setattr(changes, "get_model_config", lambda *a: {"model_kwargs": {}})
     p = await changes.propose(ChatCompletionRequest(repo_url=str(repo), type="local", messages=[
         {"role": "user", "content": "Change value to 2"}]))
     assert p["status"] == "pending"
     assert "main.py" in seen["prompt"] and "value = 1" in seen["prompt"]
+    assert "Generated document: Default value" in seen["prompt"]
     assert (repo / "main.py").read_bytes() == b"value = 1\r\n"
 
 

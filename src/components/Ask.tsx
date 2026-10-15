@@ -718,6 +718,11 @@ const Ask: React.FC<AskProps> = ({
 
   // Effect to continue research when response is updated
   useEffect(() => {
+    if (deepResearch && response.trim() === 'No document Found Generate One' && !isLoading) {
+      setResearchComplete(true);
+      commitTurn(currentQuestion, response, 'deep_research', researchStages);
+      return;
+    }
     if (deepResearch && response && !isLoading && !researchComplete) {
       // Iteration 1 is the plan and is never "complete"; only apply the
       // completion heuristic from the second iteration onward.

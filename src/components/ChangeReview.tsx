@@ -6,6 +6,7 @@ export interface Proposal {
   root: string;
   status: 'pending' | 'accepted' | 'rejected';
   files: { path: string; before: string | null; after: string | null; diff: string }[];
+  documents?: { page_id: string; title: string; chunk: number; files: string[] }[];
 }
 
 export async function reviewRequest(action: string, proposal_id?: string, request?: unknown): Promise<Proposal> {
@@ -28,11 +29,12 @@ export default function ChangeReview({ proposal, busy, error, onDecision, onClos
       <button type="button" onClick={onClose} disabled={busy} aria-label="Close diff panel" className="px-2">×</button>
     </header>
     <div className="flex-1 overflow-auto p-4 space-y-4">
-      {busy && !proposal && <p role="status">Retrieving source and preparing a proposal…</p>}
+      {busy && !proposal && <p role="status">Retrieving generated documentation → cross-checking referenced code → preparing changes for your review…</p>}
       {proposal && <>
         <p className="text-sm whitespace-pre-wrap">{proposal.summary}</p>
         <p className="text-xs break-all">Apply to: <code>{proposal.root}</code></p>
         <p className="text-xs">{proposal.files.length} file(s) · {proposal.status}</p>
+        {proposal.documents && proposal.documents.length > 0 && <details className="text-xs"><summary>Documentation used ({proposal.documents.length} chunks)</summary><ul className="mt-2 space-y-1">{proposal.documents.map((doc, i) => <li key={i}>{doc.title} · chunk {doc.chunk}<br /><span className="opacity-70">{doc.files.join(', ')}</span></li>)}</ul></details>}
         {proposal.files.map(file => <section key={file.path} className="border border-[var(--border-color)] rounded overflow-hidden">
           <h3 className="text-sm font-mono p-2 break-all">{file.path} · {file.before === null ? 'New file' : file.after === null ? 'Deleted file' : 'Modified file'}</h3>
           <pre className="text-xs overflow-x-auto p-2" aria-label={`Diff for ${file.path}`}>
@@ -42,9 +44,11 @@ export default function ChangeReview({ proposal, busy, error, onDecision, onClos
       </>}
       {!proposal && !busy && !error && <p className="text-sm">Choose Edit code and describe the change you want.</p>}
       {error && <p role="alert" className="text-sm text-red-600 whitespace-pre-wrap">{error}</p>}
+      {error === 'No document Found Generate One' && <p className="text-sm">Generate a wiki for this repository first, then retry. No source lookup or changes were made.</p>}
     </div>
     <footer className="p-4 border-t border-[var(--border-color)] space-y-2">
-      {proposal?.status === 'accepted' && <p className="text-xs">Changes applied locally. Search will rebuild on the next request. Regenerate the wiki to refresh its documentation. No tests were run automatically.</p>}
+      {proposal?.status === 'accepted' && <p className="text-xs">Changes applied locally. Regenerate the wiki to refresh its documentation. No tests were run automatically.</p>}
+      {proposal?.status === 'rejected' && <p className="text-xs">Proposal rejected. Your original code was left unchanged.</p>}
       <div className="flex justify-end gap-3">
         <button type="button" disabled={busy || proposal?.status !== 'pending'} onClick={() => onDecision('reject')} className="rounded border px-4 py-2 disabled:opacity-40">Reject</button>
         <button type="button" disabled={busy || proposal?.status !== 'pending'} onClick={() => onDecision('accept')} className="rounded bg-[var(--accent-primary)] text-white px-4 py-2 disabled:opacity-40">Accept</button>

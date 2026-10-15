@@ -7,12 +7,9 @@ and Codemap remain explanation modes; Edit code creates a proposal. The root cha
 prompts describe this capability and direct modification requests to Edit code.
 The model has no write or command-execution tool.
 
-Edit code calls the existing native preparation/retrieval pipeline, then reads the
-current complete text of retrieved files. Context is bounded by an estimated
-token budget for the selected model. Replacements must match one exact source
-block; new files and explicit whole-file deletions are supported. Plans are
-limited to 12 operations, 100 KB per file, and UTF-8 text. Files too large for the
-model context are omitted; insufficient evidence fails without a proposal.
+All interactive modes now retrieve generated documentation chunks first, matching repository identity and language. Retrieval ranks chunk/title/file terms and selects up to six relevant chunks; this is lexical retrieval, not semantic embeddings. Missing or unrelated documentation returns exactly `No document Found Generate One` before source lookup or inference. Cross-checking reads only document-referenced files. Wiki generation separately retains source retrieval to bootstrap documents.
+
+Edit code supplies current source with original line numbers. Range validation resolves edits against that snapshot, preserving line endings and disambiguating repeated text. Invalid ranges fail closed; local Ollama gets one bounded corrective attempt. Validation metadata (not raw source/model output) is recorded in `edit-validation.jsonl`. Proposals record document provenance; legacy pending proposals without evidence cannot be accepted. Context and edits remain bounded to 12 operations and 100 KB per file.
 
 The UI shows chat and unified diffs in equal-width columns, with the destination
 path and fixed Accept/Reject footer. Proposals, original/replacement contents and
@@ -24,8 +21,7 @@ uses atomic per-file replacement with rollback for ordinary write failures.
 Local-origin checks and a required review header guard the new API/proxy routes.
 Chat Markdown disables raw HTML so model replies cannot embed active HTML.
 
-Acceptance invalidates the native embedding database. The next request rebuilds
-it. Existing wiki pages remain unchanged until explicit regeneration. Remote
+Acceptance invalidates the native embedding database. Source indexing rebuilds it when next invoked. Existing wiki pages remain unchanged until explicit regeneration. Remote
 repositories use their DeepWiki-managed local clone; no Git commit, push, or test
 execution is performed. Source locations are shown before approval.
 
@@ -67,7 +63,7 @@ Reproduce backend checks with the configured tokenizer cache and isolated runtim
 
 ```powershell
 $env:TIKTOKEN_CACHE_DIR = "$PWD/.local/deepwiki-tool/token-cache"
-.local/deepwiki-tool/runtime/Scripts/python.exe -m pytest tests/test_change_review.py tests/test_local_ollama_pipeline.py tests/test_config.py tests/test_extract_repo_name.py tests/unit/test_chat.py -q
+.local/deepwiki-tool/runtime/Scripts/python.exe -m pytest tests/test_document_first.py tests/test_change_review.py tests/test_local_ollama_pipeline.py tests/backend -q
 npm run build
 ```
 
@@ -92,3 +88,17 @@ not implemented. Multi-file power-loss atomicity and concurrent external editor
 locking are not claimed; proposals retain originals for manual recovery. A crash
 during application may leave a partial batch, and stale checks prevent blind
 reapplication. Generated wiki refresh is manual.
+
+## Investigation of reported failure
+
+The screenshot's error comes from exact old-text matching: the model-supplied block matched zero or multiple locations. The failed raw response was not retained, so whitespace differences, invented text and duplicate text cannot be distinguished for that particular attempt. The more fundamental workflow defect was confirmed: edits retrieved source directly instead of requiring generated documentation. Original-line ranges and mandatory documentation address these separate problems.
+
+The previous browser/provider checks used deterministic responses; they did not establish live Gemma editing quality. Ollama at 127.0.0.1:11434 was unavailable during this investigation, and this machine had no generated wiki cache for the reported repository. Live Gemma inference remains unverified.
+
+## Correction verification
+
+- 78 backend tests passed across document-first retrieval, review, local Ollama HTTP fixtures and backend wiki suites. Three additional answer/retry tests passed in the final 15-test document-first run (81 distinct backend tests in total).
+- Production Next.js build passed, including TypeScript checks; existing lint warnings remain.
+- Headless Edge regression passed: equal halves, documentation provenance, Accept/Reject, reload/history/drafts, repository isolation, missing-document disabled acceptance, and no automatic Deep Research retry after missing documentation.
+- All model responses in these tests were fixtures. No live Gemma inference was performed.
+- Real Next proxy -> FastAPI acceptance smoke test passed against an isolated fixture file; absent, foreign and mismatched origins were refused without writes.

@@ -4,7 +4,9 @@ from fastapi.websockets import WebSocketState
 
 from api.logger import get_logger
 from api.schemas import ChatCompletionRequest
-from api.services.research import RepoNotIndexedError, research_chat
+from api.services.research import RepoNotIndexedError
+from api.services.document_chat import document_chat
+from api.services.document_context import NoDocumentError, NO_DOCUMENT
 
 logger = get_logger(__name__)
 
@@ -35,11 +37,13 @@ async def handle_websocket_chat(websocket: WebSocket):
             await websocket.send_text("Error: Last message must be from the user")
             return
 
-        async for chunk in await research_chat(request):
+        async for chunk in await document_chat(request):
             await websocket.send_text(chunk)
 
     except WebSocketDisconnect:
         logger.info("WebSocket disconnected")
+    except NoDocumentError:
+        await _send_if_connect(websocket, NO_DOCUMENT)
     except RepoNotIndexedError as e:
         await _send_if_connect(websocket, str(e))
     except ValueError as e:
@@ -79,8 +83,10 @@ async def chat_completions_stream(request: ChatCompletionRequest):
         )
 
     try:
-        async_respond = await research_chat(request=request)
+        async_respond = await document_chat(request=request)
 
+    except NoDocumentError:
+        return StreamingResponse(iter([NO_DOCUMENT]), media_type="text/event-stream")
     except RepoNotIndexedError as e:
         raise HTTPException(status_code=425, detail=str(e))
     except ValueError as e:

@@ -11,6 +11,7 @@ const fs = require('node:fs');
   const proposals = new Map();
   const requests = [];
   let decisions = 0;
+  let missingDocs = false;
   const wikiPage = { id: 'overview', title: 'Overview', content: 'A sample repository.', filePaths: ['main.py'], importance: 'high', relatedPages: [] };
   await page.route('**/api/wiki_cache?*', route => route.fulfill({ json: {
     provider: 'ollama', model: 'qwen3:8b',
@@ -24,7 +25,11 @@ const fs = require('node:fs');
     const body = route.request().postDataJSON();
     if (body.action === 'propose') {
       requests.push(body.request);
-      const p = { id: String(proposals.size + 1).padStart(32, '0'), summary: 'Update the default value.', root: 'D:/sample-repository', status: 'pending', files: [{ path: 'main.py', before: 'value = 1\n', after: 'value = 2\n', diff: '--- a/main.py\n+++ b/main.py\n@@ -1 +1 @@\n-value = 1\n+value = 2\n' }] };
+      if (missingDocs) {
+        await route.fulfill({ status: 400, json: { detail: 'No document Found Generate One' } });
+        return;
+      }
+      const p = { id: String(proposals.size + 1).padStart(32, '0'), summary: 'Update the default value.', documents: [{page_id: 'overview', title: 'Overview', chunk: 1, files: ['main.py']}], root: 'D:/sample-repository', status: 'pending', files: [{ path: 'main.py', before: 'value = 1\n', after: 'value = 2\n', diff: '--- a/main.py\n+++ b/main.py\n@@ -1 +1 @@\n-value = 1\n+value = 2\n' }] };
       proposals.set(p.id, p);
       await route.fulfill({ json: p });
     } else {
@@ -35,7 +40,7 @@ const fs = require('node:fs');
   });
   await page.routeWebSocket('**/ws/chat', ws => ws.onMessage(message => {
     requests.push(JSON.parse(String(message)));
-    ws.send('The value is defined in main.py.');
+    ws.send(missingDocs ? 'No document Found Generate One' : 'The value is defined in main.py.');
     ws.close();
   }));
   const url = (repo = 'sample') => `http://127.0.0.1:3000/test/${repo}?type=local&local_path=${encodeURIComponent(`D:/fixture/${repo}`)}&provider=ollama&model=qwen3:8b`;
@@ -53,6 +58,7 @@ const fs = require('node:fs');
   await page.getByRole('button', { name: 'Accept', exact: true }).waitFor();
   await page.waitForFunction(() => !document.querySelector('aside button:last-child')?.disabled);
   assert.equal(decisions, 0);
+  await page.getByText('Documentation used (1 chunks)').waitFor();
   const aside = page.getByRole('complementary', { name: 'Proposed code changes' });
   const widths = await aside.evaluate(el => ({ right: el.parentElement.getBoundingClientRect().width, left: el.parentElement.previousElementSibling.getBoundingClientRect().width }));
   assert.ok(Math.abs(widths.left - widths.right) < 2, JSON.stringify(widths));
@@ -103,6 +109,17 @@ const fs = require('node:fs');
   await page.getByText('Saved codemap', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Previous stage', exact: true }).click();
   await page.getByText('Saved research plan').waitFor();
+  missingDocs = true;
+  await chooseMode(/Edit code Propose changes/);
+  await input().fill('Change theme colors'); await input().press('Enter');
+  await page.getByRole('alert').filter({ hasText: 'No document Found Generate One' }).waitFor();
+  assert.equal(await page.getByRole('button', {name: 'Accept', exact: true}).isDisabled(), true);
+  assert.equal(decisions, 2);
+  await chooseMode(/Deep Research/);
+  const beforeResearch = requests.length;
+  await input().fill('Explain theme colors'); await input().press('Enter');
+  await page.waitForTimeout(2500);
+  assert.equal(requests.length, beforeResearch + 1, 'Missing documentation must not auto-continue research');
   assert.deepEqual(errors, []);
   console.log('PASS: 50/50 diff, explicit accept/reject, restored proposals/draft, new/select chat, follow-up context, reload, repository isolation.');
   await browser.close();

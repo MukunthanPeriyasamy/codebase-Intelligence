@@ -16,7 +16,8 @@ repo.mkdir()
 (repo / "sample.txt").write_bytes(b"before\n")
 proposal = make_proposal(repo, EditPlan(summary="Fixture only", edits=[
     Edit(path="sample.txt", old_text="before", new_text="after")
-]), {"sample.txt": "before\n"}, str(root / "data/cache.pkl"))
+]), {"sample.txt": "before\n"}, str(root / "data/cache.pkl"),
+    [{"page_id": "sample", "title": "Sample", "chunk": 1, "files": ["sample.txt"]}])
 Path(".local/review-proxy-result.json").write_text(json.dumps(proposal))
 app = FastAPI()
 app.include_router(router)

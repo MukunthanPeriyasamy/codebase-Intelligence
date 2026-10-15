@@ -1,5 +1,11 @@
 # AI Workflow Rules
 
+## Document-first workflow correction — 2026-10-15
+
+This supersedes earlier source-first chat/edit retrieval descriptions. Interactive Fast, Deep Research, Codemap and Edit code first retrieve relevant chunks from the repository's generated wiki in the requested language. Missing, empty, unrelated or wrong-repository documentation stops with `No document Found Generate One`, before source access or inference. Current source is cross-checked only for files referenced by those chunks. Wiki generation retains its source-based bootstrap.
+
+Edit proposals use original numbered source line ranges, validate the resulting diff without writing, and record documentation provenance. Only explicit Accept applies the stored proposal after a stale-source check; Reject leaves current files unchanged. Older proposals lacking document evidence cannot be accepted. One validation-correction attempt is permitted for local Ollama. Chat history remains browser-local and repository-scoped. See `../validation/chat-editing.md` for verification and limitations.
+
 ## Approved chat editing and persistent history — 2026-10-15
 
 The user explicitly approved implementing code modification capabilities with an Accept/Reject diff review. The old prohibition on modifying analyzed repositories is superseded only for user-accepted proposals. Generation/research/chat alone must never mutate source. Keep current DeepWiki architecture and Ollama support. Document and verify review boundaries and persistent conversation behavior.

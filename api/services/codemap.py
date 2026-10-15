@@ -20,7 +20,7 @@ from api.chat import ChatStreamer, prompt_builder
 from api.config import get_model_config
 from api.logger import get_logger
 from api.prompts import CODEMAP_ENRICH_PROMPT, CODEMAP_SKELETON_PROMPT
-from api.rag import RAG
+from api.services.document_context import retrieve_documents, cross_check_sources, source_context, NoDocumentError
 from api.schemas import CodeMap, CodeMapRequest
 from api.repository import Repo
 
@@ -223,21 +223,14 @@ async def generate_codemap(request: CodeMapRequest) -> AsyncIterator[str]:
 
     # ---- Phase 1a: analyzing code (RAG retrieval) ---------------------------------
     yield _phase("analyzing", "start")
-    rag = await asyncio.to_thread(RAG, provider=request.provider, model=request.model)
-    await rag.aprepare_retriever(
-        request.repo_url,
-        request.type,
-        request.token,
-        excluded_files=request.excluded_files,
-        excluded_dirs=request.excluded_dirs,
-        included_files=request.included_files,
-        included_dirs=request.included_dirs,
-    )
-    retrieved = await rag.acall(request.question, language=request.language or "en")
-    documents = retrieved[0].documents if retrieved and retrieved[0].documents else []
-    logger.info("Codemap retrieval returned %d chunks", len(documents))
-    context_text = _format_context(documents) if documents else ""
-    yield _phase("analyzing", "done", chunk_count=len(documents))
+    try:
+        evidence = await asyncio.to_thread(retrieve_documents, request, request.question)
+        root, sources, gaps = await asyncio.to_thread(cross_check_sources, request, evidence, 50_000)
+    except (NoDocumentError, ValueError) as exc:
+        yield _event(type="error", message=str(exc))
+        return
+    context_text = evidence.context + "\n\n" + source_context(sources) + "\nSource gaps: " + "; ".join(gaps)
+    yield _phase("analyzing", "done", chunk_count=len(evidence.chunks))
 
     model_config = get_model_config(request.provider, request.model)["model_kwargs"]
 
@@ -290,7 +283,11 @@ async def generate_codemap(request: CodeMapRequest) -> AsyncIterator[str]:
 
     # Ground citation line numbers against the real source (LLM line numbers are
     # guesses; the verbatim snippet is authoritative).
-    repo_dir = (getattr(rag.db_manager, "repo_paths", None) or {}).get("save_repo_dir")
+    repo_dir = str(root)
+    for section in final.sections:
+        for step in section.steps:
+            if step.citation and step.citation.file_path not in sources:
+                step.citation = None
     if repo_dir:
         _ground_citations(final, repo_dir)
 
