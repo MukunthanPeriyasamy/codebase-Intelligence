@@ -104,6 +104,16 @@ def test_read_repo_file_tree(tmp_path, exclude_test_config):
     assert readme == "hello readme"
 
 
+def test_document_file_tree_keeps_unknown_languages_but_respects_filters(tmp_path, exclude_test_config):
+    (tmp_path / "module.customlang").write_text("procedure run(value) => value")
+    (tmp_path / "binary.customlang").write_bytes(b"\x00\xff")
+    (tmp_path / "skip.customlang").write_text("ignored")
+    entries, _ = read_repo_file_tree(str(tmp_path), excluded_files=["skip.*"])
+    assert "module.customlang" in entries
+    assert "binary.customlang" not in entries
+    assert "skip.customlang" not in entries
+
+
 def test_detect_default_branch_non_git_dir(tmp_path):
     assert detect_default_branch(str(tmp_path)) == "main"
 

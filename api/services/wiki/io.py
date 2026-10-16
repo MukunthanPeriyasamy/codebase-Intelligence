@@ -61,6 +61,8 @@ async def save_wiki_cache(
     )
     logger.info(f"Attempting to save wiki cache. Path: {cache_path}")
     try:
+        from api.services.document_schema import build_schema
+        wiki_cache.documentation_schema = build_schema(wiki_cache.generated_pages)
         await asave(wiki_cache, cache_path, encoding="utf-8")
         logger.info(f"Wiki cache successfully saved to {cache_path}")
         return True

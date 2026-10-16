@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
+import { quoteNestedRoundLabels } from '@/utils/mermaidSource';
 // We'll use dynamic import for svg-pan-zoom
 
 // Initialize mermaid with defaults - Japanese aesthetic
 mermaid.initialize({
-  startOnLoad: true,
+  startOnLoad: false,
   theme: 'neutral',
   securityLevel: 'loose',
   suppressErrorRendering: true,
-  logLevel: 'error',
+  logLevel: 'fatal',
   maxTextSize: 100000, // Increase text size limit
   htmlLabels: true,
   flowchart: {
@@ -307,7 +308,6 @@ const Mermaid: React.FC<MermaidProps> = ({ chart, className = '', zoomingEnabled
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const mermaidRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const idRef = useRef(`mermaid-${Math.random().toString(36).substring(2, 9)}`);
   const isDarkModeRef = useRef(
@@ -365,8 +365,17 @@ const Mermaid: React.FC<MermaidProps> = ({ chart, className = '', zoomingEnabled
         setError(null);
         setSvg('');
 
-        // Render the chart directly without preprocessing
-        const { svg: renderedSvg } = await mermaid.render(idRef.current, chart);
+        // Validate before rendering so malformed generated syntax never enters
+        // Mermaid's render queue. Preserve valid diagrams exactly as supplied.
+        let source = chart;
+        if (!await mermaid.parse(source, { suppressErrors: true })) {
+          source = quoteNestedRoundLabels(chart);
+          if (source === chart || !await mermaid.parse(source, { suppressErrors: true })) {
+            throw new Error('Invalid Mermaid syntax. Check node labels and quote text containing parentheses.');
+          }
+        }
+        if (!isMounted) return;
+        const { svg: renderedSvg } = await mermaid.render(idRef.current, source);
 
         if (!isMounted) return;
 
@@ -377,24 +386,12 @@ const Mermaid: React.FC<MermaidProps> = ({ chart, className = '', zoomingEnabled
 
         setSvg(processedSvg);
 
-        // Call mermaid.contentLoaded to ensure proper initialization
-        setTimeout(() => {
-          mermaid.contentLoaded();
-        }, 50);
       } catch (err) {
-        console.error('Mermaid rendering error:', err);
-
         const errorMessage = err instanceof Error ? err.message : String(err);
 
         if (isMounted) {
           setError(`Failed to render diagram: ${errorMessage}`);
 
-          if (mermaidRef.current) {
-            mermaidRef.current.innerHTML = `
-              <div class="text-red-500 dark:text-red-400 text-xs mb-1">Syntax error in diagram</div>
-              <pre class="text-xs overflow-auto p-2 bg-gray-100 dark:bg-gray-800 rounded">${chart}</pre>
-            `;
-          }
         }
       }
     };
@@ -420,13 +417,11 @@ const Mermaid: React.FC<MermaidProps> = ({ chart, className = '', zoomingEnabled
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            図表レンダリングエラー
+            Diagram could not be rendered
           </div>
         </div>
-        <div ref={mermaidRef} className="text-xs overflow-auto"></div>
-        <div className="mt-3 text-xs text-[var(--muted)] font-serif">
-          図表に構文エラーがあり、レンダリングできません。
-        </div>
+        <p role="alert" className="text-xs mb-2">{error}</p>
+        <pre className="text-xs overflow-auto p-2 rounded">{chart}</pre>
       </div>
     );
   }

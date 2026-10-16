@@ -63,8 +63,10 @@ def resolve_line_edits(plan: EditPlan, sources: dict) -> EditPlan:
         if not ranged:
             resolved.extend(edits)
             continue
-        if len(ranged) != len(edits) or name not in sources:
-            raise ValueError(f"{name}: use line ranges only for a supplied current source file")
+        if name not in sources:
+            raise ValueError(f"{name}: not present in the document-guided current source context. Do not invent this path. Regenerate function documentation or narrow the request; no changes applied")
+        if len(ranged) != len(edits):
+            raise ValueError(f"{name}: do not mix line-range edits with other edit formats")
         lines = sources[name].splitlines(keepends=True)
         end = 0
         for edit in sorted(ranged, key=lambda e: e.start_line or 0):
@@ -172,11 +174,14 @@ async def propose(request: ChatCompletionRequest):
         if tokens <= budget:
             sources[name] = content
             budget -= tokens
+        else:
+            gaps.append(f"{name}: referenced by documentation but omitted from model context budget")
     if not sources:
         raise ValueError("Documentation found, but its referenced source could not be cross-checked within the model context. Regenerate documentation or narrow the request.")
     context = ("<generated_documents>\n" + evidence.context + "\n</generated_documents>\n"
                + "<current_source>\n" + source_context(sources) + "\n</current_source>\n"
-               + "Source gaps: " + "; ".join(gaps))
+               + "Editable existing paths (exact spelling only): " + json.dumps(list(sources))
+               + "\nSource gaps: " + "; ".join(gaps))
     prompt = prompt_builder(EDIT_CODE_SYSTEM_PROMPT, request.messages[-1].content, history, context)
     streamer = ChatStreamer.create(provider=request.provider, model=request.model, model_config=model_config)
     # One bounded corrective attempt for local Ollama; never silently retry paid providers.

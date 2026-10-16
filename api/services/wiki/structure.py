@@ -32,6 +32,7 @@ def read_repo_file_tree(
         included_dirs=included_dirs,
         excluded_dirs=excluded_dirs,
         excluded_files=excluded_files,
+        all_text_files=True,
     )
 
     readme = ""

@@ -1,5 +1,17 @@
 # Progress Tracker
 
+## Multilingual documentation and schema-first retrieval — 2026-10-16
+
+The user's latest scope is language-independent, superseding Python-only function coverage. Python AST facts are supplemented by pinned bundled Tree-sitter grammars and language adapters for the configured programming languages; HTML/Vue/Svelte script blocks are parsed too. Unknown language text keeps numbered evidence and model analysis with explicit coverage gaps. No universal semantic/runtime completeness claim is made.
+
+Wiki caches now store a document-only schema: Frontend, Backend, Databases, API, Domain, Business, Application, Configuration, Tests and General, with page/file/chunk/source-range metadata. Chat builds/validates this index from cached documents, searches requested areas and documented connections, then cross-checks only their referenced source. Broader retrieval remains document-only. Answers are returned normally; modification proposals require Accept before writing and Reject preserves source. Missing documents retain the exact stop message. See `../validation/function-documentation.md`.
+
+## Function-level documentation coverage — 2026-10-15
+
+Fresh wiki generation appends source-derived reference pages, independently of top-k model retrieval. Python AST analysis inventories every parsed function/method/nested function/lambda, signatures, defaults/types, returns/yields, calls and argument expressions, candidate callers/result consumers, imports, and try/error/cleanup blocks. Numbered source continuations preserve all selected readable file lines. Other languages receive complete numbered slices and per-slice model analysis; their function coverage is explicitly unverified. Domain/business/data/application candidates are identified with their evidence limits. Runtime values and dynamic dispatch are not invented.
+
+Connected Python import/caller paths are included in documentation provenance for document-first edit retrieval. File filters are passed by keyword; source context omissions are explicit. Existing caches need Refresh Wiki. Keep Accept/Reject and no-document boundaries intact. Details and verification: `../validation/function-documentation.md`.
+
 ## Document-first workflow correction — 2026-10-15
 
 This supersedes earlier source-first chat/edit retrieval descriptions. Interactive Fast, Deep Research, Codemap and Edit code first retrieve relevant chunks from the repository's generated wiki in the requested language. Missing, empty, unrelated or wrong-repository documentation stops with `No document Found Generate One`, before source access or inference. Current source is cross-checked only for files referenced by those chunks. Wiki generation retains its source-based bootstrap.

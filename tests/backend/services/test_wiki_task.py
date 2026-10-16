@@ -216,13 +216,17 @@ _STRUCT_XML = (
 )
 
 
-async def test_run_task_end_to_end(monkeypatch):
+async def test_run_task_end_to_end(monkeypatch, tmp_path):
     monkeypatch.setattr(wt, "WIKI_TASK_TTL_SECONDS", 0)
     monkeypatch.setattr(wt, "repo_index_exist", lambda repo: True)
-    monkeypatch.setattr(wt, "Repo", _FakeRepo)
+    def isolated_repo(*args, **kwargs):
+        repo = _FakeRepo(*args, **kwargs)
+        repo.save_path = str(tmp_path)
+        return repo
+    monkeypatch.setattr(wt, "Repo", isolated_repo)
     monkeypatch.setattr(wt, "detect_default_branch", lambda p: "main")
     monkeypatch.setattr(
-        wt, "read_repo_file_tree", lambda p, *a, **k: ("README.md\nsrc/a.py", "readme")
+        wt, "read_repo_file_tree", lambda p, *a, **k: (["README.md", "src/a.py"], "readme")
     )
 
     async def fake_research(request):
@@ -249,7 +253,8 @@ async def test_run_task_end_to_end(monkeypatch):
 
     assert task.status == TaskStatus.COMPLETED
     assert task.default_branch == "main"
-    assert task.pages_total == 1 and task.pages_done == 1
+    assert task.pages_total == 2 and task.pages_done == 2  # overview + coverage report
+    assert any(p.title == "Documentation coverage and layers" for p in saved["pages"].values())
     content = saved["pages"]["page-1"].content
     assert content.startswith("<details>")
     assert "[README.md:1](https://github.com/o/r/blob/main/README.md#L1)" in content

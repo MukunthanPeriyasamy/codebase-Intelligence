@@ -16,6 +16,7 @@ class WikiPage(BaseModel):
     filePaths: list[str]
     importance: str  # Should ideally be Literal['high', 'medium', 'low']
     relatedPages: list[str]
+    referenceKind: Literal["static", "source"] | None = None
 
 
 class WikiSection(BaseModel):
@@ -53,6 +54,7 @@ class WikiCacheData(BaseModel):
     repo: RepoInfo | None = None
     provider: str | None = None
     model: str | None = None
+    documentation_schema: dict | None = None
 
 
 class WikiCacheRequest(BaseModel):

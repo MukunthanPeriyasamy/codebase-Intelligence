@@ -6,7 +6,7 @@ export interface Proposal {
   root: string;
   status: 'pending' | 'accepted' | 'rejected';
   files: { path: string; before: string | null; after: string | null; diff: string }[];
-  documents?: { page_id: string; title: string; chunk: number; files: string[] }[];
+  documents?: { page_id: string; title: string; chunk: number; files: string[]; areas?: string[] }[];
 }
 
 export async function reviewRequest(action: string, proposal_id?: string, request?: unknown): Promise<Proposal> {
@@ -34,7 +34,7 @@ export default function ChangeReview({ proposal, busy, error, onDecision, onClos
         <p className="text-sm whitespace-pre-wrap">{proposal.summary}</p>
         <p className="text-xs break-all">Apply to: <code>{proposal.root}</code></p>
         <p className="text-xs">{proposal.files.length} file(s) · {proposal.status}</p>
-        {proposal.documents && proposal.documents.length > 0 && <details className="text-xs"><summary>Documentation used ({proposal.documents.length} chunks)</summary><ul className="mt-2 space-y-1">{proposal.documents.map((doc, i) => <li key={i}>{doc.title} · chunk {doc.chunk}<br /><span className="opacity-70">{doc.files.join(', ')}</span></li>)}</ul></details>}
+        {proposal.documents && proposal.documents.length > 0 && <details className="text-xs"><summary>Documentation used ({proposal.documents.length} chunks)</summary><ul className="mt-2 space-y-1">{proposal.documents.map((doc, i) => <li key={i}>{doc.title} · chunk {doc.chunk}{doc.areas?.length ? ` · ${doc.areas.join(', ')}` : ''}<br /><span className="opacity-70">{doc.files.join(', ')}</span></li>)}</ul></details>}
         {proposal.files.map(file => <section key={file.path} className="border border-[var(--border-color)] rounded overflow-hidden">
           <h3 className="text-sm font-mono p-2 break-all">{file.path} · {file.before === null ? 'New file' : file.after === null ? 'Deleted file' : 'Modified file'}</h3>
           <pre className="text-xs overflow-x-auto p-2" aria-label={`Diff for ${file.path}`}>

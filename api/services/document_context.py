@@ -16,6 +16,7 @@ from api.repository import Repo
 from api.schemas.base import RepoRequestBase
 from api.services.source_files import safe_path, read_source
 from api.utils import deepwiki_root
+from api.services.document_schema import build_schema, route_schema
 
 NO_DOCUMENT = "No document Found Generate One"
 
@@ -48,11 +49,11 @@ class DocumentEvidence:
 
     @property
     def context(self):
-        return "\n\n".join(f"## Generated document: {c['title']} (chunk {c['chunk']})\n{c['text']}" for c in self.chunks)
+        return "\n\n".join(f"## Generated document: {c['title']} (chunk {c['chunk']}; schema areas: {', '.join(c.get('areas', ['general']))})\n{c['text']}" for c in self.chunks)
 
     @property
     def provenance(self):
-        return [{k: c[k] for k in ("page_id", "title", "chunk", "files")} for c in self.chunks]
+        return [{k: c[k] for k in ("page_id", "title", "chunk", "files", "areas") if k in c} for c in self.chunks]
 
 
 def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence:
@@ -63,7 +64,8 @@ def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence
         for cache in cache_dir.glob("deepwiki_cache_*.json"):
             if not cache.name.endswith(f"_{request.language}.json"):
                 continue
-            if cache.is_symlink() or cache.stat().st_size > 16_000_000:
+            # Function/source reference pages are larger than summary-only wikis.
+            if cache.is_symlink() or cache.stat().st_size > 128_000_000:
                 continue
             try:
                 data = json.loads(cache.read_text(encoding="utf-8"))
@@ -81,6 +83,13 @@ def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence
     if not candidates:
         raise NoDocumentError()
     pages = max(candidates, key=lambda item: item[0])[1]
+    # Build from the cached documents only, including legacy caches. No code is
+    # consulted to create the schema or select chunks.
+    schema = build_schema(pages)
+    _, routed_pages = route_schema(schema, query)
+    routed_files = {path for page_id in routed_pages for path in schema["pages"][page_id]["files"]}
+    connected_pages = {page_id for page_id, entry in schema["pages"].items()
+                       if routed_files.intersection(entry["files"])}
     chunks = []
     for page_id, page in pages.items():
         if not isinstance(page, dict) or not isinstance(page.get("content"), str) or not page["content"].strip():
@@ -89,10 +98,12 @@ def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence
         paths = page.get("filePaths")
         files = [p.replace("\\", "/").removeprefix("./") for p in (paths if isinstance(paths, list) else []) if isinstance(p, str)]
         content = page["content"]
-        for start in range(0, min(len(content), 200_000), 1600):
-            text = content[start:start + 2000]
+        entry = schema["pages"][page_id]
+        for spec in entry["chunks"]:
+            start = spec["start"]
+            text = content[start:spec["end"]]
             chunks.append(dict(page_id=str(page_id), title=title, text=text,
-                               chunk=start // 1600 + 1, files=files))
+                               chunk=start // 1600 + 1, files=files, areas=entry["areas"]))
     query_terms = set(terms(query))
     if query_terms & {"theme", "color", "colour", "colors", "colours", "palette", "styling"}:
         query_terms.update({"theme", "color", "colors", "colour", "palette", "styling", "appearance"})
@@ -104,11 +115,27 @@ def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence
                     for t in query_terms if bag[t])
         score += 2 * len(set(terms(chunk["title"])) & query_terms)
         if score > 0:
+            if chunk["page_id"] in routed_pages:
+                score *= 1.5
             ranked.append((score, chunk))
     if not ranked:
         raise NoDocumentError()
+    # Search the selected schema branches and their documented connections
+    # first. If none match, widen only within the document index.
+    scoped = [(score, chunk) for score, chunk in ranked if chunk["page_id"] in routed_pages | connected_pages]
+    if scoped:
+        ranked = scoped
     ranked.sort(key=lambda item: item[0], reverse=True)
-    return DocumentEvidence([c for _, c in ranked[:6]])
+    selected, per_file = [], Counter()
+    for _, chunk in ranked:
+        primary = chunk["files"][0] if chunk["files"] else chunk["page_id"]
+        if per_file[primary] >= 2:
+            continue
+        selected.append(chunk)
+        per_file[primary] += 1
+        if len(selected) == 6:
+            break
+    return DocumentEvidence(selected)
 
 
 def cross_check_sources(request: RepoRequestBase, evidence: DocumentEvidence, max_chars=180_000):

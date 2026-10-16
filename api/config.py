@@ -458,7 +458,8 @@ def _should_process_file(
                 break
     if not is_excluded and excluded_files:
         for excluded_file in excluded_files:
-            if file_name == excluded_file:
+            from fnmatch import fnmatch
+            if fnmatch(file_name, excluded_file):
                 is_excluded = True
                 break
     return not is_excluded
@@ -470,6 +471,7 @@ def iterate_files(
     excluded_files: list[str] | None = None,
     included_dirs: list[str] | None = None,
     included_files: list[str] | None = None,
+    all_text_files: bool = False,
 ) -> list[str]:
     """Walk ``root_dir`` and return repo-relative paths of the files worth
     processing, using the SAME rules the RAG indexer uses so the wiki-structure
@@ -507,11 +509,25 @@ def iterate_files(
     for p in Path(root_dir).rglob("*"):
         if not p.is_file():
             continue
-        if extensions and p.suffix.lower() not in extensions:
+        unknown_extension = bool(extensions and p.suffix.lower() not in extensions)
+        if unknown_extension and not all_text_files:
             continue
         if _should_process_file(
             p, use_inclusion, inc_dirs, inc_files, exc_dirs, exc_files
         ):
+            if unknown_extension:
+                # Documentation has a language-independent fallback for bounded
+                # text. Keep hidden/generated/binary files out of that fallback.
+                if any(part.startswith(".") for part in p.relative_to(root_dir).parts) or p.is_symlink():
+                    continue
+                try:
+                    if p.stat().st_size > 1_000_000:
+                        continue
+                    content = p.read_bytes().decode("utf-8-sig")
+                    if "\0" in content:
+                        continue
+                except (OSError, UnicodeError):
+                    continue
             results.append(os.path.relpath(p, root_dir).replace(os.sep, "/"))
     return results
 

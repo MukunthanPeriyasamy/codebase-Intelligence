@@ -19,6 +19,14 @@ Keep Ollama running. Open **http://127.0.0.1:3000**, enter your repository and s
 
 Setup installs frontend and backend dependencies. `npm start` starts both local servers. Backend logs are in `.local/logs/`. Press Ctrl+C to stop. `npm run build` checks the production frontend build. `npm run dev:ui` starts only the frontend.
 
+## Function and source documentation
+
+New wiki generation includes a **Function and source reference** section across languages: signatures, parameters/defaults/types, calls and passed expressions, return/yield evidence, candidate callers/result consumers, imports, errors/cleanup, and numbered implementations. Python uses its AST; other configured programming languages use pinned bundled Tree-sitter grammars. HTML/Vue/Svelte script blocks are analyzed. Long implementations continue across pages. Dynamic dispatch, runtime values and unsupported constructs remain explicitly unresolved.
+
+A document-only schema organizes Frontend, Backend, Databases, API, Domain, Business, Application, Configuration, Tests and General. Retrieval searches matching schema areas and documented connections before cross-checking referenced code. Unknown source languages retain numbered text and model analysis, with coverage marked unverified. Binary, hidden fallback files, linked paths, repository exclusions and size limits still apply. Area/layer classification is heuristic, not a proof of architecture.
+
+Use **Refresh Wiki** to regenerate existing cached documentation. On another installation, rerun backend setup to install the new pinned parser dependency. Old caches can be indexed by schema without source lookup, but gain function references only after regeneration. See `validation/function-documentation.md` for supported fixtures, limits and verification.
+
 ## Chat editing and history
 
 Choose **Edit code** below the chat input to request a code change. Generated wiki documentation is required: relevant document chunks are retrieved first, then their referenced files are cross-checked against current source. Without relevant documentation, chat returns `No document Found Generate One` and stops before reading source or calling the model. The model proposes edits using original numbered source lines, and the review panel lists the documentation used. Chat and the diff occupy equal halves of the panel. Review every file, then choose **Accept** to apply the whole proposal or **Reject** to leave files unchanged. Chat answers and model output never directly write files.

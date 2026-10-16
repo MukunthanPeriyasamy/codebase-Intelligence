@@ -317,3 +317,10 @@ websockets==17.2
     #   uvicorn
 yarl==1.25.1
     # via aiohttp
+
+# Multilingual documentation parser (bundled grammars; no runtime downloads)
+tree-sitter==0.26.0
+tree-sitter-c-sharp==0.23.5
+tree-sitter-embedded-template==0.25.0
+tree-sitter-language-pack==0.13.0
+tree-sitter-yaml==0.7.2

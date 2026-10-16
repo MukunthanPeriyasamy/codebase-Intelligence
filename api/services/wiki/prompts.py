@@ -33,10 +33,10 @@ Your task is to generate a comprehensive and accurate technical wiki page in Mar
 
 You will be given:
 1. The "[WIKI_PAGE_TOPIC]" for the page you need to create.
-2. A list of "[RELEVANT_SOURCE_FILES]" from the project that you MUST use as the sole basis for the content. You have access to the full content of these files. You MUST use AT LEAST 5 relevant source files for comprehensive coverage - if fewer are provided, search for additional related files in the codebase.
+2. A list of "[RELEVANT_SOURCE_FILES]" from the project that you MUST use as the sole basis for the content. Use only the source evidence actually supplied. Do not claim full-file access when only excerpts are supplied. Do not invent additional files or search results. Source-derived function/reference pages provide exhaustive selected-source evidence separately.
 
 CRITICAL STARTING INSTRUCTION:
-The very first thing on the page MUST be a `<details>` block listing ALL the `[RELEVANT_SOURCE_FILES]` you used to generate the content. There MUST be AT LEAST 5 source files listed - if fewer were provided, you MUST find additional related files to include.
+The very first thing on the page MUST be a `<details>` block listing ALL the `[RELEVANT_SOURCE_FILES]` you used to generate the content. List only supplied source paths, even when fewer than five are available.
 Do not provide any acknowledgements, disclaimers, apologies, or any other preface before the `<details>` block. JUST START with the `<details>` block.
 Format the block EXACTLY like the following template, reproducing it verbatim (do not add line numbers, do not convert the links to plain text, do not add any other text):
 <details>
@@ -45,7 +45,7 @@ Format the block EXACTLY like the following template, reproducing it verbatim (d
 The following files were used as context for generating this wiki page:
 
 {file_links}
-<!-- Add additional relevant files if fewer than 5 were provided -->
+<!-- Do not invent additional source files -->
 </details>
 
 Immediately after the `<details>` block, the main title of the page should be a H1 Markdown heading: `# {title}`.
@@ -56,12 +56,13 @@ Based ONLY on the content of the `[RELEVANT_SOURCE_FILES]`:
 
 2.  **Detailed Sections:** Break down "{title}" into logical sections using H2 (`##`) and H3 (`###`) Markdown headings. For each section:
     *   Explain the architecture, components, data flow, or logic relevant to the section's focus, as evidenced in the source files.
-    *   Identify key functions, classes, data structures, API endpoints, or configuration elements pertinent to that section.
+    *   Document EVERY function and method in the supplied evidence, including nested/anonymous functions: name, signature, parameters and defaults/types, received value expressions, calls and arguments passed, return/yield values and types, callers and return consumers, imports/aliases, try/error/else/finally blocks, raised errors and cleanup. Include exact numbered snippets and source ranges. Runtime values and dynamic dispatch must be marked unknown unless directly evidenced. Identify domain, business, data and application responsibilities and connections; do not invent layers that are absent. Explicitly list missing evidence and partial definitions.
 
 3.  **Mermaid Diagrams:**
     *   EXTENSIVELY use Mermaid diagrams (e.g., `flowchart TD`, `sequenceDiagram`, `classDiagram`, `erDiagram`, `graph TD`) to visually represent architectures, flows, relationships, and schemas found in the source files.
     *   Ensure diagrams are accurate and directly derived from information in the `[RELEVANT_SOURCE_FILES]`.
     *   Provide a brief explanation before or after each diagram to give context.
+    *   Quote flowchart node labels containing punctuation or parentheses: use E("LLM (Groq)") or E["LLM (Groq)"], never E(LLM (Groq)).
     *   CRITICAL: All diagrams MUST follow strict vertical orientation:
        - Use "graph TD" (top-down) directive for flow diagrams
        - NEVER use "graph LR" (left-right)
@@ -101,7 +102,7 @@ Based ONLY on the content of the `[RELEVANT_SOURCE_FILES]`:
         *   Configuration options, their types, and default values.
         *   Data model fields, types, constraints, and descriptions.
 
-5.  **Code Snippets (ENTIRELY OPTIONAL):**
+5.  **Code Snippets (REQUIRED):**
     *   Include short, relevant code snippets (e.g., Python, Java, JavaScript, SQL, JSON, YAML) directly from the `[RELEVANT_SOURCE_FILES]` to illustrate key implementation details, data structures, or configurations.
     *   Ensure snippets are well-formatted within Markdown code blocks with appropriate language identifiers.
 
@@ -115,7 +116,7 @@ Based ONLY on the content of the `[RELEVANT_SOURCE_FILES]`:
     *   The word `Sources:` MUST be placed BEFORE the opening bracket, never inside it (write `Sources: [path]()`, NOT `[Sources: path]()`).
     *   Leave the parentheses `()` EMPTY — they are resolved into real links automatically. Do not put a URL inside them.
     *   If an entire section is overwhelmingly based on one or two files, you can cite them under the section heading in addition to more specific citations within the section.
-    *   IMPORTANT: You MUST cite AT LEAST 5 different source files throughout the wiki page to ensure comprehensive coverage.
+    *   IMPORTANT: Cite only supplied evidence. Never fabricate files to meet a minimum count.
 
 7.  **Technical Accuracy:** All information must be derived SOLELY from the `[RELEVANT_SOURCE_FILES]`. Do not infer, invent, or use external knowledge about similar systems or common practices unless it's directly supported by the provided code. If information is not present in the provided files, do not include it or explicitly state its absence if crucial to the topic.
 
