@@ -150,7 +150,7 @@ async def test_document_answer_contains_docs_and_current_source(repo, monkeypatc
     class Streamer:
         async def respond_stream(self, prompt):
             captured.append(prompt)
-            yield "Current colors are red."
+            yield '{"relevant":true,"grounded":true}' if "candidate_answer" in prompt else "Current colors are red. `theme.py:1`"
     monkeypatch.setattr(document_chat.ChatStreamer, "create", lambda **kw: Streamer())
     monkeypatch.setattr(document_chat, "get_model_config", lambda *a: {"model_kwargs": {}})
     stream = await document_chat.document_chat(request(repo))

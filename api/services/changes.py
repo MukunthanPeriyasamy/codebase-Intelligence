@@ -20,6 +20,7 @@ from api.rag.pipeline import get_repo_db, count_tokens
 from api.schemas import ChatCompletionRequest
 from api.services.document_context import retrieve_documents, cross_check_sources, source_context
 from api.services.source_files import safe_path, read_source, MAX_FILE
+from api.services.developer_intent import resolve_intent, DEVELOPER_CONTRACT
 from api.utils import deepwiki_root
 
 MAX_CONTEXT = 250_000
@@ -159,14 +160,14 @@ async def propose(request: ChatCompletionRequest):
     if not request.messages or request.messages[-1].role != "user":
         raise ValueError("A user instruction is required")
     # Documentation is mandatory, before any checkout/source access or model call.
-    query = request.messages[-1].content
-    if len(query.split()) < 5 and len(request.messages) > 1:
-        query = "\n".join(m.content for m in request.messages[-5:] if m.role == "user")
+    intent = resolve_intent(request.messages)
+    query = intent.query
     evidence = await asyncio.to_thread(retrieve_documents, request, query)
     root, candidates, gaps = await asyncio.to_thread(cross_check_sources, request, evidence)
     model_config = get_model_config(request.provider, request.model)["model_kwargs"]
-    history = json.dumps([{"role": m.role, "content": m.content} for m in request.messages[-9:-1]])[-20_000:]
-    base = prompt_builder(EDIT_CODE_SYSTEM_PROMPT, request.messages[-1].content, history, evidence.context)
+    history = json.dumps([{"role": m.role, "content": m.content} for m in request.messages[-9:-1] if m.role == "user"])[-12_000:]
+    system = EDIT_CODE_SYSTEM_PROMPT + DEVELOPER_CONTRACT + "\nResolved developer intent: " + intent.contract
+    base = prompt_builder(system, request.messages[-1].content, history, evidence.context)
     budget = min(24_000, int(model_config.get("num_ctx", 32_000) * 0.65)) - count_tokens(base)
     sources = {}
     for name, content in candidates.items():
@@ -182,7 +183,7 @@ async def propose(request: ChatCompletionRequest):
                + "<current_source>\n" + source_context(sources) + "\n</current_source>\n"
                + "Editable existing paths (exact spelling only): " + json.dumps(list(sources))
                + "\nSource gaps: " + "; ".join(gaps))
-    prompt = prompt_builder(EDIT_CODE_SYSTEM_PROMPT, request.messages[-1].content, history, context)
+    prompt = prompt_builder(system, request.messages[-1].content, history, context)
     streamer = ChatStreamer.create(provider=request.provider, model=request.model, model_config=model_config)
     # One bounded corrective attempt for local Ollama; never silently retry paid providers.
     attempts = 2 if request.provider == "ollama" else 1

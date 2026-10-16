@@ -1,5 +1,11 @@
 import pytest
 
+@pytest.fixture(autouse=True)
+def isolate_document_embeddings(monkeypatch):
+    # Unit tests never contact embedding providers; hybrid ranking has its own fixture.
+    from api.services import document_context
+    monkeypatch.setattr(document_context, "semantic_scores", lambda *args: None)
+
 @pytest.fixture
 def exclude_test_config(monkeypatch):
     from api.config import configs

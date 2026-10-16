@@ -10,6 +10,7 @@ import math
 import os
 from pathlib import Path
 import re
+import logging
 from urllib.parse import urlsplit, unquote
 
 from api.repository import Repo
@@ -17,6 +18,10 @@ from api.schemas.base import RepoRequestBase
 from api.services.source_files import safe_path, read_source
 from api.utils import deepwiki_root
 from api.services.document_schema import build_schema, route_schema
+from api.services.document_vectors import semantic_scores
+from api.services.developer_intent import resolve_intent
+
+logger = logging.getLogger(__name__)
 
 NO_DOCUMENT = "No document Found Generate One"
 
@@ -57,6 +62,10 @@ class DocumentEvidence:
 
 
 def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence:
+    messages = getattr(request, "messages", None)
+    intent = resolve_intent(messages) if messages else None
+    if intent:
+        query = intent.query
     cache_dir = Path(deepwiki_root()) / "wikicache"
     candidates = []
     if cache_dir.is_dir():
@@ -103,29 +112,56 @@ def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence
             start = spec["start"]
             text = content[start:spec["end"]]
             chunks.append(dict(page_id=str(page_id), title=title, text=text,
-                               chunk=start // 1600 + 1, files=files, areas=entry["areas"]))
+                               chunk=start // 1600 + 1, files=files, areas=entry["areas"],
+                               concepts=entry["concepts"], source_ranges=entry["source_ranges"]))
     query_terms = set(terms(query))
     if query_terms & {"theme", "color", "colour", "colors", "colours", "palette", "styling"}:
         query_terms.update({"theme", "color", "colors", "colour", "palette", "styling", "appearance"})
     tokens = [Counter(terms(c["text"] + " " + c["title"] + " " + " ".join(c["files"]))) for c in chunks]
     df = Counter(t for bag in tokens for t in bag)
+    average = sum(sum(b.values()) for b in tokens) / max(1, len(tokens))
     ranked = []
     for chunk, bag in zip(chunks, tokens):
-        score = sum(math.log(1 + len(chunks) / df[t]) * (1 + math.log(bag[t]))
+        score = sum(math.log(1 + (len(chunks) - df[t] + .5) / (df[t] + .5)) *
+                    bag[t] * 2.2 / (bag[t] + 1.2 * (.25 + .75 * sum(bag.values()) / max(1, average)))
                     for t in query_terms if bag[t])
         score += 2 * len(set(terms(chunk["title"])) & query_terms)
         if score > 0:
             if chunk["page_id"] in routed_pages:
                 score *= 1.5
             ranked.append((score, chunk))
-    if not ranked:
-        raise NoDocumentError()
     # Search the selected schema branches and their documented connections
     # first. If none match, widen only within the document index.
     scoped = [(score, chunk) for score, chunk in ranked if chunk["page_id"] in routed_pages | connected_pages]
     if scoped:
         ranked = scoped
     ranked.sort(key=lambda item: item[0], reverse=True)
+    # Include semantically relevant chunks with no lexical overlap. Keep the
+    # document-only candidate window bounded for local embedding providers.
+    pool = ranked[:128]
+    seen = {(c["page_id"], c["chunk"]) for _, c in pool}
+    extras = [c for c in chunks if (c["page_id"], c["chunk"]) not in seen]
+    extras.sort(key=lambda c: (c["page_id"] in routed_pages, bool(intent and intent.concept in c["concepts"])), reverse=True)
+    pool += [(0, c) for c in extras[:max(0, 256 - len(pool))]]
+    if not pool:
+        raise NoDocumentError()
+    vectors = semantic_scores(query, [c["title"] + "\n" + ", ".join(c["concepts"]) + "\n" + c["text"] for _, c in pool])
+    semantic_order = sorted(range(len(pool)), key=lambda i: vectors[i], reverse=True) if vectors is not None else []
+    positions = {index: rank for rank, index in enumerate(semantic_order)}
+    fused = []
+    for index, (lexical, chunk) in enumerate(pool):
+        score = 1 / (60 + index + 1) if lexical > 0 else 0
+        if vectors is not None and vectors[index] >= .4:
+            score += 1 / (60 + positions[index] + 1)
+        if not score:
+            continue
+        if intent and intent.concept in chunk["concepts"]:
+            score *= 1.5
+        chunk["retrieval_score"] = round(score, 6)
+        fused.append((score, chunk))
+    ranked = sorted(fused, key=lambda item: item[0], reverse=True)
+    if not ranked:
+        raise NoDocumentError()
     selected, per_file = [], Counter()
     for _, chunk in ranked:
         primary = chunk["files"][0] if chunk["files"] else chunk["page_id"]
@@ -135,6 +171,8 @@ def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence
         per_file[primary] += 1
         if len(selected) == 6:
             break
+    logger.info("Document retrieval concept=%s mode=%s chunks=%s", intent.concept if intent else "general",
+                "hybrid" if vectors is not None else "bm25", [(c["page_id"], c["chunk"], c["retrieval_score"]) for c in selected])
     return DocumentEvidence(selected)
 
 
@@ -162,3 +200,25 @@ def cross_check_sources(request: RepoRequestBase, evidence: DocumentEvidence, ma
 def source_context(sources: dict[str, str]) -> str:
     return "\n\n".join(f"## File Path: {name}\n[lines 1-{len(text.splitlines())}]\n" +
         "\n".join(f"{i}: {line}" for i, line in enumerate(text.splitlines(), 1)) for name, text in sources.items())
+
+
+def focused_source(name, text, evidence, query, max_lines=180):
+    """Select bounded live lines only inside a document-referenced file."""
+    lines = text.splitlines()
+    wanted = set()
+    priority = set()
+    for chunk in evidence.chunks:
+        for ref in chunk.get("source_ranges", []):
+            if ref["file"] == name:
+                wanted.update(range(max(1, ref["start_line"] - 4), min(len(lines), ref["end_line"] + 4) + 1))
+    query_words = set(terms(query))
+    for n, line in enumerate(lines, 1):
+        if query_words.intersection(terms(line)):
+            priority.update(range(max(1, n - 4), min(len(lines), n + 4) + 1))
+    wanted.update(priority)
+    if len(lines) <= max_lines:
+        wanted = set(range(1, len(lines) + 1))
+    # Do not present unrelated beginning-of-file code as evidence when no range matched.
+    selected = sorted(sorted(wanted, key=lambda n: (n not in priority, n))[:max_lines])
+    return (f"## File Path: {name}\nSelected current source lines (omitted lines are not evidence):\n" +
+            "\n".join(f"{n}: {lines[n-1]}" for n in selected), set(selected))
