@@ -1,3 +1,4 @@
+import { backendBase } from '@/utils/backend';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
         (action !== 'propose' && !/^[a-f0-9]{32}$/.test(proposal_id))) {
       return NextResponse.json({ detail: 'Invalid review request' }, { status: 400 });
     }
-    const base = process.env.SERVER_BASE_URL || 'http://127.0.0.1:8001';
+    const base = backendBase();
     const suffix = action === 'propose' ? '' : `/${proposal_id}${action === 'get' ? '' : `/${action}`}`;
     const response = await fetch(`${base}/chat/changes${suffix}`, {
       method: action === 'get' ? 'GET' : 'POST',

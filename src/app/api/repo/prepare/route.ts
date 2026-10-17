@@ -1,3 +1,4 @@
+import { backendBase } from '@/utils/backend';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Proxy for the backend's repository-indexing endpoint.
@@ -9,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const TARGET_SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://127.0.0.1:8001';
+const TARGET_SERVER_BASE_URL = backendBase();
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,7 +1,8 @@
+import { backendBase } from '@/utils/backend';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Proxy for the backend wiki-task endpoints.
-const TARGET_SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://127.0.0.1:8001';
+const TARGET_SERVER_BASE_URL = backendBase();
 
 function json(text: string, status: number): NextResponse {
   return new NextResponse(text, {

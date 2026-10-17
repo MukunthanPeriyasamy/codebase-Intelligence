@@ -7,6 +7,8 @@ function load(relative) {
   const file = path.resolve(relative);
   const mod = new Module(file, module);
   mod.paths = Module._nodeModulePaths(path.dirname(file));
+  const nativeRequire = mod.require.bind(mod);
+  mod.require = name => name === "@/utils/backend" ? load("src/utils/backend.ts") : nativeRequire(name);
   mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText, file);
   return mod.exports;
 }
@@ -20,12 +22,12 @@ function load(relative) {
     const tasks = load('src/app/api/wiki/tasks/route.ts');
     const request = {nextUrl:new URL('http://localhost/api/wiki/tasks?status=active')};
     global.fetch = async url => {
-      assert.equal(url, 'http://127.0.0.1:8001/auth/status');
+      assert.equal(url, 'http://127.0.0.1:8001/api/v1/auth/status');
       return Response.json({auth_required:true});
     };
     assert.deepEqual(await (await auth.GET()).json(), {auth_required:true});
     global.fetch = async url => {
-      assert.equal(url, 'http://127.0.0.1:8001/wiki/tasks?status=active');
+      assert.equal(url, 'http://127.0.0.1:8001/api/v1/wiki/tasks?status=active');
       return Response.json([{id:'existing'}]);
     };
     assert.deepEqual(await (await tasks.GET(request)).json(), [{id:'existing'}]);

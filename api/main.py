@@ -71,6 +71,7 @@ for module in (
     codemap,
 ):
     app.include_router(module.router)
+    app.include_router(module.router, prefix="/api/v1")
 
 
 @app.get("/")

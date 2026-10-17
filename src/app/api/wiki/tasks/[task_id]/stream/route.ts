@@ -1,6 +1,7 @@
+import { backendBase } from '@/utils/backend';
 import { NextRequest, NextResponse } from 'next/server';
 
-const TARGET_SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://127.0.0.1:8001';
+const TARGET_SERVER_BASE_URL = backendBase();
 
 // GET /api/wiki/tasks/:task_id/stream -> proxy the backend SSE progress stream.
 export async function GET(

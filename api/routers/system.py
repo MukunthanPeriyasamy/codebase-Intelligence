@@ -82,3 +82,29 @@ async def get_model_config():
             ],
             defaultProvider="google",
         )
+
+
+@router.get("/ready")
+def readiness():
+    """Backend/storage readiness; does not download or invoke a model."""
+    from fastapi.responses import JSONResponse
+    from api.services.document_store import client
+    try:
+        client().heartbeat()
+        return {"status": "ready", "service": "deepwiki-api", "vector_store": "ready"}
+    except Exception:
+        logger.exception("Vector-store readiness failed")
+        return JSONResponse(status_code=503, content={"status": "unavailable", "service": "deepwiki-api",
+            "error": "ChromaDB is unavailable. Install requirements.lock in the backend runtime and check the data directory permissions."})
+
+
+@router.get("/agents")
+def agent_routes():
+    """Discover task-specific services; every route executes on FastAPI."""
+    return {"api_base": "/api/v1", "services": {
+        "documentation": {"submit": "/wiki/tasks", "progress": "/wiki/tasks/{task_id}/stream"},
+        "retrieval": {"inspect": "/documents/retrieve"},
+        "answer": {"stream": "/chat/completions/stream", "websocket": "/ws/chat"},
+        "codemap": {"stream": "/codemap/stream", "websocket": "/ws/codemap"},
+        "changes": {"propose": "/chat/changes", "decision": "/chat/changes/{proposal_id}/{action}",
+                    "requires_user_approval": True}}}

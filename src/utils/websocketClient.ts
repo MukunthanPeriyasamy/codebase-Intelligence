@@ -29,10 +29,10 @@ const getWsBase = () => {
   return (process.env.SERVER_BASE_URL || 'http://localhost:8001').replace(/^http/, 'ws');
 };
 
-const getWebSocketUrl = () => `${getWsBase()}/ws/chat`;
+const getWebSocketUrl = () => `${getWsBase()}/api/v1/ws/chat`;
 
 // HTTP base of the backend API (same host/port as the WebSocket base).
-export const getApiBaseUrl = () => getWsBase().replace(/^ws/, 'http');
+export const getApiBaseUrl = () => getWsBase().replace(/^ws/, 'http') + '/api/v1';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -166,7 +166,7 @@ export interface CodemapHandlers {
   onClose: () => void;
 }
 
-const getCodemapWebSocketUrl = () => `${getWsBase()}/ws/codemap`;
+const getCodemapWebSocketUrl = () => `${getWsBase()}/api/v1/ws/codemap`;
 
 /**
  * Opens a WebSocket to the codemap endpoint and parses the NDJSON event stream.

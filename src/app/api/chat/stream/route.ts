@@ -1,8 +1,9 @@
+import { backendBase } from '@/utils/backend';
 import { NextRequest, NextResponse } from 'next/server';
 
 // The target backend server base URL, derived from environment variable or defaulted.
 // This should match the logic in your frontend's page.tsx for consistency.
-const TARGET_SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://127.0.0.1:8001';
+const TARGET_SERVER_BASE_URL = backendBase();
 
 // This is a fallback HTTP implementation that will be used if WebSockets are not available
 // or if there's an error with the WebSocket connection

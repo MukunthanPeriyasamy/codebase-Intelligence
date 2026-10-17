@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-deepwiki.ps1",
+    "dev": "node scripts/run-services.cjs",
     "build": "next build",
-    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-deepwiki.ps1",
+    "start": "node scripts/run-services.cjs",
     "lint": "eslint src",
     "dev:ui": "next dev --turbopack --port 3000 --hostname 127.0.0.1",
-    "start:ui": "next start --hostname 127.0.0.1"
+    "start:ui": "next start --hostname 127.0.0.1",
+    "start:backend": "node scripts/run-services.cjs backend",
+    "start:frontend": "node scripts/run-services.cjs frontend"
   },
   "dependencies": {
     "mermaid": "^11.4.1",
