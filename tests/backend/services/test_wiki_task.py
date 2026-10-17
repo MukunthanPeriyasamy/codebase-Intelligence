@@ -112,6 +112,9 @@ async def test_submit_joins_active_task(monkeypatch):
 async def test_submit_serves_cache(monkeypatch):
     reg = TaskRegistry()
     monkeypatch.setattr(wt, "wiki_cache_exists", lambda **p: True)
+    async def current(task):
+        return True
+    monkeypatch.setattr(wt, "profiles_current", current)
 
     res = await reg.submit(_req(), generate_repo_wiki)
     assert res.from_cache and not res.created
@@ -217,6 +220,14 @@ _STRUCT_XML = (
 
 
 async def test_run_task_end_to_end(monkeypatch, tmp_path):
+    (tmp_path / "README.md").write_text("# Example project\n")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/a.py").write_text("def run():\n    return 1\n")
+    class Streamer:
+        async def respond_stream(self, prompt):
+            yield "# P1\n\nExplained [README.md:1]()."
+    monkeypatch.setattr(wt.ChatStreamer, "create", lambda **kw: Streamer())
+    monkeypatch.setattr(wt, "get_model_config", lambda *a: {"model_kwargs": {"num_ctx": 32000}})
     monkeypatch.setattr(wt, "WIKI_TASK_TTL_SECONDS", 0)
     monkeypatch.setattr(wt, "repo_index_exist", lambda repo: True)
     def isolated_repo(*args, **kwargs):
@@ -253,7 +264,8 @@ async def test_run_task_end_to_end(monkeypatch, tmp_path):
 
     assert task.status == TaskStatus.COMPLETED
     assert task.default_branch == "main"
-    assert task.pages_total == 2 and task.pages_done == 2  # overview + coverage report
+    assert task.pages_total >= 5 and task.pages_done == task.pages_total
+    assert task.documentation_profiles["rule_version"] == 1
     assert any(p.title == "Documentation coverage and layers" for p in saved["pages"].values())
     content = saved["pages"]["page-1"].content
     assert content.startswith("<details>")

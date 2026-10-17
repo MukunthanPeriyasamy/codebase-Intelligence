@@ -424,12 +424,13 @@ def _should_process_file(
     included_files: list[str],
     excluded_dirs: list[str],
     excluded_files: list[str],
+    root_dir: str | None = None,
 ) -> bool:
     """Decide if a file passes the include/exclude rules (moved from rag.pipeline
     so the tree listing and the RAG indexer share one implementation)."""
     if isinstance(file_path, str):
         file_path = Path(file_path)
-    file_path_parts = file_path.resolve().parts
+    file_path_parts = (file_path.relative_to(root_dir).parts if root_dir is not None else file_path.resolve().parts)
     file_name = file_path_parts[-1]
 
     if use_inclusion:
@@ -513,7 +514,7 @@ def iterate_files(
         if unknown_extension and not all_text_files:
             continue
         if _should_process_file(
-            p, use_inclusion, inc_dirs, inc_files, exc_dirs, exc_files
+            p, use_inclusion, inc_dirs, inc_files, exc_dirs, exc_files, root_dir
         ):
             if unknown_extension:
                 # Documentation has a language-independent fallback for bounded

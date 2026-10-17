@@ -55,6 +55,7 @@ class WikiCacheData(BaseModel):
     provider: str | None = None
     model: str | None = None
     documentation_schema: dict | None = None
+    documentation_profiles: dict | None = None
 
 
 class WikiCacheRequest(BaseModel):

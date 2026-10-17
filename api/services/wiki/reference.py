@@ -109,6 +109,9 @@ def build_reference_pages(root, file_tree):
         except (OSError, ValueError, UnicodeError) as exc:
             coverage.append(f"- `{path}`: skipped ({exc}).")
 
+    if not sources:
+        raise ValueError("Documentation coverage failed: zero readable source files; check filters and checkout permissions.")
+
     # Resolve only direct same-module or imported module-level function names.
     # Dynamic methods, ambiguous names and re-exports stay explicitly unresolved.
     modules = {p: p.removesuffix(".py").replace("/", ".").removesuffix(".__init__") for p in trees}
