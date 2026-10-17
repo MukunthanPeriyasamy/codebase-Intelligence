@@ -125,3 +125,4 @@ class WikiTaskSummary(BaseModel):
 
 class WikiTaskStatus(WikiTaskSummary):
     wiki_structure: WikiStructureModel | None = None
+    pipeline: list[dict] = Field(default_factory=list)

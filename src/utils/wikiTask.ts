@@ -75,12 +75,13 @@ export interface WikiTaskSummaryDto {
 
 export interface WikiTaskStatusDto extends WikiTaskSummaryDto {
   wiki_structure?: WikiTaskStructureDto | null;
+  pipeline?: { id: string; label: string; state: 'pending' | 'active' | 'completed' | 'failed'; detail: string; started_at?: number; finished_at?: number }[];
 }
 
 export interface SubscribeWikiTaskHandlers {
   onProgress?: (status: WikiTaskStatusDto) => void;
   onDone?: (status: WikiTaskStatusDto | null) => void;
-  onError?: (message: string) => void;
+  onError?: (message: string, status?: WikiTaskStatusDto) => void;
 }
 
 // Drop undefined/empty-string values so we never send them to the backend.
@@ -174,7 +175,8 @@ export function subscribeWikiTask(
     if (me && typeof me.data === 'string' && me.data) {
       const status = parse(me.data);
       es.close();
-      handlers.onError?.(status?.error || 'Wiki generation failed');
+      if (status) handlers.onProgress?.(status);
+      handlers.onError?.(status?.error || 'Wiki generation failed', status ?? undefined);
       return;
     }
     // Otherwise this is a connection-level error. EventSource auto-retries while

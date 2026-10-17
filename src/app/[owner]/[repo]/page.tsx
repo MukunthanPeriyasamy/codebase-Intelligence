@@ -7,6 +7,7 @@ import Markdown from '@/components/Markdown';
 import ModelSelectionModal from '@/components/ModelSelectionModal';
 import ThemeToggle from '@/components/theme-toggle';
 import WikiTreeView from '@/components/WikiTreeView';
+import WikiPipelineProgress from '@/components/WikiPipelineProgress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { RepoInfo } from '@/types/repoinfo';
 import getRepoUrl from '@/utils/getRepoUrl';
@@ -510,7 +511,7 @@ export default function RepoWikiPage() {
       // Otherwise follow the (new or joined) task via its SSE progress stream.
       const applyStatus = (status: WikiTaskStatusDto) => {
         setGenerationProgress(status);
-        setLoadingMessage(messageForStatus(status.status));
+        setLoadingMessage(status.pipeline?.find(stage => stage.state === 'active')?.label || messageForStatus(status.status));
         if (status.wiki_structure) {
           const structure = toWikiStructure(status.wiki_structure);
           setWikiStructure(prev => prev ?? structure);
@@ -523,16 +524,17 @@ export default function RepoWikiPage() {
         onDone: async (status) => {
           if (status) setGenerationProgress(status);
           const ok = await loadWikiFromServerCache();
+          if (status) setGenerationProgress(status);
           if (!ok) {
             setError('Wiki generation finished but its result could not be loaded.');
             setIsLoading(false);
             setLoadingMessage(undefined);
           }
         },
-        onError: async (message) => {
+        onError: async (message, status) => {
           // The task may have completed and expired (TTL) before we could read a
           // terminal event; try the cache before surfacing an error.
-          const ok = await loadWikiFromServerCache();
+          const ok = status?.status === 'failed' ? false : await loadWikiFromServerCache();
           if (ok) return;
           if (message.toLowerCase().includes('ollama') && message.toLowerCase().includes('not found')) {
             setEmbeddingError(true);
@@ -841,14 +843,9 @@ export default function RepoWikiPage() {
   const progressDone = generationProgress
     ? generationProgress.pages_done
     : (wikiStructure ? wikiStructure.pages.length - pagesInProgress.size : 0);
-  // Pages still to come, in structure order (backend generates them in order).
-  // With per-page concurrency 1 the backend only reports a single in-flight id,
-  // so we surface the remaining backlog (done count onward) to keep the old
-  // "currently processing" list showing several upcoming titles.
+  // Only show pages actually in flight, including concurrent generation.
   const processingPageIds = generationProgress
-    ? (wikiStructure
-        ? wikiStructure.pages.slice(generationProgress.pages_done).map(p => p.id)
-        : generationProgress.current_page_ids)
+    ? generationProgress.current_page_ids
     : Array.from(pagesInProgress);
 
   return (
@@ -866,6 +863,7 @@ export default function RepoWikiPage() {
       </header>
 
       <main className="flex-1 max-w-[90%] xl:max-w-[1400px] mx-auto overflow-y-auto">
+        {(generationProgress || isLoading) && <WikiPipelineProgress progress={generationProgress} />}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center p-8 bg-[var(--card-bg)] rounded-lg shadow-custom card-japanese">
             <div className="relative mb-6">

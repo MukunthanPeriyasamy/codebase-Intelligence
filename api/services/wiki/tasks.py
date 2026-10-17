@@ -54,6 +54,14 @@ from api.logger import get_logger
 
 logger = get_logger(__name__)
 
+PIPELINE = [
+    ("queued", "Queued"), ("repository", "Prepare repository and index"),
+    ("inventory", "Read repository inventory"), ("profiles", "Detect application profiles"),
+    ("references", "Extract source references"), ("structure", "Plan documentation structure"),
+    ("pages", "Generate documentation pages"), ("validate", "Validate coverage"),
+    ("save", "Save documentation and search schema"),
+]
+
 
 def _env_int(name, default: int) -> int:
     try:
@@ -89,6 +97,25 @@ class WikiTask(BaseModel):
     reference_pages: dict[str, WikiPage] = Field(default_factory=dict, exclude=True, repr=False)
     documentation_profiles: dict = Field(default_factory=dict, exclude=True, repr=False)
     incomplete_page_ids: list[str] = Field(default_factory=list, exclude=True, repr=False)
+    pipeline: list[dict] = Field(default_factory=lambda: [
+        {"id": key, "label": label, "state": "pending", "detail": ""} for key, label in PIPELINE])
+
+    def advance(self, stage: str, detail: str = "") -> None:
+        now = int(time.time() * 1000)
+        for item in self.pipeline:
+            if item["state"] == "active":
+                item.update(state="completed", finished_at=now)
+            if item["id"] == "queued" and item["state"] == "pending":
+                item.update(state="completed", finished_at=now)
+        item = next(item for item in self.pipeline if item["id"] == stage)
+        item.update(state="active", detail=detail, started_at=now)
+
+    def finish_pipeline(self, failed=False) -> None:
+        for item in self.pipeline:
+            if item["state"] == "active":
+                item.update(state="failed" if failed else "completed", finished_at=int(time.time() * 1000))
+                if failed:
+                    item["detail"] = self.error or "Generation failed"
     default_branch: str = "main"  # set by determine_structure; used for file URLs
     error: str | None = None
     submitted_at: int = Field(default_factory=lambda: int(time.time() * 1000))
@@ -125,6 +152,7 @@ class WikiTask(BaseModel):
             pages_total=self.pages_total,
             current_page_ids=self.current_page_ids,
             wiki_structure=self.wiki_structure,
+            pipeline=self.pipeline,
             error=self.error,
             submitted_at=self.submitted_at,
         )
@@ -225,6 +253,7 @@ async def profiles_current(task: WikiTask) -> bool:
     if cached is None or not cached.documentation_profiles:
         return False
     try:
+        task.advance("repository")
         repo = Repo(r.repo_url, r.type, access_token=r.token)
         files, _ = await asyncio.to_thread(read_repo_file_tree, repo.save_path,
             excluded_dirs=r.excluded_dirs, excluded_files=r.excluded_files,
@@ -254,19 +283,24 @@ async def generate_repo_wiki(task: WikiTask) -> None:
         task.wiki_structure = structure
 
         task.status = TaskStatus.GENERATING
+        task.advance("pages")
         pages = await _generate_pages(task, structure)
 
+        task.advance("validate")
         if task.documentation_profiles:
             incomplete = [pages[key].title for key in task.incomplete_page_ids if key in pages]
             if incomplete:
                 raise ValueError("Documentation incomplete; not published as a complete wiki: " + ", ".join(incomplete[:5]))
 
+        task.advance("save")
         await _save(task, pages)
+        task.finish_pipeline()
         task.status = TaskStatus.COMPLETED
         logger.info("Wiki task completed for %s", task.repo_key)
     except Exception as e:
         task.status = TaskStatus.FAILED
         task.error = str(e)
+        task.finish_pipeline(failed=True)
         logger.exception("Wiki task failed for %s", task.repo_key)
 
 
@@ -360,6 +394,7 @@ async def _determine_structure(task: WikiTask) -> WikiStructureModel:
         await asyncio.to_thread(repo.download)
 
     task.default_branch = await asyncio.to_thread(detect_default_branch, repo.save_path)
+    task.advance("inventory")
     file_tree, readme = await asyncio.to_thread(
         read_repo_file_tree,
         repo.save_path,
@@ -368,13 +403,16 @@ async def _determine_structure(task: WikiTask) -> WikiStructureModel:
         included_dirs=r.included_dirs,
         included_files=r.included_files,
     )
+    task.advance("profiles", f"Inspecting {len(file_tree)} selected files")
     report, sources = await asyncio.to_thread(inspect_repository, repo.save_path, file_tree)
     task.documentation_profiles = report
     file_tree = list(sources)
     # Fail before inference if source reference collection cannot read any files.
+    task.advance("references", f"Extracting evidence from {len(sources)} readable files")
     references = await asyncio.to_thread(build_reference_pages, repo.save_path, file_tree)
     references.extend(profile_pages(report, sources))
 
+    task.advance("structure", f"{len(references)} reference and profile pages prepared")
     prompt = build_structure_prompt(
         r.owner, r.repo, file_tree, readme, r.comprehensive, r.language
     ) + requirements_prompt(report)
