@@ -4,7 +4,16 @@ Set-Location $root
 $python = Join-Path $root '.local/deepwiki-tool/runtime/Scripts/python.exe'
 if (-not (Test-Path $python)) { throw 'Run scripts/setup-deepwiki.ps1 first.' }
 # Use the exact backend interpreter and data directory before starting expensive generation.
-& $python -c 'import sys; from api.services.document_store import client; import chromadb; db = client(); db.heartbeat(); print("ChromaDB", chromadb.__version__, "ready in", sys.executable)'
+# Send source through stdin: Windows PowerShell strips embedded quotes in native arguments.
+@'
+import sys
+import chromadb
+from api.services.document_store import client
+
+db = client()
+db.heartbeat()
+print("ChromaDB", chromadb.__version__, "ready in", sys.executable)
+'@ | & $python -
 if ($LASTEXITCODE -ne 0) { throw 'ChromaDB preflight failed. Run scripts/setup-deepwiki.ps1 to install the locked dependencies in the backend runtime, then retry.' }
 foreach ($port in @(3000,8001)) {
     if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { throw "Port $port is in use. Stop the existing service first." }
