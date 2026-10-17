@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Proxy for the backend wiki-task endpoints.
-const TARGET_SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://localhost:8001';
+const TARGET_SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://127.0.0.1:8001';
 
 function json(text: string, status: number): NextResponse {
   return new NextResponse(text, {
@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     });
     return json(await res.text(), res.status);
   } catch (error) {
-    console.error('Error in /api/wiki/tasks POST proxy:', error);
-    return json(JSON.stringify({ error: 'Failed to submit wiki task' }), 502);
+    console.warn('Error in /api/wiki/tasks POST proxy:', error);
+    return json(JSON.stringify({ error: 'Cannot reach the Python backend. Start the full application with npm start and check .local/logs/api-error.log.' }), 502);
   }
 }
 
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     const res = await fetch(`${TARGET_SERVER_BASE_URL}/wiki/tasks${qs}`);
     return json(await res.text(), res.status);
   } catch (error) {
-    console.error('Error in /api/wiki/tasks GET proxy:', error);
-    return json(JSON.stringify({ error: 'Failed to list wiki tasks' }), 502);
+    console.warn('Error in /api/wiki/tasks GET proxy:', error);
+    return json(JSON.stringify({ error: 'Cannot reach the Python backend. Start the full application with npm start and check .local/logs/api-error.log.' }), 502);
   }
 }

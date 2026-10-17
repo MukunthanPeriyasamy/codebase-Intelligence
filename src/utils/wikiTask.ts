@@ -119,7 +119,8 @@ export async function listWikiTasks(
   const qs = status ? `?status=${encodeURIComponent(status)}` : '';
   const res = await fetch(`/api/wiki/tasks${qs}`);
   if (!res.ok) {
-    throw new Error(`Failed to list wiki tasks (${res.status})`);
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Failed to list wiki tasks (${res.status})`);
   }
   return res.json();
 }

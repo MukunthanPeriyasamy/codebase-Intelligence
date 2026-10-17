@@ -253,12 +253,13 @@ export default function RepoWikiPage() {
         setIsAuthLoading(true);
         const response = await fetch('/api/auth/status');
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.error || `Authentication service unavailable (${response.status}). Please retry after starting the backend.`);
         }
         const data = await response.json();
         setAuthRequired(data.auth_required);
       } catch (err) {
-        console.error("Failed to fetch auth status:", err);
+        setError(err instanceof Error ? err.message : "Authentication service unavailable. Start the backend and reload.");
         // Assuming auth is required if fetch fails to avoid blocking UI for safety
         setAuthRequired(true);
       } finally {

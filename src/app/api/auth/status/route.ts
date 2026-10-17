@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const TARGET_SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://localhost:8001';
+const TARGET_SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'http://127.0.0.1:8001';
 
 export async function GET() {
   try {
@@ -22,10 +22,10 @@ export async function GET() {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error forwarding request to backend:', error);
+    console.warn('Backend auth request failed:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
+      { error: 'Cannot reach the Python backend. Start the full application with npm start and check .local/logs/api-error.log.' },
+      { status: 503 }
     );
   }
 }
