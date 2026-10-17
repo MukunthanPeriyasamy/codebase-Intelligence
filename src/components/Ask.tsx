@@ -103,6 +103,7 @@ interface ChatSnapshot {
 }
 
 interface AskProps {
+  documentSessionId?: string;
   repoInfo: RepoInfo;
   provider?: string;
   model?: string;
@@ -119,6 +120,7 @@ interface AskProps {
 }
 
 const Ask: React.FC<AskProps> = ({
+  documentSessionId,
   repoInfo,
   provider = '',
   model = '',
@@ -230,7 +232,8 @@ const Ask: React.FC<AskProps> = ({
     onCloseCodeViewer?.();
     try {
       const result = await reviewRequest('propose', undefined, {
-        repo_url: getRepoUrl(repoInfo), type: repoInfo.type, token: repoInfo.token,
+        repo_url: getRepoUrl(repoInfo),
+        document_session_id: documentSessionId, type: repoInfo.type, token: repoInfo.token,
         provider: selectedProvider, model: isCustomSelectedModel ? customSelectedModel : selectedModel, language,
         messages: [...buildHistoryFromTurns(), { role: 'user', content: askedQuestion, mode: 'normal' }],
       });
@@ -528,6 +531,7 @@ const Ask: React.FC<AskProps> = ({
       // Prepare the request body
       const requestBody: ChatCompletionRequest = {
         repo_url: getRepoUrl(repoInfo),
+        document_session_id: documentSessionId,
         type: repoInfo.type,
         messages: newHistory.map(msg => ({
           role: msg.role as 'user' | 'assistant',
@@ -852,6 +856,7 @@ const Ask: React.FC<AskProps> = ({
 
     const request: CodemapRequest = {
       repo_url: getRepoUrl(repoInfo),
+      document_session_id: documentSessionId,
       question: askedQuestion,
       type: repoInfo.type,
       provider: selectedProvider,
@@ -945,6 +950,7 @@ const Ask: React.FC<AskProps> = ({
       // Prepare request body
       const requestBody: ChatCompletionRequest = {
         repo_url: getRepoUrl(repoInfo),
+        document_session_id: documentSessionId,
         type: repoInfo.type,
         messages: newHistory.map(msg => ({
           role: msg.role as 'user' | 'assistant',

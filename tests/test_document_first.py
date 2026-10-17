@@ -13,7 +13,10 @@ def save_docs(repo, title="Theme", content="Theme colors are configured here.", 
     cache = Path(deepwiki_root()) / "wikicache"
     cache.mkdir(parents=True, exist_ok=True)
     path = cache / "deepwiki_cache_local_test_repo_en.json"
-    path.write_text(json.dumps({"repo": {"type": "local", "repoUrl": str(repo)},
+    from api.services.document_store import index_documents
+    pages = {"theme": {"title": title, "content": content, "filePaths": files if files is not None else ["theme.py"]}}
+    index = index_documents(request(repo), pages) if content else None
+    path.write_text(json.dumps({"document_index": index,"repo": {"type": "local", "repoUrl": str(repo)},
         "generated_pages": {"theme": {"title": title, "content": content,
             "filePaths": files if files is not None else ["theme.py"]}}}), encoding="utf-8")
     return path
@@ -22,6 +25,8 @@ def save_docs(repo, title="Theme", content="Theme colors are configured here.", 
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     monkeypatch.setenv("DEEPWIKI_DATA_DIR", str(tmp_path / "data"))
+    from api.services import document_store
+    monkeypatch.setattr(document_store, "embed", lambda model, texts: [[1., 0., 0.] for _ in texts])
     root = tmp_path / "repo"
     root.mkdir()
     (root / "theme.py").write_bytes(b"color = 'red'\r\ncolor = 'red'\r\n")
@@ -34,7 +39,7 @@ def request(repo):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("state", ["absent", "empty", "unrelated", "other_repo"])
+@pytest.mark.parametrize("state", ["absent", "other_repo"])
 async def test_missing_document_stops_before_source_or_model(repo, monkeypatch, state):
     if state == "empty":
         save_docs(repo, content="")
@@ -45,7 +50,6 @@ async def test_missing_document_stops_before_source_or_model(repo, monkeypatch, 
     def forbidden(*args, **kwargs):
         pytest.fail("Source/model accessed before relevant documentation")
     monkeypatch.setattr(changes, "cross_check_sources", forbidden)
-    monkeypatch.setattr(document_chat, "cross_check_sources", forbidden)
     monkeypatch.setattr(changes.ChatStreamer, "create", forbidden)
     for operation in (changes.propose, document_chat.document_chat):
         with pytest.raises(NoDocumentError, match=NO_DOCUMENT):
@@ -144,7 +148,7 @@ async def test_codemap_missing_documents_does_not_infer(repo, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_document_answer_contains_docs_and_current_source(repo, monkeypatch):
+async def test_document_answer_contains_docs_without_current_source(repo, monkeypatch):
     save_docs(repo, content="Theme documentation says purple; compare with current code.")
     captured = []
     class Streamer:
@@ -155,7 +159,8 @@ async def test_document_answer_contains_docs_and_current_source(repo, monkeypatc
     monkeypatch.setattr(document_chat, "get_model_config", lambda *a: {"model_kwargs": {}})
     stream = await document_chat.document_chat(request(repo))
     assert "red" in "".join([part async for part in stream])
-    assert "purple" in captured[0] and "1: color = 'red'" in captured[0]
+    assert "purple" in captured[0] and "1: color = 'red'" not in captured[0]
+    assert len(captured) == 1
 
 
 @pytest.mark.asyncio

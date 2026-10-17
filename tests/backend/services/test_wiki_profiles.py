@@ -80,7 +80,7 @@ async def test_cached_profile_invalidates_after_source_changes(tmp_path, monkeyp
     paths = write(tmp_path, {"main.py": "def run():\n    return 1\n"})
     report, _ = inspect_repository(tmp_path, paths)
     async def cached(*args):
-        return SimpleNamespace(documentation_profiles=report)
+        return SimpleNamespace(documentation_profiles=report, document_index={"status":"ready", "embedding_model":"nomic-embed-text"})
     monkeypatch.setattr(tasks, "read_wiki_cache", cached)
     monkeypatch.setattr(tasks, "Repo", lambda *a, **kw: SimpleNamespace(save_path=str(tmp_path)))
     task = tasks.WikiTask.from_wiki_request(WikiTaskRequest(owner="local", repo="sample", type="local", repo_url=str(tmp_path)))

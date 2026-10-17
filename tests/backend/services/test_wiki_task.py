@@ -13,6 +13,15 @@ from api.services.wiki.tasks import (
 
 pytestmark = pytest.mark.asyncio
 
+@pytest.fixture(autouse=True)
+def isolate_indexing(monkeypatch):
+    # These task orchestration tests isolate the vector service; integration tests use real Chroma.
+    def index(request, pages, progress):
+        for stage in ("chunking", "embedding", "vector_store"):
+            progress(stage, "test")
+        return {"status": "ready", "embedding_model": request.embedding_model}
+    monkeypatch.setattr(wt, "index_documents", index)
+
 
 def _req(**kw) -> WikiTask:
     d = dict(

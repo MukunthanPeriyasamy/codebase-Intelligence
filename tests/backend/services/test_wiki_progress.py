@@ -9,7 +9,7 @@ def task():
 def test_pipeline_retains_completed_stages_and_serializes():
     t = task()
     assert all(s["state"] == "pending" for s in t.to_status().pipeline)
-    for stage in ["repository", "inventory", "profiles", "references", "structure", "pages", "validate", "save"]:
+    for stage in ["repository", "inventory", "profiles", "references", "structure", "pages", "validate", "chunking", "embedding", "vector_store", "save"]:
         t.advance(stage)
     assert t.pipeline[-1]["state"] == "active"
     assert all(s["state"] == "completed" for s in t.pipeline[:-1])

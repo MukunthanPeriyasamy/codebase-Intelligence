@@ -93,6 +93,7 @@ export default function Home() {
           setModel(config.model || '');
           setIsCustomModel(config.isCustomModel || false);
           setCustomModel(config.customModel || '');
+          setEmbeddingModel(config.embeddingModel || 'nomic-embed-text');
           setSelectedPlatform(config.selectedPlatform || 'github');
           setExcludedDirs(config.excludedDirs || '');
           setExcludedFiles(config.excludedFiles || '');
@@ -126,6 +127,7 @@ export default function Home() {
   const [model, setModel] = useState<string>('');
   const [isCustomModel, setIsCustomModel] = useState<boolean>(false);
   const [customModel, setCustomModel] = useState<string>('');
+  const [embeddingModel, setEmbeddingModel] = useState('nomic-embed-text');
 
   // Wiki type state - default to comprehensive view
   const [isComprehensiveView, setIsComprehensiveView] = useState<boolean>(true);
@@ -321,6 +323,7 @@ export default function Home() {
           model,
           isCustomModel,
           customModel,
+          embeddingModel,
           selectedPlatform,
           excludedDirs,
           excludedFiles,
@@ -363,6 +366,7 @@ export default function Home() {
     // Add model parameters
     params.append('provider', provider);
     params.append('model', model);
+    params.append('embedding_model', embeddingModel.trim() || 'nomic-embed-text');
     if (isCustomModel && customModel) {
       params.append('custom_model', customModel);
     }
@@ -446,6 +450,8 @@ export default function Home() {
 
           {/* Configuration Modal */}
           <ConfigurationModal
+            embeddingModel={embeddingModel}
+            setEmbeddingModel={setEmbeddingModel}
             isOpen={isConfigModalOpen}
             onClose={() => setIsConfigModalOpen(false)}
             repositoryInput={repositoryInput}

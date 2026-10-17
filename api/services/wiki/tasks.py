@@ -46,6 +46,7 @@ from api.services.wiki.prompts import (
 from api.services.wiki.reference import build_reference_pages, attach_reference_pages
 from api.services.wiki.profiles import inspect_repository, profile_pages, requirements_prompt
 from api.services.wiki.io import read_wiki_cache
+from api.services.document_store import index_documents
 from api.chat import ChatStreamer, prompt_builder
 from api.config import get_model_config
 from api.rag import count_tokens
@@ -59,7 +60,8 @@ PIPELINE = [
     ("inventory", "Read repository inventory"), ("profiles", "Detect application profiles"),
     ("references", "Extract source references"), ("structure", "Plan documentation structure"),
     ("pages", "Generate documentation pages"), ("validate", "Validate coverage"),
-    ("save", "Save documentation and search schema"),
+    ("chunking", "Chunk generated documents"), ("embedding", "Embed documents with Ollama"),
+    ("vector_store", "Verify Chroma vector store"), ("save", "Save documentation and search schema"),
 ]
 
 
@@ -96,12 +98,17 @@ class WikiTask(BaseModel):
     wiki_structure: WikiStructureModel | None = None
     reference_pages: dict[str, WikiPage] = Field(default_factory=dict, exclude=True, repr=False)
     documentation_profiles: dict = Field(default_factory=dict, exclude=True, repr=False)
+    document_index: dict | None = Field(default=None, exclude=True, repr=False)
     incomplete_page_ids: list[str] = Field(default_factory=list, exclude=True, repr=False)
     pipeline: list[dict] = Field(default_factory=lambda: [
         {"id": key, "label": label, "state": "pending", "detail": ""} for key, label in PIPELINE])
 
     def advance(self, stage: str, detail: str = "") -> None:
         now = int(time.time() * 1000)
+        current = next((item for item in self.pipeline if item['id'] == stage and item['state'] == 'active'), None)
+        if current is not None:
+            current['detail'] = detail
+            return
         for item in self.pipeline:
             if item["state"] == "active":
                 item.update(state="completed", finished_at=now)
@@ -250,10 +257,9 @@ async def profiles_current(task: WikiTask) -> bool:
     """Reuse only documentation matching this checkout, scope and detector version."""
     r = task.request
     cached = await read_wiki_cache(r.owner, r.repo, r.type, r.language)
-    if cached is None or not cached.documentation_profiles:
+    if cached is None or not cached.documentation_profiles or not cached.document_index or cached.document_index.get('status') != 'ready' or cached.document_index.get('embedding_model') != r.embedding_model:
         return False
     try:
-        task.advance("repository")
         repo = Repo(r.repo_url, r.type, access_token=r.token)
         files, _ = await asyncio.to_thread(read_repo_file_tree, repo.save_path,
             excluded_dirs=r.excluded_dirs, excluded_files=r.excluded_files,
@@ -268,6 +274,7 @@ async def generate_repo_wiki(task: WikiTask) -> None:
     """Drive one task through the state machine (SPEC.md §7)."""
     r = task.request
     try:
+        task.advance("repository")
         repo = Repo(r.repo_url, r.type, access_token=r.token)
 
         # Req 1.1: build the index only if it does not already exist.
@@ -292,6 +299,11 @@ async def generate_repo_wiki(task: WikiTask) -> None:
             if incomplete:
                 raise ValueError("Documentation incomplete; not published as a complete wiki: " + ", ".join(incomplete[:5]))
 
+        # The wiki is not ready for chat until every document chunk is persisted.
+        loop = asyncio.get_running_loop()
+        def index_progress(stage, detail):
+            loop.call_soon_threadsafe(task.advance, stage, detail)
+        task.document_index = await asyncio.to_thread(index_documents, r, pages, index_progress)
         task.advance("save")
         await _save(task, pages)
         task.finish_pipeline()
@@ -327,6 +339,7 @@ async def _save(
             provider=task.request.provider,
             model=task.request.model,
             documentation_profiles=task.documentation_profiles,
+            document_index=task.document_index,
         ),
     )
     if not saved:

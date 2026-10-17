@@ -6,7 +6,7 @@ import pytest
 from api.services.developer_intent import resolve_intent
 from api.services.answer_validation import validated_answer, INSUFFICIENT, citation_error
 from api.services.document_schema import build_schema
-from api.services.document_context import retrieve_documents, NoDocumentError
+from api.services.document_context import retrieve_legacy_documents as retrieve_documents, NoDocumentError
 from tests.test_document_first import save_docs, request, repo
 
 

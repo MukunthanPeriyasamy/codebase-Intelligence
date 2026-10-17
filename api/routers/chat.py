@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from fastapi.websockets import WebSocketState
@@ -17,6 +18,24 @@ router = APIRouter(tags=["chat"])
 async def _send_if_connect(websocket: WebSocket, msg: str):
     if websocket.application_state == WebSocketState.CONNECTED:
         await websocket.send_text(msg)
+
+
+@router.post("/documents/retrieve")
+async def inspect_document_retrieval(request: ChatCompletionRequest):
+    """Inspect RAG evidence without generating an answer or reading source files."""
+    from api.services.document_context import retrieve_documents
+    from api.services.document_store import session_index
+    if not request.messages or request.messages[-1].role != "user":
+        raise HTTPException(status_code=400, detail="A user question is required")
+    try:
+        index = await asyncio.to_thread(session_index, request)
+        scoped = request.model_copy(update={"document_session_id": index["session_id"]})
+        evidence = await asyncio.to_thread(retrieve_documents, scoped, request.messages[-1].content)
+        return {"index": index, "chunks": evidence.chunks, "source_cross_validation": False}
+    except NoDocumentError:
+        raise HTTPException(status_code=404, detail=NO_DOCUMENT)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
 
 
 @router.websocket("/ws/chat")

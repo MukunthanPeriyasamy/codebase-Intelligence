@@ -41,6 +41,7 @@ export interface ChatMessage {
 }
 
 export interface ChatCompletionRequest {
+  document_session_id?: string;
   repo_url: string;
   messages: ChatMessage[];
   token?: string;
@@ -138,6 +139,7 @@ export interface CodemapData {
 }
 
 export interface CodemapRequest {
+  document_session_id?: string;
   repo_url: string;
   question: string;
   token?: string;

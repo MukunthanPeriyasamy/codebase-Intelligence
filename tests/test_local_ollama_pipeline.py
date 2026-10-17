@@ -107,7 +107,9 @@ async def test_native_retrieval_to_review_to_accept(ollama_server, monkeypatch, 
     assert path.read_bytes() == original
     assert "encoding='utf-8'" in proposal["files"][0]["diff"]
     assert proposal["documents"][0]["title"] == "Input loading"
-    assert not any(url == "/api/embed" for url, _ in ollama_server), "Editing must not bypass documents by indexing source"
+    embedded = [text for url, body in ollama_server if url == "/api/embed" for text in body["input"]]
+    assert any("Read input files" in text for text in embedded)
+    assert not any("def load_input" in text for text in embedded), "Only documents and queries may be embedded"
     decide(proposal["id"], "accept")
     assert b"encoding='utf-8'" in path.read_bytes()
     assert not list((tmp_path / "data").rglob("*.pkl"))

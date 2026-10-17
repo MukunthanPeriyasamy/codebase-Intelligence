@@ -4,8 +4,11 @@ import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import UserSelector from './UserSelector';
 import TokenInput from './TokenInput';
+import EmbeddingModelField from './EmbeddingModelField';
 
 interface ConfigurationModalProps {
+  embeddingModel: string;
+  setEmbeddingModel: (value: string) => void;
   isOpen: boolean;
   onClose: () => void;
 
@@ -61,6 +64,7 @@ interface ConfigurationModalProps {
 }
 
 export default function ConfigurationModal({
+  embeddingModel, setEmbeddingModel,
   isOpen,
   onClose,
   repositoryInput,
@@ -125,6 +129,7 @@ export default function ConfigurationModal({
 
           {/* Modal body */}
           <div className="p-6 max-h-[70vh] overflow-y-auto">
+            <EmbeddingModelField value={embeddingModel} onChange={setEmbeddingModel} />
             {/* Repository info */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-[var(--foreground)] mb-2">

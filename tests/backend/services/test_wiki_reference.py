@@ -5,7 +5,7 @@ import pytest
 from api.schemas import ChatCompletionRequest, WikiStructureModel, WikiTaskRequest
 from api.services.wiki.reference import build_reference_pages, attach_reference_pages
 from api.services.wiki.tasks import WikiTask, _generate_page
-from api.services.document_context import retrieve_documents, cross_check_sources
+from api.services.document_context import retrieve_legacy_documents as retrieve_documents, cross_check_sources
 from api.utils import deepwiki_root
 from pathlib import Path
 

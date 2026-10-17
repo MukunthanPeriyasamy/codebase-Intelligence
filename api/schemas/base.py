@@ -13,6 +13,8 @@ class RepoRequestBase(BaseModel):
     provider: str = Field("ollama", description="Model provider")
     model: str | None = Field(None, description="Model name for the provider")
     language: str = Field("en", description="Language for content generation")
+    embedding_model: str = Field("nomic-embed-text", min_length=1, max_length=160, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:/-]*$")
+    document_session_id: str | None = Field(None, pattern=r"^[a-f0-9]{32}$", description="Generated wiki document session; never a chat-history identifier")
     excluded_dirs: list[str] = Field(
         default_factory=list,
         description="List or newline-separated string of directories to exclude from processing",

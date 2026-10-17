@@ -5,8 +5,11 @@ import {useLanguage} from '@/contexts/LanguageContext';
 import UserSelector from './UserSelector';
 import WikiTypeSelector from './WikiTypeSelector';
 import TokenInput from './TokenInput';
+import EmbeddingModelField from './EmbeddingModelField';
 
 interface ModelSelectionModalProps {
+  embeddingModel?: string;
+  setEmbeddingModel?: (value: string) => void;
   isOpen: boolean;
   onClose: () => void;
   provider: string;
@@ -17,7 +20,7 @@ interface ModelSelectionModalProps {
   setIsCustomModel: (value: boolean) => void;
   customModel: string;
   setCustomModel: (value: string) => void;
-  onApply: (token?: string) => void;
+  onApply: (token?: string, embeddingModel?: string) => void;
 
   // Wiki type options
   isComprehensiveView: boolean;
@@ -46,6 +49,7 @@ interface ModelSelectionModalProps {
 }
 
 export default function ModelSelectionModal({
+  embeddingModel = 'nomic-embed-text', setEmbeddingModel,
   isOpen,
   onClose,
   provider,
@@ -81,6 +85,7 @@ export default function ModelSelectionModal({
   // Local state for form values (to only apply changes when the user clicks "Submit")
   const [localProvider, setLocalProvider] = useState(provider);
   const [localModel, setLocalModel] = useState(model);
+  const [localEmbeddingModel, setLocalEmbeddingModel] = useState(embeddingModel);
   const [localIsCustomModel, setLocalIsCustomModel] = useState(isCustomModel);
   const [localCustomModel, setLocalCustomModel] = useState(customModel);
   const [localIsComprehensiveView, setLocalIsComprehensiveView] = useState(isComprehensiveView);
@@ -99,6 +104,7 @@ export default function ModelSelectionModal({
     if (isOpen) {
       setLocalProvider(provider);
       setLocalModel(model);
+      setLocalEmbeddingModel(embeddingModel);
       setLocalIsCustomModel(isCustomModel);
       setLocalCustomModel(customModel);
       setLocalIsComprehensiveView(isComprehensiveView);
@@ -110,10 +116,12 @@ export default function ModelSelectionModal({
       setLocalAccessToken('');
       setShowTokenSection(showTokenInput);
     }
-  }, [isOpen, provider, model, isCustomModel, customModel, isComprehensiveView, excludedDirs, excludedFiles, includedDirs, includedFiles, repositoryType, showTokenInput]);
+  }, [isOpen, provider, model, embeddingModel, isCustomModel, customModel, isComprehensiveView, excludedDirs, excludedFiles, includedDirs, includedFiles, repositoryType, showTokenInput]);
 
   // Handler for applying changes
   const handleApply = () => {
+    if (setEmbeddingModel && !localEmbeddingModel.trim()) return;
+    setEmbeddingModel?.(localEmbeddingModel.trim());
     setProvider(localProvider);
     setModel(localModel);
     setIsCustomModel(localIsCustomModel);
@@ -126,9 +134,9 @@ export default function ModelSelectionModal({
 
     // Pass token to onApply if needed
     if (showTokenInput) {
-      onApply(localAccessToken);
+      onApply(localAccessToken, localEmbeddingModel.trim());
     } else {
-      onApply();
+      onApply(undefined, localEmbeddingModel.trim());
     }
     onClose();
   };
@@ -157,6 +165,7 @@ export default function ModelSelectionModal({
 
           {/* Modal body */}
           <div className="p-6">
+            {setEmbeddingModel && <EmbeddingModelField value={localEmbeddingModel} onChange={setLocalEmbeddingModel} />}
             {/* Wiki Type Selector */}
             {
               showWikiType && <WikiTypeSelector

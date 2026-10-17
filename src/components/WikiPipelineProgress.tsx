@@ -1,6 +1,6 @@
 import type { WikiTaskStatusDto } from '@/utils/wikiTask';
 
-const pendingStages = ['Queued', 'Prepare repository and index', 'Read repository inventory', 'Detect application profiles', 'Extract source references', 'Plan documentation structure', 'Generate documentation pages', 'Validate coverage', 'Save documentation and search schema'].map((label, index) => ({ id: String(index), label, state: 'pending' as const, detail: '' }));
+const pendingStages = ['Queued', 'Prepare repository and index', 'Read repository inventory', 'Detect application profiles', 'Extract source references', 'Plan documentation structure', 'Generate documentation pages', 'Validate coverage', 'Chunk documents', 'Embed document chunks', 'Verify vector store', 'Save documentation and search schema'].map((label, index) => ({ id: String(index), label, state: 'pending' as const, detail: '' }));
 
 export default function WikiPipelineProgress({ progress: supplied }: { progress: WikiTaskStatusDto | null }) {
   const progress = supplied ?? { status: 'pending', pipeline: pendingStages, pages_total: 0, pages_done: 0, error: null };

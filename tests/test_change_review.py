@@ -94,6 +94,8 @@ def test_failed_second_write_rolls_back_first(repo, monkeypatch):
 @pytest.mark.asyncio
 async def test_retrieval_generation_proposes_without_writing(repo, monkeypatch):
     seen = {}
+    from api.services import document_store
+    monkeypatch.setattr(document_store, "embed", lambda model, texts: [[1., 0., 0.] for _ in texts])
     from tests.test_document_first import save_docs
     save_docs(repo, title="Default value", content="The default value is configured in main.py.", files=["main.py"])
     class Streamer:

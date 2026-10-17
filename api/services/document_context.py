@@ -62,6 +62,15 @@ class DocumentEvidence:
 
 
 def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence:
+    from api.services.document_store import retrieve
+    messages = getattr(request, 'messages', None)
+    if messages:
+        query = resolve_intent(messages).query
+    return retrieve(request, query)
+
+
+def retrieve_legacy_documents(request: RepoRequestBase, query: str) -> DocumentEvidence:
+    """Legacy lexical ranking retained for migration comparisons, never a fallback."""
     messages = getattr(request, "messages", None)
     intent = resolve_intent(messages) if messages else None
     if intent:

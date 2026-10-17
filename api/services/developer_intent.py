@@ -39,7 +39,7 @@ def resolve_intent(messages):
     followup = bool(re.search(r"\b(it|that|those|its|them|same)\b", lower)) or correction
     context = (previous[-1] + "\n") if previous and followup else ""
     concept = "general"
-    if re.search(r"\b(purpose|objective)\b", lower):
+    if re.search(r"\b(purpose|objective|features|capabilities)\b", lower):
         concept = "application.purpose"
     elif re.search(r"\b(colou?rs?|palette|styling|appearance)\b|\b(ui|visual)\s+theme\b", lower):
         concept = "frontend.styling.theme"
@@ -47,6 +47,8 @@ def resolve_intent(messages):
         concept = "frontend.styling.theme"
     elif re.search(r"\b(state|store|reducer)\b", lower) and not re.search(r"\b(database|transaction|sql)\b", lower):
         concept = "frontend.state"
+    elif re.search(r"\b(llm|inference)\b", lower):
+        concept = "backend.inference"
     elif re.search(r"\b(model|models)\b", lower):
         if re.search(r"\b(database|data|entity|orm|table)\b", lower):
             concept = "databases.models"

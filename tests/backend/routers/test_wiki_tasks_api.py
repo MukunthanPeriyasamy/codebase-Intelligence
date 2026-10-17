@@ -36,6 +36,7 @@ def _structure() -> WikiStructureModel:
 
 
 def _patch_stubs(monkeypatch):
+    monkeypatch.setattr(wt, "index_documents", lambda *args: {"status":"ready"})
     monkeypatch.setattr(wt, "wiki_cache_exists", lambda *p, **kwargs: False)
     monkeypatch.setattr(wt, "repo_index_exist", lambda repo: True)  # skip indexing
     monkeypatch.setattr(wt, "WIKI_TASK_TTL_SECONDS", 5)

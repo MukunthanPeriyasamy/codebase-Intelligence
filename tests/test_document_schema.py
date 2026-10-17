@@ -5,7 +5,7 @@ import pytest
 
 from api.schemas import ChatCompletionRequest, WikiCacheData, WikiPage, WikiStructureModel
 from api.services.document_schema import build_schema, route_schema
-from api.services.document_context import retrieve_documents
+from api.services.document_context import retrieve_legacy_documents as retrieve_documents
 from api.utils import deepwiki_root
 
 

@@ -173,6 +173,8 @@ export default function RepoWikiPage() {
   // Model selection state variables
   const [selectedProviderState, setSelectedProviderState] = useState(providerParam);
   const [selectedModelState, setSelectedModelState] = useState(modelParam);
+  const [embeddingModel, setEmbeddingModel] = useState(searchParams.get('embedding_model') || 'nomic-embed-text');
+  const [documentSessionId, setDocumentSessionId] = useState<string | undefined>();
   const [isCustomSelectedModelState, setIsCustomSelectedModelState] = useState(isCustomModelParam);
   const [customSelectedModelState, setCustomSelectedModelState] = useState(customModelParam);
   const [showModelOptions, setShowModelOptions] = useState(false); // Controls whether to show model options
@@ -289,6 +291,8 @@ export default function RepoWikiPage() {
       }
 
       const cachedData = await response.json(); // Returns null if no cache
+      setDocumentSessionId(cachedData?.document_index?.session_id);
+      if (cachedData?.document_index?.embedding_model) setEmbeddingModel(cachedData.document_index.embedding_model);
       if (!(cachedData && cachedData.wiki_structure && cachedData.generated_pages && Object.keys(cachedData.generated_pages).length > 0)) {
         console.log('No valid wiki data in server cache or cache is empty.');
         return false;
@@ -449,7 +453,7 @@ export default function RepoWikiPage() {
   // Submit a backend wiki-generation task and follow it to completion via SSE.
   // The browser no longer orchestrates indexing / structure / page generation;
   // it only submits, streams progress, and loads the finished wiki from cache.
-  const startGeneration = useCallback(async () => {
+  const startGeneration = useCallback(async (embeddingOverride?: string) => {
     // Tear down any previous stream before starting a new one.
     taskUnsubRef.current?.();
     taskUnsubRef.current = null;
@@ -482,6 +486,7 @@ export default function RepoWikiPage() {
     try {
       const model = isCustomSelectedModelState ? customSelectedModelState : selectedModelState;
       const result = await submitWikiTask({
+        embedding_model: embeddingOverride || embeddingModel,
         repo_url: getRepoUrl(effectiveRepoInfo),
         type: effectiveRepoInfo.type,
         owner: effectiveRepoInfo.owner,
@@ -552,6 +557,7 @@ export default function RepoWikiPage() {
     }
   }, [
     effectiveRepoInfo,
+    embeddingModel,
     currentToken,
     selectedProviderState,
     selectedModelState,
@@ -655,7 +661,7 @@ export default function RepoWikiPage() {
 
   // No longer needed as we use the modal directly
 
-  const confirmRefresh = useCallback(async (newToken?: string) => {
+  const confirmRefresh = useCallback(async (newToken?: string, newEmbeddingModel?: string) => {
     setShowModelOptions(false);
     setLoadingMessage(messages.loading?.clearingCache || 'Clearing server cache...');
     setIsLoading(true); // Show loading indicator immediately
@@ -668,6 +674,7 @@ export default function RepoWikiPage() {
         language: language,
         provider: selectedProviderState,
         model: selectedModelState,
+        embedding_model: newEmbeddingModel || embeddingModel,
         is_custom_model: isCustomSelectedModelState.toString(),
         custom_model: customSelectedModelState,
         comprehensive: isComprehensiveView.toString(),
@@ -745,8 +752,8 @@ export default function RepoWikiPage() {
 
     // The server cache was just cleared, so submit a fresh generation task
     // directly. startGeneration() resets all wiki/progress/error state itself.
-    await startGeneration();
-  }, [effectiveRepoInfo, language, messages.loading, selectedProviderState, selectedModelState, isCustomSelectedModelState, customSelectedModelState, modelExcludedDirs, modelExcludedFiles, isComprehensiveView, authCode, authRequired, startGeneration]);
+    await startGeneration(newEmbeddingModel);
+  }, [embeddingModel, effectiveRepoInfo, language, messages.loading, selectedProviderState, selectedModelState, isCustomSelectedModelState, customSelectedModelState, modelExcludedDirs, modelExcludedFiles, isComprehensiveView, authCode, authRequired, startGeneration]);
 
   // Start wiki generation when component mounts
   useEffect(() => {
@@ -1150,6 +1157,7 @@ export default function RepoWikiPage() {
           <div className="flex-1 flex min-h-0">
             <div className={`overflow-hidden pt-10 min-h-0 ${codeViewerOpen ? 'w-3/5' : 'w-full'}`}>
               <Ask
+                documentSessionId={documentSessionId}
                 key={`${effectiveRepoInfo.type}:${getRepoUrl(effectiveRepoInfo)}`}
                 repoInfo={effectiveRepoInfo}
                 provider={selectedProviderState}
@@ -1182,6 +1190,8 @@ export default function RepoWikiPage() {
       </div>
 
       <ModelSelectionModal
+        embeddingModel={embeddingModel}
+        setEmbeddingModel={setEmbeddingModel}
         isOpen={isModelSelectionModalOpen}
         onClose={() => setIsModelSelectionModalOpen(false)}
         provider={selectedProviderState}

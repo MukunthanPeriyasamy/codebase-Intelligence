@@ -17,6 +17,7 @@ export type TaskStatusValue =
   | 'failed';
 
 export interface WikiTaskSubmitRequest {
+  embedding_model?: string;
   repo_url: string;
   type: string;
   owner: string;
