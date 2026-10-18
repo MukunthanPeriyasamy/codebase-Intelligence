@@ -61,6 +61,9 @@ async function main() {
     children.push(child);
     child.on('error', error => { console.error(`[${name}] ${error.message}`); stop(1); });
     child.on('exit', (code, signal) => {
+      if (name === 'backend' && typeof code === 'number' && (code >>> 0) === 0xC0000005) {
+        console.error('[backend] Native access violation (0xC0000005). Inspect .local/logs/backend-fault.log for the crashing stack. This is not an authentication error.');
+      }
       if (!stopping) { console.error(`[${name}] exited (${code ?? signal}); stopping companion service.`); stop(code === 0 ? 0 : 1); }
     });
     return child;

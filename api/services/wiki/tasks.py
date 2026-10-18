@@ -104,6 +104,7 @@ class WikiTask(BaseModel):
         {"id": key, "label": label, "state": "pending", "detail": ""} for key, label in PIPELINE])
 
     def advance(self, stage: str, detail: str = "") -> None:
+        logger.info("Wiki pipeline %s stage=%s: %s", self.repo_key, stage, detail)
         now = int(time.time() * 1000)
         current = next((item for item in self.pipeline if item['id'] == stage and item['state'] == 'active'), None)
         if current is not None:
