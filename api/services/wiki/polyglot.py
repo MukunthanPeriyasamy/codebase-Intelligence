@@ -1,6 +1,9 @@
 """Multilingual syntax evidence. Never executes analyzed code or guesses dispatch."""
 from pathlib import Path
 import re
+import json
+import subprocess
+import sys
 
 LANGUAGES = {
     ".js": "javascript", ".mjs": "javascript", ".cjs": "javascript", ".jsx": "tsx",
@@ -35,11 +38,13 @@ IMPORTS = {"import_statement", "import_declaration", "import_header", "using_dir
 
 
 def walk(node, stop_functions=False):
-    for child in node.named_children:
+    stack = list(reversed(node.named_children))
+    while stack:
+        child = stack.pop()
         if stop_functions and child.type in FUNCTIONS:
             continue
         yield child
-        yield from walk(child, stop_functions)
+        stack.extend(reversed(child.named_children))
 
 
 def text(node):
@@ -59,12 +64,40 @@ def span(node):
 
 
 def scan(path, source):
+    """Keep native parser faults outside the API process; fail the task explicitly."""
+    if Path(path).suffix.lower() not in LANGUAGES:
+        return {"language": "unknown", "status": "unsupported", "functions": [], "imports": [], "calls": []}
+    try:
+        result = subprocess.run(
+            [sys.executable, "-X", "faulthandler", str(Path(__file__).resolve())],
+            input=json.dumps({"path": path, "source": source}),
+            capture_output=True, text=True, encoding="utf-8", timeout=60,
+            cwd=str(Path(__file__).resolve().parents[3]),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"Syntax analysis timed out for {path}; no complete documentation was published.") from exc
+    if result.returncode:
+        from api.utils import deepwiki_root
+        import uuid
+        log = Path(deepwiki_root()) / "parser-faults" / (uuid.uuid4().hex + ".log")
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.write_text(f"File: {path}\nExit: {result.returncode}\n{result.stderr}", encoding="utf-8")
+        raise RuntimeError(f"Syntax parser failed for {path} (exit {result.returncode}); backend remains available. Diagnostics: {log}")
+    try:
+        return json.loads(result.stdout)
+    except (ValueError, TypeError) as exc:
+        raise RuntimeError(f"Syntax parser returned invalid evidence for {path}") from exc
+
+
+def _scan(path, source):
     language = LANGUAGES.get(Path(path).suffix.lower())
     if not language:
         return {"language": "unknown", "status": "unsupported", "functions": [], "imports": [], "calls": []}
     try:
         from tree_sitter_language_pack import get_parser
-        root = get_parser(language).parse(source.encode("utf-8")).root_node
+        parser = get_parser(language)
+        tree = parser.parse(source.encode("utf-8"))
+        root = tree.root_node
     except (ImportError, LookupError, RuntimeError, ValueError) as exc:
         return {"language": language, "status": f"parser unavailable: {type(exc).__name__}", "functions": [], "imports": [], "calls": []}
     nodes = list(walk(root))
@@ -75,7 +108,7 @@ def scan(path, source):
             if re.search(r"type\s*=\s*['\"]application/(?:ld\+)?json", attrs, re.I):
                 continue
             suffix = ".ts" if re.search(r"lang\s*=\s*['\"](?:ts|typescript)['\"]", attrs, re.I) else ".js"
-            embedded.append(scan("embedded" + suffix, "\n" * source[:match.start(2)].count("\n") + code))
+            embedded.append(_scan("embedded" + suffix, "\n" * source[:match.start(2)].count("\n") + code))
         return {"language": language, "status": "partial: syntax errors" if root.has_error or any(s["status"] != "parsed" for s in embedded) else "parsed",
                 "scope": "script blocks; template expressions are not function-inventoried",
                 "functions": [f for s in embedded for f in s["functions"]],
@@ -157,3 +190,9 @@ def ancestors(node):
     while parent is not None:
         yield parent
         parent = parent.parent
+
+
+if __name__ == "__main__":
+    # JSON contains source as data; it is parsed, never executed.
+    payload = json.load(sys.stdin)
+    print(json.dumps(_scan(payload["path"], payload["source"]), ensure_ascii=True))

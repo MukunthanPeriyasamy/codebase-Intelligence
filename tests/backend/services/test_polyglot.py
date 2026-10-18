@@ -72,3 +72,48 @@ def test_documented_cross_file_call_candidates(tmp_path):
     page = next(p for p in pages if "worker.ts · save" in p.title)
     assert "api.ts" in page.filePaths
     assert "result = save(x)" in page.content
+
+
+def test_deep_walk_does_not_use_python_recursion():
+    from api.services.wiki.polyglot import walk
+    class Node:
+        type = 'block'
+        def __init__(self, children): self.named_children = children
+    node = Node([])
+    for _ in range(2500): node = Node([node])
+    assert len(list(walk(node))) == 2500
+
+
+def test_native_crash_is_reported_without_killing_parent(tmp_path, monkeypatch):
+    import subprocess
+    from api.services.wiki import polyglot
+    monkeypatch.setenv('DEEPWIKI_DATA_DIR', str(tmp_path))
+    monkeypatch.setattr(polyglot.subprocess, 'run', lambda *args, **kwargs:
+        subprocess.CompletedProcess(args[0], 3221225477, '', 'Windows fatal exception: access violation'))
+    with pytest.raises(RuntimeError, match='backend remains available'):
+        polyglot.scan('ui.html', '<script>function run() {}</script>')
+    log = next((tmp_path / 'parser-faults').glob('*.log'))
+    assert 'ui.html' in log.read_text() and 'access violation' in log.read_text()
+
+
+def test_parser_timeout_fails_closed(monkeypatch):
+    import subprocess
+    from api.services.wiki import polyglot
+    def timeout(*args, **kwargs): raise subprocess.TimeoutExpired(args[0], 60)
+    monkeypatch.setattr(polyglot.subprocess, 'run', timeout)
+    with pytest.raises(RuntimeError, match='timed out'):
+        polyglot.scan('ui.js', 'function run() {}')
+
+
+def test_abrupt_worker_exit_is_contained(tmp_path, monkeypatch):
+    import subprocess
+    import sys
+    from api.services.wiki import polyglot
+    monkeypatch.setenv('DEEPWIKI_DATA_DIR', str(tmp_path))
+    run = subprocess.run
+    def terminated_worker(*args, **kwargs):
+        return run([sys.executable, '-c', 'import os; os._exit(7)'], **kwargs)
+    monkeypatch.setattr(polyglot.subprocess, 'run', terminated_worker)
+    with pytest.raises(RuntimeError, match='exit 7'):
+        polyglot.scan('ui.js', 'function run() {}')
+    assert list((tmp_path / 'parser-faults').glob('*.log'))
