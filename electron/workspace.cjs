@@ -7,6 +7,13 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
 class Workspace {
   root = null;
+  async exportDocument({ workspace, text }) {
+    if (typeof text !== 'string' || !text.trim() || Buffer.byteLength(text) > 32 * 1024 * 1024) throw new Error('Document must be nonempty and smaller than 32 MB');
+    const root = await this.resolve(workspace);
+    const relative = `deepwiki-document-${Date.now()}-${require('node:crypto').randomUUID().slice(0, 8)}.md`;
+    await fs.writeFile(path.join(root, relative), text, { encoding: 'utf8', flag: 'wx' });
+    return { relative };
+  }
   async select(folder) {
     const root = await fs.realpath(folder);
     if (!(await fs.stat(root)).isDirectory()) throw new Error('Choose a directory');

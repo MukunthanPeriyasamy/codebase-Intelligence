@@ -67,3 +67,19 @@ It writes its screenshot and fixture files under `.local`.
 
 The existing document-first editing rules are unchanged. Switching to Electron does
 not fix missing document evidence or model-generated invalid edit proposals.
+
+## Document preview and workspace copies
+
+Settings > Document generation > Preview saved documentation loads the persisted
+wiki for the selected directory and language, including after restarting the app.
+Select a page to view rendered Markdown, code blocks and diagrams. Save Markdown
+to workspace exports every page into a uniquely named `deepwiki-document-*.md`
+file in the selected root without overwriting previous copies. Refresh the explorer
+to open that file. These files are reference exports; chat continues using the backend
+index, not edits made to an exported Markdown copy.
+
+The existing RAG path is generated pages -> overlapping chunks -> Ollama embeddings
+-> persistent ChromaDB -> metadata-filtered retrieval -> cited model response.
+Repository, generation session, language and embedding model isolate retrieval.
+The preview displays the index metadata recorded during generation; it is not a
+live Ollama or Chroma health probe. Regenerate documents when the source changes.

@@ -5,5 +5,6 @@ contextBridge.exposeInMainWorld('desktop', {
   read: request => ipcRenderer.invoke('workspace:read', request),
   save: request => ipcRenderer.invoke('workspace:save', request),
   create: request => ipcRenderer.invoke('workspace:create', request),
+  exportDocument: request => ipcRenderer.invoke('workspace:exportDocument', request),
   setDirty: dirty => ipcRenderer.send('workspace:dirty', dirty === true),
 });

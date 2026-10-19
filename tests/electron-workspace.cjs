@@ -21,4 +21,9 @@ test('workspace read/save, conflicts, binary files and path boundaries', async (
   await workspace.create({ workspace: root, relative: 'new.ts' });
   await assert.rejects(workspace.create({ workspace: root, relative: 'new.ts' }));
   await assert.rejects(workspace.create({ workspace: root, relative: '../../outside.ts' }), /outside/);
+  const exported = await workspace.exportDocument({ workspace: root, text: '# Documentation\n\nReference code' });
+  assert.equal(await fs.readFile(path.join(root, exported.relative), 'utf8'), '# Documentation\n\nReference code');
+  const second = await workspace.exportDocument({ workspace: root, text: '# New version' });
+  assert.notEqual(exported.relative, second.relative);
+  await assert.rejects(workspace.exportDocument({ workspace: root + 'wrong', text: 'test' }), /Workspace changed/);
 });

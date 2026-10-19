@@ -5,6 +5,7 @@ import EmbeddingModelField from '@/components/EmbeddingModelField';
 import WikiPipelineProgress from '@/components/WikiPipelineProgress';
 import { getWikiTask, submitWikiTask, type WikiTaskStatusDto } from '@/utils/wikiTask';
 import type { DesktopWorkspace } from '@/types/desktop';
+import DocumentPreview from './DocumentPreview';
 
 export type StudioConfig = { provider: string; model: string; embeddingModel: string; language: string; comprehensive: boolean; excludedDirs: string; excludedFiles: string };
 export const defaultStudioConfig: StudioConfig = { provider: 'ollama', model: 'qwen3:8b', embeddingModel: 'nomic-embed-text', language: 'en', comprehensive: true, excludedDirs: '', excludedFiles: '' };
@@ -119,6 +120,7 @@ export default function Settings({ open, onClose, workspace, config, onSave }: {
         <div className="generation-action"><span>{draft.provider} / {draft.model}<small>Embeddings: {draft.embeddingModel} · ChromaDB</small></span><button className="primary" disabled={!workspace || running} onClick={() => void generate()}><FaPlay />{running ? 'Generating…' : 'Generate documentation'}</button></div>
         {(!completed || progress) && <WikiPipelineProgress progress={progress} />}
         {completed && <p className="settings-notice">Documentation and its search index are ready.</p>}
+        {workspace && <DocumentPreview key={`${workspace.root}:${taskLanguage}`} workspace={workspace} language={taskLanguage} />}
         {workspace && (completed || progress) && <a className="settings-doc-link" href={`/local/${encodeURIComponent(workspace.name)}?${params}`} target="_blank"><FaBookOpen /> Open workspace documentation ↗</a>}
         <p className="settings-help">Generation continues on the backend when this dialog closes. Reopening shows its progress. Existing cached results may be reused.</p>
       </>}

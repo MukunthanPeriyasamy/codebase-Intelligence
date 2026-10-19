@@ -49,6 +49,18 @@ const assert = require('node:assert/strict');
     assert.equal(generation.repo_url, folder);
     assert.equal(generation.model, 'desktop-test-model');
     assert.equal(generation.embedding_model, 'nomic-embed-text');
+    await page.route('**/api/wiki_cache?**', route => route.fulfill({ json: {
+      repo: { type: 'local', repoUrl: folder }, wiki_structure: { title: 'Test documentation' },
+      generated_pages: { overview: { title: 'Overview', content: 'Document preview test content.' } },
+      document_index: { status: 'ready', chunk_count: 1, embedding_model: 'nomic-embed-text' },
+    } }));
+    await page.getByRole('button', { name: 'Preview saved documentation' }).click();
+    await page.getByText('Document preview test content.', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Save Markdown to workspace' }).click();
+    await page.getByText(/Saved deepwiki-document-/).waitFor();
+    const exported = fs.readdirSync(folder).find(name => name.startsWith('deepwiki-document-'));
+    assert.ok(exported);
+    assert.match(fs.readFileSync(path.join(folder, exported), 'utf8'), /Document preview test content/);
     await page.screenshot({ path: path.join(root, '.local/desktop-settings.png') });
     await page.getByRole('button', { name: 'Close settings', exact: true }).click();
     await page.getByRole('button', { name: /ollama\/desktop-test-model/ }).waitFor();

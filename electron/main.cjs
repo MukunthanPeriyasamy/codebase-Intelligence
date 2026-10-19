@@ -82,7 +82,7 @@ else {
       const result = await dialog.showOpenDialog(window, { properties: ['openDirectory'], title: 'Open a code workspace' });
       return result.canceled ? null : workspace.select(result.filePaths[0]);
     });
-    for (const method of ['list', 'read', 'save', 'create']) ipcMain.handle(`workspace:${method}`, (event, request) => {
+    for (const method of ['list', 'read', 'save', 'create', 'exportDocument']) ipcMain.handle(`workspace:${method}`, (event, request) => {
       trusted(event); return workspace[method](request);
     });
     ipcMain.on('workspace:dirty', (event, value) => { trusted(event); dirty = value === true; });
