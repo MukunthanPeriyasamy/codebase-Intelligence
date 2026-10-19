@@ -22,5 +22,5 @@ pytest>=7
 pytest-asyncio>=0.23
 
 tree-sitter-language-pack==0.13.0
-tree-sitter==0.26.0
+tree-sitter==0.25.2
 chromadb>=1.0,<2

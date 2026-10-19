@@ -181,3 +181,48 @@ async def test_invalid_model_output_retry_limit_and_no_writes(repo, monkeypatch,
     assert len(calls) == expected
     assert (repo / "theme.py").read_bytes() == original
     assert not (Path(deepwiki_root()) / "changes.sqlite3").exists()
+
+@pytest.mark.asyncio
+async def test_edit_traces_document_citation_to_current_code_and_requires_approval(repo, monkeypatch):
+    # The retrieved page metadata lists only README; the implementation link is in its text.
+    (repo / 'readme.md').write_text('Application overview')
+    original = (repo / 'theme.py').read_bytes()
+    save_docs(repo, content='Theme implementation is in `theme.py:1-2`. Old documentation says purple.', files=['readme.md'])
+    prompts = []
+    class Streamer:
+        async def respond_stream(self, prompt):
+            prompts.append(prompt)
+            yield json.dumps({'summary':'Update actual theme implementation', 'edits':[
+                {'path':'theme.py','start_line':1,'end_line':1,'new_text':"color = 'blue'"}]})
+    monkeypatch.setattr(changes.ChatStreamer, 'create', lambda **kw: Streamer())
+    monkeypatch.setattr(changes, 'get_model_config', lambda *args: {'model_kwargs':{}})
+    proposal = await changes.propose(request(repo))
+    assert "1: color = 'red'" in prompts[0]
+    assert proposal['files'][0]['path'] == 'theme.py'
+    assert (repo / 'theme.py').read_bytes() == original
+    changes.decide(proposal['id'], 'reject')
+    assert (repo / 'theme.py').read_bytes() == original
+    proposal = await changes.propose(request(repo))
+    changes.decide(proposal['id'], 'accept')
+    assert (repo / 'theme.py').read_bytes().startswith(b"color = 'blue'\r\n")
+
+
+def test_document_links_do_not_allow_escape(repo):
+    from api.services.document_context import DocumentEvidence
+    evidence = DocumentEvidence([{'files':[], 'text':'See `../outside.py:1` and [theme](theme.py#L1).'}])
+    _, sources, gaps = cross_check_sources(request(repo), evidence)
+    assert list(sources) == ['theme.py']
+    assert any('../outside.py' in gap for gap in gaps)
+
+@pytest.mark.asyncio
+async def test_implementation_request_rejects_readme_only_plan(repo, monkeypatch):
+    (repo / 'readme.md').write_text('Theme is red\n')
+    save_docs(repo, content='See `theme.py:1` for implementation.', files=['readme.md'])
+    class Streamer:
+        async def respond_stream(self, prompt):
+            yield json.dumps({'summary':'Update theme', 'edits':[{'path':'readme.md','start_line':1,'end_line':1,'new_text':'Theme is blue'}]})
+    monkeypatch.setattr(changes.ChatStreamer,'create',lambda **kw:Streamer())
+    monkeypatch.setattr(changes,'get_model_config',lambda *args:{'model_kwargs':{}})
+    with pytest.raises(ValueError,match='implementation changes'):
+        await changes.propose(request(repo))
+    assert (repo / 'readme.md').read_text() == 'Theme is red\n'

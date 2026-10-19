@@ -406,7 +406,7 @@ tqdm==4.70.1
     #   chromadb
     #   google-generativeai
     #   huggingface-hub
-tree-sitter==0.26.0
+tree-sitter==0.25.2
     # via
     #   -r requirements.txt
     #   tree-sitter-language-pack

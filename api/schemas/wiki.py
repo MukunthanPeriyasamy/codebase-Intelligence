@@ -16,6 +16,7 @@ class WikiPage(BaseModel):
     filePaths: list[str]
     importance: str  # Should ideally be Literal['high', 'medium', 'low']
     relatedPages: list[str]
+    fileRecord: dict | None = None
     referenceKind: Literal["static", "source"] | None = None
 
 

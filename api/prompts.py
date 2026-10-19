@@ -211,6 +211,9 @@ Never edit an existing file absent from the document-guided current source conte
 To add a requested new text file use action create and complete new_text; omit line ranges.
 To delete a file only when explicitly requested use action delete, start_line=1, end_line=the last line, and empty new_text.
 Use repository-relative forward-slash paths, never absolute paths or .git metadata.
+The path field must exactly match an Editable existing path: use "readme.md", NEVER "readme.md:46" or a document chunk ID. Put line numbers only in start_line/end_line.
+For application behavior changes, edit the supplied implementation/configuration, not merely README examples. Identify the current provider/client, model, arguments and response handling before proposing an LLM migration; changing a model name alone may not change the provider. If the required implementation is absent, return edits: [] describing the missing evidence.
+When current source contains selected excerpts, only edit displayed lines; never infer omitted lines. The summary must explain the requested behavior, actual implementation changes and remaining checks.
 Do not insert placeholders, ellipses, or unrelated changes. If evidence is insufficient, return edits: [] and explain what is missing.
 Do not claim tests were run or changes applied. Respond in the user's language in summary.
 """

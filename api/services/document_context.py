@@ -50,7 +50,35 @@ class DocumentEvidence:
 
     @property
     def paths(self):
-        return list(dict.fromkeys(p for c in self.chunks for p in c["files"]))
+        paths = []
+        for chunk in self.chunks:
+            paths.extend(chunk.get("files", []))
+            for record in chunk.get("file_records", []):
+                paths.append(record["path"])
+                paths.extend(record.get("related_files", []))
+            # Trace explicit document citations and links, never search unrelated code.
+            for value in re.findall(r"`([^`\n]+)`|\]\(([^)\s]+)\)", chunk.get("text", "")):
+                name = next((part for part in value if part), "")
+                name = re.sub(r":\d+(?:-\d+)?$", "", name).split("#", 1)[0]
+                if re.fullmatch(r"[\w./\\-]+\.[A-Za-z0-9]+", name) and not name.startswith(("/", "\\")):
+                    paths.append(name.replace("\\", "/").removeprefix("./"))
+        return list(dict.fromkeys(paths))
+
+    @property
+    def file_records(self):
+        return {record["path"]: record for chunk in self.chunks
+                for record in chunk.get("file_records", [])}
+
+    def record_context(self, query):
+        words = set(terms(query))
+        sections = []
+        for name, record in self.file_records.items():
+            symbols = sorted(record.get("symbols", []),
+                key=lambda symbol: -len(words & set(terms(symbol["name"]))))[:12]
+            sections.append(json.dumps({"path": name, "what": record.get("what"),
+                "purpose": record.get("purpose"), "why": record.get("why"),
+                "symbols": symbols, "related_files": record.get("related_files", [])}, ensure_ascii=True))
+        return "\n".join(sections)
 
     @property
     def context(self):
@@ -58,7 +86,8 @@ class DocumentEvidence:
 
     @property
     def provenance(self):
-        return [{k: c[k] for k in ("page_id", "title", "chunk", "files", "areas") if k in c} for c in self.chunks]
+        return [{**{k: c[k] for k in ("page_id", "title", "chunk", "areas") if k in c},
+                 "files": DocumentEvidence([c]).paths} for c in self.chunks]
 
 
 def retrieve_documents(request: RepoRequestBase, query: str) -> DocumentEvidence:
@@ -192,13 +221,20 @@ def cross_check_sources(request: RepoRequestBase, evidence: DocumentEvidence, ma
         raise ValueError("Documentation found, but its source checkout is missing. Restore the repository and regenerate documentation.")
     sources = {}
     gaps = []
-    for name in evidence.paths:
+    # Reserve the limited context for implementation before prose documents.
+    paths = sorted(evidence.paths, key=lambda name: Path(name).suffix.lower() in {".md", ".rst", ".txt"})
+    for name in paths:
         try:
             content = read_source(safe_path(root, name))
             if content is None:
                 gaps.append(f"{name}: missing from current code")
             elif len(sources) < 12 and sum(map(len, sources.values())) + len(content) <= max_chars:
                 sources[name] = content
+                record = evidence.file_records.get(name)
+                if record and record.get("source_sha256"):
+                    import hashlib
+                    if hashlib.sha256(content.removeprefix("\ufeff").encode()).hexdigest() != record["source_sha256"]:
+                        gaps.append(f"{name}: file record is stale; use supplied current code, not recorded line positions")
             else:
                 gaps.append(f"{name}: outside source context budget")
         except (ValueError, OSError, UnicodeError):
@@ -224,6 +260,13 @@ def focused_source(name, text, evidence, query, max_lines=180):
     for n, line in enumerate(lines, 1):
         if query_words.intersection(terms(line)):
             priority.update(range(max(1, n - 4), min(len(lines), n + 4) + 1))
+    record = evidence.file_records.get(name)
+    if record:
+        import hashlib
+        if hashlib.sha256(text.removeprefix("\ufeff").encode()).hexdigest() == record.get("source_sha256"):
+            for symbol in record.get("symbols", []):
+                if query_words.intersection(terms(symbol["name"])):
+                    wanted.update(range(max(1, symbol["start_line"]), min(len(lines), symbol["end_line"]) + 1))
     wanted.update(priority)
     if len(lines) <= max_lines:
         wanted = set(range(1, len(lines) + 1))

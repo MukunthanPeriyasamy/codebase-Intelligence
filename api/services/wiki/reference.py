@@ -6,6 +6,7 @@ dispatch or values. Unsupported syntax retains numbered evidence and explicit ga
 """
 import ast
 import hashlib
+import json
 from pathlib import Path
 
 from api.schemas import WikiPage, WikiSection
@@ -264,6 +265,42 @@ def build_reference_pages(root, file_tree):
                 content = "\n\n".join(header if offset == start else [f"# Function `{name}` continued", f"Source: `{path}:{offset}-{last}`"])
                 content += "\n\n## Numbered implementation\n\n" + snippet(sources[path], offset, last)
                 pages.append(new_page(f"polyglot:{path}:{name}:{start}:{offset}", f"{path} · {name} · L{offset}-{last}", content, [path, *connected]))
+
+    # One explicit file record per readable file, including files without functions.
+    # Declared purpose is authoritative only as documentation, never inferred intent.
+    for path, source in sources.items():
+        symbols = [{"name": f["name"], "start_line": f["node"].lineno,
+                    "end_line": f["node"].end_lineno} for f in functions if f["path"] == path]
+        symbols += [{"name": f["name"], "start_line": f["lines"][0], "end_line": f["lines"][1]}
+                    for f in multilingual.get(path, {}).get("functions", [])]
+        related = sorted(set(import_links[path]) | {
+            other for page in pages if page.filePaths and page.filePaths[0] == path
+            for other in page.filePaths[1:] if other in sources and other != path})
+        declared = ast.get_docstring(trees[path]) if path in trees else None
+        classes = [{"name": n.name, "start_line": n.lineno, "end_line": n.end_lineno}
+                   for n in ast.walk(trees[path]) if isinstance(n, ast.ClassDef)] if path in trees else multilingual.get(path, {}).get("classes", [])
+        imports = [{"text": expression(n), "lines": [n.lineno, n.end_lineno]}
+                   for n in ast.walk(trees[path]) if isinstance(n, (ast.Import, ast.ImportFrom))] if path in trees else multilingual.get(path, {}).get("imports", [])
+        names = ", ".join(f["name"] for f in symbols[:12])
+        overview = f"Defines {names}" if names else "Contains file-level code, configuration or document content; inspect numbered source for its contract."
+
+        record = {"version": 1, "path": path,
+                  "what": overview,
+                  "purpose": declared or "No verified file-level purpose declared; inspect the symbols and source before inferring intent.",
+                  "why": "Design rationale is not established by static analysis; confirm against architecture documentation or the author.",
+                  "layer_candidates": layer_hint(path), "layer_basis": "path heuristic",
+                  "source_sha256": hashlib.sha256(source.encode()).hexdigest(),
+                  "line_count": len(source.splitlines()), "symbols": symbols, "classes": classes, "imports": imports,
+                  "purpose_basis": "module docstring" if declared else "not declared",
+                  "related_files": related, "relationship_basis": "syntactic import/call candidates, not runtime dispatch",
+                  "coverage": "parsed" if path in trees else multilingual.get(path, {}).get("status", "unsupported")}
+        content = f"# File record `{path}`\n\nWhat: {record['what']}\n\nPurpose: {record['purpose']}\n\nWhy: {record['why']}\n\n"
+        content += "Related files: " + ", ".join(f"`{name}`" for name in related) + "\n\n## Symbol locations\n"
+        content += "\n".join(f"- {f['name']}: `{path}:{f['start_line']}-{f['end_line']}`" for f in symbols)
+        content += "\n\n## Structured file record\n```json\n" + json.dumps(record, indent=2) + "\n```"
+        page = new_page(f"file-record:{path}", f"{path} · file record and purpose", content, [path, *related], "static")
+        page.fileRecord = record
+        pages.append(page)
 
     # File-level pages cover imports, module initialization and all non-function
     # code too. Every selected readable line is preserved in a bounded page.

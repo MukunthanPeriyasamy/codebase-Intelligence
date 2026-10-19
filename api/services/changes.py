@@ -18,7 +18,7 @@ from api.prompts import EDIT_CODE_SYSTEM_PROMPT
 from api.repository import Repo
 from api.rag.pipeline import get_repo_db, count_tokens
 from api.schemas import ChatCompletionRequest
-from api.services.document_context import retrieve_documents, cross_check_sources, source_context
+from api.services.document_context import retrieve_documents, cross_check_sources, source_context, focused_source, terms
 from api.services.source_files import safe_path, read_source, MAX_FILE
 from api.services.developer_intent import resolve_intent, DEVELOPER_CONTRACT
 from api.utils import deepwiki_root
@@ -156,6 +156,53 @@ def get_proposal(proposal_id: str):
     return public(json.loads(row[0]))
 
 
+def edit_source_context(candidates, evidence, query, budget):
+    """Prefer relevant implementation files; keep complete snapshots for approval."""
+    words = set(terms(query))
+    documentation_request = bool(words & {"readme", "documentation", "markdown"})
+    def priority(item):
+        name, content = item
+        documentation = Path(name).suffix.lower() in {".md", ".rst", ".txt"}
+        return (documentation and not documentation_request, -len(words & set(terms(name + " " + content))))
+    sources, visible, sections, omitted = {}, {}, [], []
+    for name, content in sorted(candidates.items(), key=priority):
+        section = source_context({name: content})
+        lines = set(range(1, len(content.splitlines()) + 1))
+        if count_tokens(section) > budget:
+            section, lines = focused_source(name, content, evidence, query, max_lines=100)
+        size = count_tokens(section)
+        if lines and size <= budget:
+            sources[name], visible[name] = content, lines
+            sections.append(section)
+            budget -= size
+        else:
+            omitted.append(f"{name}: no relevant current source fits the context budget")
+    return sources, visible, "\n\n".join(sections), omitted
+
+
+def validate_visible_edits(plan, sources, visible):
+    edits = []
+    for edit in plan.edits:
+        # A citation is not a path. Normalize only an exact supplied path and an
+        # independently supplied matching range; never resolve guessed filenames.
+        if edit.path not in sources:
+            match = re.fullmatch(r"(.+):(\d+)(?:-(\d+))?", edit.path)
+            if match and match[1] in sources and edit.start_line == int(match[2]) and (
+                match[3] is None or edit.end_line == int(match[3])
+            ):
+                edit = edit.model_copy(update={"path": match[1]})
+        if edit.path in sources:
+            shown = visible[edit.path]
+            full = set(range(1, len(sources[edit.path].splitlines()) + 1))
+            if shown != full:
+                if edit.action != "replace" or edit.start_line is None or edit.end_line is None:
+                    raise ValueError(f"{edit.path}: use replacement line ranges from the displayed source excerpt")
+                if edit.end_line < edit.start_line or edit.end_line > len(sources[edit.path].splitlines()) or not set(range(edit.start_line, edit.end_line + 1)) <= shown:
+                    raise ValueError(f"{edit.path}: edit includes source lines not supplied to the model")
+        edits.append(edit)
+    return plan.model_copy(update={"edits": edits})
+
+
 async def propose(request: ChatCompletionRequest):
     if not request.messages or request.messages[-1].role != "user":
         raise ValueError("A user instruction is required")
@@ -167,20 +214,15 @@ async def propose(request: ChatCompletionRequest):
     model_config = get_model_config(request.provider, request.model)["model_kwargs"]
     history = json.dumps([{"role": m.role, "content": m.content} for m in request.messages[-9:-1] if m.role == "user"])[-12_000:]
     system = EDIT_CODE_SYSTEM_PROMPT + DEVELOPER_CONTRACT + "\nResolved developer intent: " + intent.contract
-    base = prompt_builder(system, request.messages[-1].content, history, evidence.context)
+    document_context = evidence.context + "\n<file_records>\n" + evidence.record_context(query) + "\n</file_records>"
+    base = prompt_builder(system, request.messages[-1].content, history, document_context)
     budget = min(24_000, int(model_config.get("num_ctx", 32_000) * 0.65)) - count_tokens(base)
-    sources = {}
-    for name, content in candidates.items():
-        tokens = count_tokens(source_context({name: content}))
-        if tokens <= budget:
-            sources[name] = content
-            budget -= tokens
-        else:
-            gaps.append(f"{name}: referenced by documentation but omitted from model context budget")
+    sources, visible, code_context, omitted = edit_source_context(candidates, evidence, query, budget)
+    gaps.extend(omitted)
     if not sources:
         raise ValueError("Documentation found, but its referenced source could not be cross-checked within the model context. Regenerate documentation or narrow the request.")
-    context = ("<generated_documents>\n" + evidence.context + "\n</generated_documents>\n"
-               + "<current_source>\n" + source_context(sources) + "\n</current_source>\n"
+    context = ("<generated_documents>\n" + document_context + "\n</generated_documents>\n"
+               + "<current_source>\n" + code_context + "\n</current_source>\n"
                + "Editable existing paths (exact spelling only): " + json.dumps(list(sources))
                + "\nSource gaps: " + "; ".join(gaps))
     prompt = prompt_builder(system, request.messages[-1].content, history, context)
@@ -203,6 +245,11 @@ async def propose(request: ChatCompletionRequest):
                 if not plan.edits:
                     raise ValueError(plan.summary or "No changes proposed from the retrieved documentation")
                 try:
+                    if not set(terms(intent.question)) & {"readme", "documentation", "markdown"} and all(
+                        Path(edit.path.split(":", 1)[0]).suffix.lower() in {".md", ".rst", ".txt"} for edit in plan.edits
+                    ):
+                        raise ValueError("The request requires implementation changes; a documentation-only proposal does not implement it. Use the supplied current code, or explain missing implementation evidence with no edits.")
+                    plan = validate_visible_edits(plan, sources, visible)
                     return make_proposal(root, plan, sources, get_repo_db(Repo(request.repo_url, request.type)), evidence.provenance)
                 except ValueError as exc:
                     reason = str(exc)

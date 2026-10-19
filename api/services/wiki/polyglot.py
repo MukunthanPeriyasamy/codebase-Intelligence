@@ -100,7 +100,6 @@ def _scan(path, source):
         root = tree.root_node
     except (ImportError, LookupError, RuntimeError, ValueError) as exc:
         return {"language": language, "status": f"parser unavailable: {type(exc).__name__}", "functions": [], "imports": [], "calls": []}
-    nodes = list(walk(root))
     if language in {"html", "vue", "svelte"}:
         embedded = []
         for match in re.finditer(r"<script\b([^>]*)>([\s\S]*?)</script\s*>", source, re.IGNORECASE):
@@ -113,6 +112,7 @@ def _scan(path, source):
                 "scope": "script blocks; template expressions are not function-inventoried",
                 "functions": [f for s in embedded for f in s["functions"]],
                 "calls": [c for s in embedded for c in s["calls"]], "imports": [i for s in embedded for i in s["imports"]]}
+    nodes = list(walk(root))
     imports = [{"text": text(n), "lines": span(n)} for n in nodes if n.type in IMPORTS]
     calls = [{"text": text(n), "callee": text(field(n, "function", "name", "method")),
               "lines": span(n), "consumer": text(n.parent) if n.parent else ""} for n in nodes if n.type in CALLS]
@@ -182,7 +182,9 @@ def _scan(path, source):
             "implicit_result": text(body.named_children[-1]) if body is not None and body.named_children else text(body),
         })
     return {"language": language, "status": "partial: syntax errors" if root.has_error else "parsed",
-            "functions": functions, "imports": imports, "calls": calls}
+            "functions": functions, "imports": imports, "calls": calls,
+            "classes": [{"name": text(field(n, "name")), "start_line": span(n)[0], "end_line": span(n)[1]}
+                        for n in nodes if n.type in {"class_declaration", "class_definition", "class", "struct_item", "interface_declaration"}]}
 
 
 def ancestors(node):

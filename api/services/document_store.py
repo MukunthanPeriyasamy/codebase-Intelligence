@@ -58,6 +58,8 @@ def chunk_documents(pages):
             start, end = spec['start'], spec['end']
             chunks.append(dict(page_id=page_id, title=entry['title'], chunk=spec['id'],
                 text=content[start:end], files=entry['files'], areas=entry['areas'],
+                source_ranges=entry.get('source_ranges', []),
+                file_records=[schema['file_records'][name] for name in entry['files'] if name in schema['file_records']],
                 document_start_line=content.count('\n', 0, start) + 1,
                 document_end_line=content.count('\n', 0, end) + 1))
     return chunks

@@ -117,3 +117,16 @@ def test_abrupt_worker_exit_is_contained(tmp_path, monkeypatch):
     with pytest.raises(RuntimeError, match='exit 7'):
         polyglot.scan('ui.js', 'function run() {}')
     assert list((tmp_path / 'parser-faults').glob('*.log'))
+
+
+def test_large_embedded_script_preserves_function_coverage():
+    # Enough temporary native Node wrappers to cross normal cyclic-GC thresholds.
+    functions = '\n'.join(f'function f{i}(x) {{ try {{ return save(x); }} catch(e) {{ throw e; }} }}' for i in range(600))
+    source = '<html>\n<body>\n<script>\n' + functions + '\n</script>\n<script lang="ts">\nfunction typed(x: string) { return x; }\n</script></body></html>'
+    for _ in range(2):
+        result = scan('frontend/index.html', source)
+        assert result['status'] == 'parsed'
+        assert len(result['functions']) == 601
+        assert result['functions'][0]['lines'][0] == 4
+        assert result['functions'][-1]['name'] == 'typed'
+        assert result['functions'][0]['errors']

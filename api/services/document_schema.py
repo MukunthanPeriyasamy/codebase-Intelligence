@@ -36,10 +36,14 @@ def categories(title, paths):
 def build_schema(pages):
     index = {area: [] for area in [*AREAS, "general"]}
     entries = {}
+    file_records = {}
     for page_id, value in pages.items():
         page = value.model_dump() if hasattr(value, "model_dump") else value
         if not isinstance(page, dict) or not isinstance(page.get("content"), str) or not page["content"].strip():
             continue
+        record = page.get("fileRecord")
+        if isinstance(record, dict) and record.get("path"):
+            file_records[record["path"]] = record
         paths = page.get("filePaths") or []
         paths = [p.replace("\\", "/").removeprefix("./") for p in paths if isinstance(p, str)] if isinstance(paths, list) else []
         title = str(page.get("title", page_id))
@@ -56,7 +60,7 @@ def build_schema(pages):
                             "files": paths, "source_ranges": ranges, "chunks": chunks}
         for area in areas:
             index[area].append(page_id)
-    return {"version": 1, "areas": index, "pages": entries}
+    return {"version": 1, "areas": index, "pages": entries, "file_records": file_records}
 
 
 def route_schema(schema, query):
