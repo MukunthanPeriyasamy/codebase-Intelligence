@@ -1,6 +1,7 @@
 'use client';
 
 import React, {useState, useRef, useEffect, useMemo} from 'react';
+import { createPortal } from 'react-dom';
 import ChangeReview, { Proposal, reviewRequest } from './ChangeReview';
 import GraphCommands, { graphRequest } from './GraphCommands';
 import { useChatHistory } from '@/hooks/useChatHistory';
@@ -105,6 +106,9 @@ interface ChatSnapshot {
 }
 
 interface AskProps {
+  reviewHost?: HTMLElement | null;
+  onReviewVisibility?: (visible: boolean) => void;
+  onChangesApplied?: () => void;
   documentSessionId?: string;
   repoInfo: RepoInfo;
   provider?: string;
@@ -132,11 +136,15 @@ const Ask: React.FC<AskProps> = ({
   onRef,
   onOpenCodeViewer,
   onCloseCodeViewer,
+  reviewHost,
+  onReviewVisibility,
+  onChangesApplied,
 }) => {
   const [question, setQuestion] = useState('');
   const [editMode, setEditMode] = useState(false);
   const [kgMode, setKgMode] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  useEffect(() => { onReviewVisibility?.(reviewOpen); }, [reviewOpen, onReviewVisibility]);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [reviewError, setReviewError] = useState('');
@@ -259,6 +267,7 @@ const Ask: React.FC<AskProps> = ({
     try {
       const result = await reviewRequest(action, proposal.id);
       setProposal(result);
+      if (result.status === 'accepted') onChangesApplied?.();
       setConversationTurns(prev => prev.map(turn => turn.kind === 'chat' && turn.proposalId === result.id
         ? { ...turn, response: result.summary + `\n\nProposal ${result.status}.` } : turn));
     } catch (err) { setReviewError(err instanceof Error ? err.message : 'Review failed'); }
@@ -808,6 +817,7 @@ const Ask: React.FC<AskProps> = ({
       onCloseCodeViewer?.();
       try {
         const result = await graphRequest({ action: 'ask', question: kgCommand ? kgCommand[1] || '' : asked,
+          workspace: repoInfo.type === 'local' ? repoInfo.localPath : undefined,
           provider: selectedProvider, model: isCustomSelectedModel ? customSelectedModel : selectedModel });
         commitTurn(asked, `**KG answer** · ${result.workspace}\n\n${result.answer}\n\nTools used: ${result.evidence.map((item: { tool: string }) => item.tool).join(', ')}`, 'normal');
         setQuestion('');
@@ -828,6 +838,9 @@ const Ask: React.FC<AskProps> = ({
         const tool = catalog.tools.find((t: { name: string }) => t.name === match[1]);
         if (!tool) throw new Error('Unknown KG command. Type / to select an available command.');
         const args = JSON.parse(match[2] || '{}');
+        if (repoInfo.type === 'local' && repoInfo.localPath && tool.inputSchema?.properties?.repo_path && args && typeof args === 'object' && !Array.isArray(args) && !args.repo_path) {
+          args.repo_path = repoInfo.localPath;
+        }
         const confirmed = !tool.requires_confirmation || window.confirm(
           `Run /${tool.name} against KG workspace ${catalog.workspace}?\n${tool.description}\nArguments: ${JSON.stringify(args)}`);
         if (!confirmed) return;
@@ -1139,7 +1152,7 @@ const Ask: React.FC<AskProps> = ({
 
   return (
     <div className="flex h-full min-h-0">
-    <div className={`relative flex flex-col min-h-0 overflow-y-auto ${reviewOpen ? 'w-1/2' : 'w-full'}`}>
+    <div className={`relative flex flex-col min-h-0 overflow-y-auto ${reviewOpen && !reviewHost ? 'w-1/2' : 'w-full'}`}>
       {/* Conversation log: previous turns are preserved and new results
           are appended below as their own sections. */}
       <div className="flex-1 px-4 pt-4 space-y-6">
@@ -1461,7 +1474,7 @@ const Ask: React.FC<AskProps> = ({
 
         {/* Question input */}
         <form onSubmit={handleSubmit}>
-          {graphMenuOpen && <GraphCommands question={question}
+          {graphMenuOpen && <GraphCommands question={question} selectedWorkspace={repoInfo.type === 'local' ? repoInfo.localPath || undefined : undefined}
             onClose={() => setGraphMenuOpen(false)}
             onSelect={command => { setQuestion(command); setGraphMenuOpen(false); inputRef.current?.focus(); }} />}
           <div className="relative">
@@ -1517,7 +1530,7 @@ const Ask: React.FC<AskProps> = ({
                 setKgMode(id === 'kg');
                 if (id === 'kg') { setReviewOpen(false); onCloseCodeViewer?.(); }
                 setEditMode(id === 'edit');
-                if (id === 'edit') { setReviewOpen(true); onCloseCodeViewer?.(); }
+                if (id === 'edit') { setReviewOpen(true); onReviewVisibility?.(true); onCloseCodeViewer?.(); }
                 setDeepResearch(id === 'deep_research');
                 setCodemapMode(id === 'codemap');
                 setModeMenuOpen(false);
@@ -1613,7 +1626,7 @@ const Ask: React.FC<AskProps> = ({
         isAuthLoading={false}
       />
     </div>
-    {reviewOpen && <div className="w-1/2 min-w-0 min-h-0"><ChangeReview proposal={proposal} busy={reviewBusy || isLoading} error={reviewError} onDecision={decideProposal} onClose={() => setReviewOpen(false)} /></div>}
+    {reviewOpen && (reviewHost ? createPortal(<ChangeReview proposal={proposal} busy={reviewBusy || isLoading} error={reviewError} onDecision={decideProposal} onClose={() => setReviewOpen(false)} />, reviewHost) : <div className="w-1/2 min-w-0 min-h-0"><ChangeReview proposal={proposal} busy={reviewBusy || isLoading} error={reviewError} onDecision={decideProposal} onClose={() => setReviewOpen(false)} /></div>)}
     </div>
   );
 };

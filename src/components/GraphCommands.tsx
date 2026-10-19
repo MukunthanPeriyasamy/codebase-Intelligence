@@ -13,8 +13,8 @@ export async function graphRequest(body: object) {
   return data;
 }
 
-export default function GraphCommands({ question, onSelect, onClose }: {
-  question: string; onSelect: (command: string) => void; onClose: () => void;
+export default function GraphCommands({ question, onSelect, onClose, selectedWorkspace }: {
+  question: string; onSelect: (command: string) => void; onClose: () => void; selectedWorkspace?: string;
 }) {
   const [tools, setTools] = useState<Tool[]>([]);
   const [workspace, setWorkspace] = useState('');
@@ -27,17 +27,18 @@ export default function GraphCommands({ question, onSelect, onClose }: {
     let active = true;
     graphRequest({ action: 'tools' }).then(data => {
       if (active) { setTools([{ name: 'kg', description: 'Ask a natural-language question using read-only graph tools', requires_confirmation: false,
-        inputSchema: { properties: { question: { type: 'string' } }, required: ['question'] } }, ...data.tools]); setWorkspace(data.workspace); }
+        inputSchema: { properties: { question: { type: 'string' } }, required: ['question'] } }, ...data.tools]); setWorkspace(selectedWorkspace || data.workspace); }
     }).catch(e => { if (active) setError(e.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [selectedWorkspace]);
   const filter = question.slice(1).split(/\s/)[0].toLowerCase();
   const visible = tools.filter(t => t.name.toLowerCase().includes(filter));
   const choose = (tool: Tool) => {
     setError('');
     setSelected(tool);
     const values: Record<string, unknown> = {};
+    if (selectedWorkspace && tool.inputSchema.properties?.repo_path) values.repo_path = selectedWorkspace;
     for (const name of tool.inputSchema.required || []) {
       const prop = tool.inputSchema.properties?.[name];
       values[name] = name === 'repo_path' ? workspace : prop?.enum?.[0] ??

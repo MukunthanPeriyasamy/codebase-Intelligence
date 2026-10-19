@@ -4,11 +4,17 @@ import json
 from api.services.kg_mcp import graph, READ_ONLY
 
 
-async def answer(question, provider, model):
+async def answer(question, provider, model, workspace=None):
     from api.chat import ChatStreamer
     from api.config import get_model_config
 
     catalog = await asyncio.to_thread(graph.catalog)
+    if workspace:
+        from pathlib import Path
+        selected = Path(workspace).resolve(strict=True)
+        if not selected.is_dir():
+            raise ValueError('Select a valid workspace directory')
+        catalog['workspace'] = str(selected)
     tools = [t for t in catalog['tools'] if t['name'] in READ_ONLY]
     config = get_model_config(provider, model)['model_kwargs']
 

@@ -6,7 +6,9 @@
     "setup:kg": "node scripts/setup-kg.cjs",
     "dev": "node scripts/run-services.cjs",
     "build": "next build",
-    "start": "node scripts/run-services.cjs",
+    "start": "node scripts/start-desktop.cjs",
+    "start:web": "node scripts/run-services.cjs",
+    "start:desktop": "node scripts/start-desktop.cjs",
     "lint": "eslint src",
     "dev:ui": "next dev --turbopack --port 3000 --hostname 127.0.0.1",
     "start:ui": "next start --hostname 127.0.0.1",
@@ -14,7 +16,9 @@
     "start:frontend": "node scripts/run-services.cjs frontend"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "mermaid": "^11.4.1",
+    "monaco-editor": "^0.57.0",
     "next": "^15.5.27",
     "next-intl": "^4.1.0",
     "next-themes": "^0.4.6",
@@ -36,6 +40,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "electron": "^44.9.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.27",
     "tailwindcss": "^4",

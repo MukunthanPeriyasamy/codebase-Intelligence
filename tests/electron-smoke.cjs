@@ -1,0 +1,51 @@
+const { _electron } = require('../.local/ui-test/node_modules/playwright');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+(async () => {
+  const root = path.resolve(__dirname, '..');
+  const folder = fs.mkdtempSync(path.join(root, '.local', 'desktop-smoke-'));
+  fs.writeFileSync(path.join(folder, 'hello.ts'), 'export const greeting = "Hello desktop";\n');
+  const env = { ...process.env, DEEPWIKI_NODE: process.execPath };
+  delete env.ELECTRON_RUN_AS_NODE;
+  const app = await _electron.launch({ executablePath: require('electron'), args: [path.join(root, 'electron/main.cjs')], env, timeout: 60000 });
+  try {
+    const page = await app.firstWindow();
+    page.on('pageerror', error => console.log('PAGE ERROR:', error.message));
+    await page.waitForURL('**/desktop', { timeout: 240000 });
+    await page.getByRole('heading', { name: 'A clearer view of what you’re building.' }).waitFor();
+    await app.evaluate(({ dialog }, folder) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [folder] }); }, folder);
+    await page.getByRole('button', { name: 'Open folder', exact: false }).first().click();
+    await page.getByRole('button', { name: 'hello.ts', exact: true }).click();
+    await page.locator('.monaco-editor textarea').first().waitFor({ timeout: 60000 });
+    await page.locator('.monaco-editor textarea').first().focus();
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type('// saved from desktop');
+    await page.keyboard.press('Control+s');
+    await page.getByText('Saved hello.ts', { exact: true }).waitFor();
+    assert.match(fs.readFileSync(path.join(folder, 'hello.ts'), 'utf8'), /saved from desktop/);
+    await page.getByRole('button', { name: 'New file', exact: true }).click();
+    await page.getByRole('textbox', { name: 'New entry path' }).fill('created.py');
+    await page.getByRole('button', { name: 'Create', exact: true }).click();
+    await page.getByRole('button', { name: 'created.py', exact: true }).first().waitFor();
+    assert.ok(fs.existsSync(path.join(folder, 'created.py')));
+    let kgRequest;
+    await page.route('**/api/kg', async route => {
+      kgRequest = route.request().postDataJSON();
+      await route.fulfill({ json: { workspace: folder, answer: 'The graph links run to greet.', evidence: [{ tool: 'find_code' }] } });
+    });
+    await page.getByRole('button', { name: /^Fast/ }).click();
+    await page.getByRole('button', { name: /Knowledge Graph/ }).click();
+    await page.getByPlaceholder(/Ask about functions/).fill('Who calls greet?');
+    await page.getByRole('button', { name: 'Ask', exact: true }).click();
+    await page.getByText('The graph links run to greet.', { exact: true }).waitFor();
+    assert.equal(kgRequest.workspace, folder);
+    assert.equal(kgRequest.question, 'Who calls greet?');
+    await page.getByRole('button', { name: /Knowledge Graph/ }).click();
+    await page.getByRole('button', { name: /Edit code/ }).click();
+    await page.locator('.editor-panel .review-surface').getByRole('heading', { name: 'Review changes' }).waitFor();
+    await page.getByRole('button', { name: 'Close diff panel' }).click();
+    await page.screenshot({ path: path.join(root, '.local/desktop-smoke.png') });
+    console.log('Desktop startup, folder selection, Monaco save, file creation, scoped KG chat routing and center diff panel passed.');
+  } finally { await app.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

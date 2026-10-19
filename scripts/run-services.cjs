@@ -50,6 +50,7 @@ async function main() {
   };
   process.on('SIGINT', () => stop(0));
   process.on('SIGTERM', () => stop(0));
+  process.on('disconnect', () => stop(0));
   const env = { ...process.env,
     SERVER_BASE_URL: 'http://127.0.0.1:8001', PYTHON_BACKEND_HOST: 'http://127.0.0.1:8001',
     NEXT_PUBLIC_API_PORT: '8001', NEXT_PUBLIC_WS_BASE_URL: 'ws://127.0.0.1:8001',
@@ -82,6 +83,20 @@ async function main() {
       if (mode === 'frontend') await assertPortFree(3000);
       launch('frontend', process.execPath, [require.resolve('next/dist/bin/next'), 'dev', '--turbopack', '--port', '3000', '--hostname', '127.0.0.1'], {NODE_ENV:'development'});
       console.log('[frontend] http://127.0.0.1:3000 — Ctrl+C stops services started here.');
+      if (process.send) {
+        const deadline = Date.now() + 180000;
+        let ready = false;
+        while (!stopping && Date.now() < deadline) {
+          try {
+            const response = await fetch('http://127.0.0.1:3000/desktop', { signal: AbortSignal.timeout(5000) });
+            if (response.ok) { ready = true; break; }
+          } catch { /* Next compiles the desktop route on first request. */ }
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        if (!ready) throw new Error('Frontend readiness timed out. Check the frontend logs.');
+        process.send({ type: 'ready' });
+      }
+
     }
   } catch (error) { console.error(error.message); stop(1); }
 }

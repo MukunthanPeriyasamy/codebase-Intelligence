@@ -18,13 +18,14 @@ class GraphQuestion(BaseModel):
     question: str = Field(min_length=1, max_length=8000)
     provider: str = 'ollama'
     model: str | None = None
+    workspace: str | None = None
 
 
 @router.post('/ask')
 async def ask(request: GraphQuestion):
     from api.services.kg_chat import answer
     try:
-        return await answer(request.question, request.provider, request.model)
+        return await answer(request.question, request.provider, request.model, request.workspace)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     except Exception as exc:

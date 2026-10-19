@@ -70,4 +70,5 @@ certs/
 
 .research/
 .local/
+public/vendor/monaco/
 !.env.example
