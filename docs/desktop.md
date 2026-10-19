@@ -16,6 +16,15 @@ CodeGraphContext retains its optional isolated setup (`npm run setup:kg`).
 
 ## Workspace
 
+The top-right Settings gear opens model configuration and document generation.
+Save settings to update the existing chat without clearing its history. Generation
+uses the selected workspace, provider/model, Ollama embedding model, language,
+coverage and exclusions. Its progress stays connected while the dialog is closed;
+the task ID is saved per workspace for reconnecting after reopening the app and folder.
+Authorization codes are entered only when required and are not stored. The model
+names and generation preferences are stored on this device. Open folder is in the
+Explorer toolbar and welcome screen.
+
 - Left: native folder selection, lazy directory tree, visible-file filtering, file
   and folder creation, refresh. Dependency/cache directories are hidden.
 - Center: local Monaco editor with syntax highlighting, tabs, line numbers, find,

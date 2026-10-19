@@ -106,6 +106,7 @@ interface ChatSnapshot {
 }
 
 interface AskProps {
+  onOpenModelSettings?: () => void;
   reviewHost?: HTMLElement | null;
   onReviewVisibility?: (visible: boolean) => void;
   onChangesApplied?: () => void;
@@ -139,6 +140,7 @@ const Ask: React.FC<AskProps> = ({
   reviewHost,
   onReviewVisibility,
   onChangesApplied,
+  onOpenModelSettings,
 }) => {
   const [question, setQuestion] = useState('');
   const [editMode, setEditMode] = useState(false);
@@ -308,7 +310,11 @@ const Ask: React.FC<AskProps> = ({
   useEffect(() => {
     providerRef.current = provider;
     modelRef.current = model;
-  }, [provider, model]);
+    if (provider && model) {
+      setSelectedProvider(provider); setSelectedModel(model);
+      setIsCustomSelectedModel(isCustomModel); setCustomSelectedModel(customModel);
+    }
+  }, [provider, model, isCustomModel, customModel]);
 
   useEffect(() => {
     const fetchModel = async () => {
@@ -1449,7 +1455,7 @@ const Ask: React.FC<AskProps> = ({
           {/* Model selection button */}
           <button
             type="button"
-            onClick={() => setIsModelSelectionModalOpen(true)}
+            onClick={() => onOpenModelSettings ? onOpenModelSettings() : setIsModelSelectionModalOpen(true)}
             className="text-xs px-2.5 py-1 rounded border border-[var(--border-color)]/40 bg-[var(--background)]/10 text-[var(--foreground)]/80 hover:bg-[var(--background)]/30 hover:text-[var(--foreground)] transition-colors flex items-center gap-1.5"
           >
             <span>{selectedProvider}/{isCustomSelectedModel ? customSelectedModel : selectedModel}</span>

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Editor, { loader, type OnMount } from '@monaco-editor/react';
-import { FaCode, FaFolderOpen, FaFolder, FaRegFileCode, FaChevronRight, FaChevronDown, FaPlus, FaSave, FaSyncAlt, FaTimes, FaSearch, FaComments, FaBookOpen } from 'react-icons/fa';
+import { FaCode, FaFolderOpen, FaFolder, FaRegFileCode, FaChevronRight, FaChevronDown, FaPlus, FaSave, FaSyncAlt, FaTimes, FaSearch, FaComments, FaBookOpen, FaCog } from 'react-icons/fa';
+import Settings, { defaultStudioConfig, studioConfigKey, type StudioConfig } from './Settings';
 import Ask from '@/components/Ask';
 import type { DesktopEntry, DesktopWorkspace, DesktopFile } from '@/types/desktop';
 import type { CodeTarget } from '@/components/CodeViewer';
@@ -14,6 +15,12 @@ const language = (name: string) => ({ ts: 'typescript', tsx: 'typescript', js: '
 
 export default function Workspace() {
   const [workspace, setWorkspace] = useState<DesktopWorkspace | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [config, setConfig] = useState<StudioConfig>(defaultStudioConfig);
+  useEffect(() => {
+    try { const saved = JSON.parse(localStorage.getItem(studioConfigKey) || 'null'); if (saved && typeof saved.provider === 'string' && typeof saved.model === 'string') setConfig({ ...defaultStudioConfig, ...saved }); }
+    catch { /* Use defaults if saved settings cannot be read. */ }
+  }, []);
   const [entries, setEntries] = useState<Record<string, DesktopEntry[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['']));
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -160,9 +167,9 @@ export default function Workspace() {
   return <main className="studio" data-theme="dark">
     <header className="studio-header"><div className="studio-brand"><span className="brand-mark"><FaCode /></span> deepwiki<span className="brand-sub">STUDIO</span></div>
       <div className="workspace-location"><FaFolderOpen /><span>{workspace?.root || 'Your next idea starts here'}</span></div>
-      <button onClick={openFolder} disabled={busy}><FaFolderOpen /> Open folder <kbd>↗</kbd></button></header>
+      <button onClick={() => setSettingsOpen(true)} aria-label="Settings" title="Settings"><FaCog size={17} /></button></header>
     <div className="studio-body" style={{ gridTemplateColumns: `${sizes.explorer}px 4px minmax(260px, 1fr) 4px ${sizes.chat}px` }}>
-      <aside className="explorer"><div className="panel-heading"><span>EXPLORER</span><div><button title="New file" aria-label="New file" disabled={!workspace} onClick={() => { setCreating('file'); setNewPath(''); }}><FaPlus /></button><button title="New folder" aria-label="New folder" disabled={!workspace} onClick={() => { setCreating('folder'); setNewPath(''); }}><FaFolder /></button><button title="Refresh files" aria-label="Refresh files" onClick={() => void refresh()}><FaSyncAlt /></button></div></div>
+      <aside className="explorer"><div className="panel-heading"><span>EXPLORER</span><div><button title="Open folder" aria-label="Open folder" disabled={busy} onClick={openFolder}><FaFolderOpen /></button><button title="New file" aria-label="New file" disabled={!workspace} onClick={() => { setCreating('file'); setNewPath(''); }}><FaPlus /></button><button title="New folder" aria-label="New folder" disabled={!workspace} onClick={() => { setCreating('folder'); setNewPath(''); }}><FaFolder /></button><button title="Refresh files" aria-label="Refresh files" onClick={() => void refresh()}><FaSyncAlt /></button></div></div>
         {creating && <form className="create-entry" onSubmit={e => { e.preventDefault(); void create(creating === 'folder'); }}>
           <label>New {creating}<input autoFocus aria-label="New entry path" placeholder="Path relative to workspace" value={newPath} onChange={e => setNewPath(e.target.value)} /></label>
           <button type="submit">Create</button><button type="button" onClick={() => setCreating(null)}>Cancel</button>
@@ -192,11 +199,13 @@ export default function Workspace() {
       <div className="resize-handle" onPointerDown={e => resize('chat', e.clientX)} />
       <aside className="studio-chat"><div className="panel-heading"><span><FaComments /> CODEBASE CHAT</span><span className="context-badge">{workspace ? 'Workspace connected' : 'No workspace'}</span></div>
         {workspace ? <Ask key={workspace.root} repoInfo={{ owner: 'local', repo: workspace.name, type: 'local', localPath: workspace.root, repoUrl: null, token: null }}
+          provider={config.provider} model={config.model} language={config.language} onOpenModelSettings={() => setSettingsOpen(true)}
           reviewHost={reviewHost} onReviewVisibility={setReviewOpen} onChangesApplied={applied}
           onOpenCodeViewer={(target: CodeTarget) => void openFile(target.file_path, target.start_line)} />
         : <div className="chat-empty"><span className="chat-orb"><FaComments /></span><h2>Meet your codebase.</h2><p>Open a project to ask questions,<br />trace relationships, and review edits.</p><div className="sample-prompt">How does this application work?</div><div className="sample-prompt">Find the callers of this function</div><div className="sample-prompt">Help me make a change</div><small>Changes stay proposals until you accept.</small></div>}
       </aside>
     </div>
     <footer className="studio-status"><span><i className="status-dot" /> {message}</span><span>{dirty ? '● Unsaved changes' : 'All changes saved'}<b>Ln {location.line}, Col {location.column}</b><b>UTF-8</b><b>{current ? language(current.path) : 'DeepWiki Studio'}</b></span></footer>
+    <Settings key={workspace?.root || 'no-workspace'} open={settingsOpen} onClose={() => setSettingsOpen(false)} workspace={workspace} config={config} onSave={setConfig} />
   </main>;
 }

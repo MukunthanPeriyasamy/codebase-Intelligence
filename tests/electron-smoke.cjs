@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
   fs.writeFileSync(path.join(folder, 'hello.ts'), 'export const greeting = "Hello desktop";\n');
   const env = { ...process.env, DEEPWIKI_NODE: process.execPath };
   delete env.ELECTRON_RUN_AS_NODE;
-  const app = await _electron.launch({ executablePath: require('electron'), args: [path.join(root, 'electron/main.cjs')], env, timeout: 60000 });
+  const app = await _electron.launch({ executablePath: require('electron'), args: [path.join(root, 'electron/main.cjs'), `--user-data-dir=${path.join(folder, 'electron-profile')}`], env, timeout: 60000 });
   try {
     const page = await app.firstWindow();
     page.on('pageerror', error => console.log('PAGE ERROR:', error.message));
@@ -29,6 +29,29 @@ const assert = require('node:assert/strict');
     await page.getByRole('button', { name: 'Create', exact: true }).click();
     await page.getByRole('button', { name: 'created.py', exact: true }).first().waitFor();
     assert.ok(fs.existsSync(path.join(folder, 'created.py')));
+    let generation;
+    await page.route('**/api/auth/status', route => route.fulfill({ json: { auth_required: false } }));
+    await page.route('**/api/wiki/tasks', async route => {
+      generation = route.request().postDataJSON();
+      await route.fulfill({ json: { task_id: 'desktop-settings-test', status: 'pending', created: true } });
+    });
+    await page.route('**/api/wiki/tasks/desktop-settings-test', route => route.fulfill({ json: {
+      id: 'desktop-settings-test', status: 'completed', pages_done: 1, pages_total: 1, error: null,
+      pipeline: [{ id: 'save', label: 'Save documentation', state: 'completed', detail: 'Ready' }],
+    } }));
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByLabel('Generation model', { exact: true }).fill('desktop-test-model');
+    await page.getByRole('textbox', { name: 'Ollama embedding model' }).fill('nomic-embed-text');
+    await page.getByRole('button', { name: 'Save settings', exact: true }).click();
+    await page.getByRole('button', { name: 'Document generation', exact: true }).click();
+    await page.getByRole('button', { name: 'Generate documentation', exact: true }).click();
+    await page.getByText('Documentation and its search index are ready.', { exact: true }).waitFor();
+    assert.equal(generation.repo_url, folder);
+    assert.equal(generation.model, 'desktop-test-model');
+    assert.equal(generation.embedding_model, 'nomic-embed-text');
+    await page.screenshot({ path: path.join(root, '.local/desktop-settings.png') });
+    await page.getByRole('button', { name: 'Close settings', exact: true }).click();
+    await page.getByRole('button', { name: /ollama\/desktop-test-model/ }).waitFor();
     let kgRequest;
     await page.route('**/api/kg', async route => {
       kgRequest = route.request().postDataJSON();
@@ -46,6 +69,6 @@ const assert = require('node:assert/strict');
     await page.locator('.editor-panel .review-surface').getByRole('heading', { name: 'Review changes' }).waitFor();
     await page.getByRole('button', { name: 'Close diff panel' }).click();
     await page.screenshot({ path: path.join(root, '.local/desktop-smoke.png') });
-    console.log('Desktop startup, folder selection, Monaco save, file creation, scoped KG chat routing and center diff panel passed.');
+    console.log('Desktop, editor, settings persistence, generation request/progress, chat model, KG routing and review panel passed (model/generation responses mocked).');
   } finally { await app.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
