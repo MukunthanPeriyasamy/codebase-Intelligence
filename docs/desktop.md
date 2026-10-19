@@ -6,6 +6,11 @@ after the frontend responds. A startup failure is displayed in a native dialog a
 the terminal. Ports 3000 and 8001 must be free; existing processes are never taken over.
 
 The Python runtime must already be prepared using `scripts/setup-deepwiki.ps1`.
+Setup selects Python 3.12 explicitly, using uv to obtain it when needed. If a previous
+attempt created a Python 3.14 or incomplete runtime, setup preserves it under
+`.local/deepwiki-tool/runtime-backup-*` and creates a supported environment. Close any
+running backend before rerunning setup. The requirements lock targets Python 3.12;
+do not enable prereleases to work around a Python-version dependency conflict.
 Ollama remains an external model service. Start it separately for local model answers.
 CodeGraphContext retains its optional isolated setup (`npm run setup:kg`).
 
