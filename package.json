@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "setup:kg": "node scripts/setup-kg.cjs",
     "dev": "node scripts/run-services.cjs",
     "build": "next build",
     "start": "node scripts/run-services.cjs",

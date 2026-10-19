@@ -1,0 +1,9 @@
+{
+  "command": "uvx",
+  "args": ["--from", "codegraphcontext==0.5.1", "codegraphcontext", "mcp", "start"],
+  "cwd": "D:/office-project/codebase-intelligence",
+  "env": {
+    "CGC_RUNTIME_DB_TYPE": "kuzudb",
+    "CGC_EMBEDDED_BUFFER_POOL_MB": "512"
+  }
+}

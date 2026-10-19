@@ -2,6 +2,7 @@
 
 import React, {useState, useRef, useEffect, useMemo} from 'react';
 import ChangeReview, { Proposal, reviewRequest } from './ChangeReview';
+import GraphCommands, { graphRequest } from './GraphCommands';
 import { useChatHistory } from '@/hooks/useChatHistory';
 import { FaChevronLeft, FaChevronRight, FaBolt, FaMicroscope, FaBook, FaChevronDown, FaCheck } from 'react-icons/fa';
 import Markdown from './Markdown';
@@ -34,9 +35,10 @@ const IDLE_PHASES: Record<CodemapPhase, PhaseStatus> = {
 };
 
 // Chat mode selector options (replaces the standalone Deep Research / Codemap toggles).
-type ChatMode = 'fast' | 'deep_research' | 'codemap' | 'edit';
+type ChatMode = 'fast' | 'deep_research' | 'codemap' | 'edit' | 'kg';
 
 const MODES: { id: ChatMode; label: string; description: string; icon: React.ReactNode }[] = [
+  { id: 'kg', label: 'Knowledge Graph', description: 'Ask questions using code relationships in the graph', icon: <FaBook size={14} /> },
   { id: 'edit', label: 'Edit code', description: 'Propose changes to review and accept', icon: <FaBook size={14} /> },
   { id: 'fast', label: 'Fast', description: 'Quick and responsive answers', icon: <FaBolt size={14} /> },
   { id: 'deep_research', label: 'Deep Research', description: 'More thorough investigation', icon: <FaMicroscope size={14} /> },
@@ -133,12 +135,14 @@ const Ask: React.FC<AskProps> = ({
 }) => {
   const [question, setQuestion] = useState('');
   const [editMode, setEditMode] = useState(false);
+  const [kgMode, setKgMode] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [reviewError, setReviewError] = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
   const [response, setResponse] = useState('');
+  const [graphMenuOpen, setGraphMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [deepResearch, setDeepResearch] = useState(false);
 
@@ -188,9 +192,9 @@ const Ask: React.FC<AskProps> = ({
     }] : []), ...(codemapQuestion ? (codemapData ? [{ kind: 'codemap' as const, question: codemapQuestion, data: codemapData }] : [{
       kind: 'chat' as const, question: codemapQuestion, response: codemapError || '[Codemap interrupted before completion.]', mode: 'normal' as const,
     }]) : [])],
-    draft: question, mode: editMode ? 'edit' : codemapMode ? 'codemap' : deepResearch ? 'deep_research' : 'fast',
+    draft: question, mode: kgMode ? 'kg' : editMode ? 'edit' : codemapMode ? 'codemap' : deepResearch ? 'deep_research' : 'fast',
     proposalId: proposal?.id,
-  }), [conversationTurns, currentQuestion, response, isLoading, deepResearch, researchStages, codemapQuestion, codemapData, codemapError, question, editMode, codemapMode, proposal?.id]);
+  }), [conversationTurns, currentQuestion, response, isLoading, deepResearch, researchStages, codemapQuestion, codemapData, codemapError, question, kgMode, editMode, codemapMode, proposal?.id]);
 
   const openProposal = async (id: string) => {
     setReviewOpen(true);
@@ -214,6 +218,7 @@ const Ask: React.FC<AskProps> = ({
       setResearchStages([]); setResearchIteration(0); setResearchComplete(true);
       setCodemapActive(false); setCodemapQuestion(''); setCodemapData(null); setCodemapError(null);
       setDeepResearch(saved.mode === 'deep_research'); setCodemapMode(saved.mode === 'codemap'); setEditMode(saved.mode === 'edit');
+      setKgMode(saved.mode === 'kg');
       setProposal(null); setReviewOpen(false); setReviewError(''); setHistoryOpen(false);
       onCloseCodeViewer?.();
       if (saved.proposalId) void openProposal(saved.proposalId);
@@ -793,6 +798,49 @@ const Ask: React.FC<AskProps> = ({
     e.preventDefault();
 
     if (!question.trim() || isLoading || reviewBusy) return;
+
+    const kgCommand = /^\/kg(?:\s+([\s\S]*))?$/.exec(question.trim());
+    if (kgCommand || (kgMode && !question.trim().startsWith('/'))) {
+      const asked = question.trim();
+      setIsLoading(true);
+      setGraphMenuOpen(false);
+      setReviewOpen(false);
+      onCloseCodeViewer?.();
+      try {
+        const result = await graphRequest({ action: 'ask', question: kgCommand ? kgCommand[1] || '' : asked,
+          provider: selectedProvider, model: isCustomSelectedModel ? customSelectedModel : selectedModel });
+        commitTurn(asked, `**KG answer** · ${result.workspace}\n\n${result.answer}\n\nTools used: ${result.evidence.map((item: { tool: string }) => item.tool).join(', ')}`, 'normal');
+        setQuestion('');
+      } catch (error) {
+        commitTurn(asked, `KG: ${(error as Error).message}`, 'normal');
+      } finally { setIsLoading(false); }
+      return;
+    }
+
+    if (question.trim().startsWith('/')) {
+      const asked = question.trim();
+      const match = /^\/([\w-]+)(?:\s+([\s\S]+))?$/.exec(asked);
+      if (!match) { setGraphMenuOpen(true); return; }
+      setIsLoading(true);
+      setGraphMenuOpen(false);
+      try {
+        const catalog = await graphRequest({ action: 'tools' });
+        const tool = catalog.tools.find((t: { name: string }) => t.name === match[1]);
+        if (!tool) throw new Error('Unknown KG command. Type / to select an available command.');
+        const args = JSON.parse(match[2] || '{}');
+        const confirmed = !tool.requires_confirmation || window.confirm(
+          `Run /${tool.name} against KG workspace ${catalog.workspace}?\n${tool.description}\nArguments: ${JSON.stringify(args)}`);
+        if (!confirmed) return;
+        const result = await graphRequest({ action: 'call', name: tool.name, arguments: args, confirmed });
+        const content = (result.content || []).map((item: { type: string; text?: string }) =>
+          item.type === 'text' ? item.text : `[${item.type} content]`).join('\n\n');
+        commitTurn(asked, `**KG ${result.isError ? 'tool error' : 'result'}** · ${catalog.workspace}\n\n\`\`\`text\n${content.replace(/`/g, 'ˋ')}\n\`\`\``, 'normal');
+        setQuestion('');
+      } catch (error) {
+        commitTurn(asked, `KG: ${(error as Error).message}`, 'normal');
+      } finally { setIsLoading(false); }
+      return;
+    }
 
     if (editMode) { void handleEdit(); return; }
 
@@ -1413,13 +1461,22 @@ const Ask: React.FC<AskProps> = ({
 
         {/* Question input */}
         <form onSubmit={handleSubmit}>
+          {graphMenuOpen && <GraphCommands question={question}
+            onClose={() => setGraphMenuOpen(false)}
+            onSelect={command => { setQuestion(command); setGraphMenuOpen(false); inputRef.current?.focus(); }} />}
           <div className="relative">
             <input
               ref={inputRef}
               type="text"
               value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder={messages.ask?.placeholder || 'What would you like to know about this codebase?'}
+              onChange={(e) => { setQuestion(e.target.value); setGraphMenuOpen(e.target.value.startsWith('/') && !e.target.value.includes(' ')); }}
+              onKeyDown={e => {
+                if (e.key === 'Escape') setGraphMenuOpen(false);
+                if (graphMenuOpen && e.key === 'ArrowDown') {
+                  e.preventDefault(); document.querySelector<HTMLButtonElement>('[aria-label="Available graph commands"] button')?.focus();
+                }
+              }}
+              placeholder={kgMode ? 'Ask about functions, callers, dependencies, or code relationships…' : messages.ask?.placeholder || 'What would you like to know about this codebase?'}
               className="block w-full rounded-md border border-[var(--border-color)] bg-[var(--input-bg)] text-[var(--foreground)] px-5 py-3.5 text-base shadow-sm focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/30 focus:outline-none transition-all"
               style={{ paddingRight: `${buttonWidth + 24}px` }}
               disabled={isLoading || reviewBusy}
@@ -1450,13 +1507,15 @@ const Ask: React.FC<AskProps> = ({
           {/* Chat mode selector (Fast / Deep Research / Codemap) */}
           <div className="mt-2 flex items-center gap-2">
             {(() => {
-              const currentMode: ChatMode = editMode ? 'edit' : codemapMode
+              const currentMode: ChatMode = kgMode ? 'kg' : editMode ? 'edit' : codemapMode
                 ? 'codemap'
                 : deepResearch
                 ? 'deep_research'
                 : 'fast';
               const current = MODES.find((m) => m.id === currentMode)!;
               const selectMode = (id: ChatMode) => {
+                setKgMode(id === 'kg');
+                if (id === 'kg') { setReviewOpen(false); onCloseCodeViewer?.(); }
                 setEditMode(id === 'edit');
                 if (id === 'edit') { setReviewOpen(true); onCloseCodeViewer?.(); }
                 setDeepResearch(id === 'deep_research');
