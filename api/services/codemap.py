@@ -167,21 +167,9 @@ def _locate_snippet(text: str, snippet: str) -> tuple[int, int] | None:
     LLM-provided line numbers are unreliable, but the snippet is copied verbatim,
     so the true location is recovered by searching the real file.
     """
-    snippet = snippet.strip("\n")
-    if not snippet:
-        return None
-    pos = text.find(snippet)
-    if pos != -1:
-        start = text.count("\n", 0, pos) + 1
-        return start, start + snippet.count("\n")
-    # Fallback: anchor on the first non-blank line of the snippet.
-    first = next((ln.strip() for ln in snippet.splitlines() if ln.strip()), "")
-    if first:
-        idx = text.find(first)
-        if idx != -1:
-            start = text.count("\n", 0, idx) + 1
-            return start, start + snippet.count("\n")
-    return None
+    from api.services.source_blocks import locate_snippet
+    return locate_snippet(text, snippet)
+
 
 
 def _ground_citations(codemap: CodeMap, repo_dir: str) -> None:

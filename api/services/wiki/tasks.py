@@ -47,6 +47,7 @@ from api.services.wiki.reference import build_reference_pages, attach_reference_
 from api.services.wiki.profiles import inspect_repository, profile_pages, requirements_prompt
 from api.services.wiki.io import read_wiki_cache
 from api.services.document_store import index_documents
+from api.services.retries import retry_async
 from api.chat import ChatStreamer, prompt_builder
 from api.config import get_model_config
 from api.rag import count_tokens
@@ -56,6 +57,7 @@ from api.logger import get_logger
 logger = get_logger(__name__)
 
 PIPELINE = [
+    ("kg", "Build knowledge graph (parallel)"),
     ("queued", "Queued"), ("repository", "Prepare repository and index"),
     ("inventory", "Read repository inventory"), ("profiles", "Detect application profiles"),
     ("references", "Extract source references"), ("structure", "Plan documentation structure"),
@@ -111,6 +113,8 @@ class WikiTask(BaseModel):
             current['detail'] = detail
             return
         for item in self.pipeline:
+            if item['id'] == 'kg':
+                continue
             if item["state"] == "active":
                 item.update(state="completed", finished_at=now)
             if item["id"] == "queued" and item["state"] == "pending":
@@ -120,6 +124,8 @@ class WikiTask(BaseModel):
 
     def finish_pipeline(self, failed=False) -> None:
         for item in self.pipeline:
+            if item['id'] == 'kg':
+                continue
             if item["state"] == "active":
                 item.update(state="failed" if failed else "completed", finished_at=int(time.time() * 1000))
                 if failed:
@@ -224,9 +230,15 @@ class TaskRegistry:
                 repo_type=task.request.type,
                 language=task.request.language,
             ) and await profiles_current(task):
+                if task.request.type == 'local':
+                    from api.services.wiki.workspace_export import save_workspace_document
+                    cached = await read_wiki_cache(task.request.owner, task.request.repo, task.request.type, task.request.language)
+                    await asyncio.to_thread(save_workspace_document, task.request, cached.wiki_structure.title, cached.generated_pages)
+                task.task = asyncio.create_task(self._run(task, build_cached_graph))
+                self._tasks[key] = task
                 return WikiTaskSubmitResult(
                     task_id=key,
-                    status=TaskStatus.COMPLETED,
+                    status=TaskStatus.PENDING,
                     from_cache=True,
                 )
 
@@ -254,6 +266,17 @@ class TaskRegistry:
 registry = TaskRegistry()
 
 
+async def build_cached_graph(task):
+    from api.services.wiki.graph_build import build_graph
+    for stage in task.pipeline:
+        if stage['id'] != 'kg':
+            stage.update(state='completed', detail='Saved documentation reused')
+    task.status = TaskStatus.INDEXING
+    repo = Repo(task.request.repo_url, task.request.type, access_token=task.request.token)
+    await build_graph(task, repo.save_path)
+    task.status = TaskStatus.COMPLETED
+
+
 async def profiles_current(task: WikiTask) -> bool:
     """Reuse only documentation matching this checkout, scope and detector version."""
     r = task.request
@@ -274,6 +297,7 @@ async def profiles_current(task: WikiTask) -> bool:
 async def generate_repo_wiki(task: WikiTask) -> None:
     """Drive one task through the state machine (SPEC.md §7)."""
     r = task.request
+    graph_task = None
     try:
         task.advance("repository")
         repo = Repo(r.repo_url, r.type, access_token=r.token)
@@ -284,10 +308,12 @@ async def generate_repo_wiki(task: WikiTask) -> None:
             logger.info("Indexing %s", task.repo_key)
             await prepare_repo_index(r)
 
+        from api.services.wiki.graph_build import build_graph
+        graph_task = asyncio.create_task(build_graph(task, repo.save_path))
         # Req 1.2 + no-persistence: index present -> (re)generate the whole wiki.
         task.status = TaskStatus.DETERMINING_STRUCTURE
         logger.info("Determining structure for %s", task.repo_key)
-        structure = await _determine_structure(task)
+        structure = await retry_async(lambda: _determine_structure(task), 'Document structure')
         task.wiki_structure = structure
 
         task.status = TaskStatus.GENERATING
@@ -307,6 +333,7 @@ async def generate_repo_wiki(task: WikiTask) -> None:
         task.document_index = await asyncio.to_thread(index_documents, r, pages, index_progress)
         task.advance("save")
         await _save(task, pages)
+        await graph_task
         task.finish_pipeline()
         task.status = TaskStatus.COMPLETED
         logger.info("Wiki task completed for %s", task.repo_key)
@@ -315,6 +342,9 @@ async def generate_repo_wiki(task: WikiTask) -> None:
         task.error = str(e)
         task.finish_pipeline(failed=True)
         logger.exception("Wiki task failed for %s", task.repo_key)
+    finally:
+        if graph_task is not None:
+            await graph_task
 
 
 async def _save(
@@ -345,6 +375,8 @@ async def _save(
     )
     if not saved:
         raise OSError("Generated documentation could not be saved")
+    from api.services.wiki.workspace_export import save_workspace_document
+    await asyncio.to_thread(save_workspace_document, task.request, task.wiki_structure.title, pages)
 
 
 async def _generate_page_with_retry(task: WikiTask, page: WikiPage) -> WikiPage:
@@ -361,6 +393,9 @@ async def _generate_page_with_retry(task: WikiTask, page: WikiPage) -> WikiPage:
                 WIKI_PAGE_RETRIES + 1,
                 e,
             )
+            if attempt < WIKI_PAGE_RETRIES:
+                task.advance('pages', f'Page {page.id}: retry {attempt + 2}/{WIKI_PAGE_RETRIES + 1}')
+                await asyncio.sleep(min(2 ** attempt, 8))
     # Give up: return an error-placeholder page so the wiki still completes.
     task.incomplete_page_ids.append(page.id)
     return page.model_copy(

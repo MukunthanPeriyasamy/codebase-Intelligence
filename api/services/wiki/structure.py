@@ -35,6 +35,8 @@ def read_repo_file_tree(
         all_text_files=True,
     )
 
+    # Generated reference copies must not feed back into the next wiki inventory.
+    files = [file for file in files if not re.fullmatch(r'deepwiki-document-.*\.md', os.path.basename(file))]
     readme = ""
 
     for file in sorted(files, key=lambda x: len(x)):

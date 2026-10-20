@@ -55,5 +55,5 @@ def test_windows_path_normalization(server):
 
 def test_missing_config(monkeypatch, tmp_path):
     monkeypatch.setenv('DEEPWIKI_KG_CONFIG', str(tmp_path / 'missing.json'))
-    with pytest.raises(RuntimeError, match='not configured'):
+    with pytest.raises(RuntimeError, match='DEEPWIKI_KG_CONFIG file does not exist'):
         GraphMCP().catalog()

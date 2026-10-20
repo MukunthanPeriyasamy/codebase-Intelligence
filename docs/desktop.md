@@ -83,3 +83,62 @@ The existing RAG path is generated pages -> overlapping chunks -> Ollama embeddi
 Repository, generation session, language and embedding model isolate retrieval.
 The preview displays the index metadata recorded during generation; it is not a
 live Ollama or Chroma health probe. Regenerate documents when the source changes.
+
+## Document and graph context for edits
+
+Edit code retrieves generated documentation first, then uses up to three documented
+symbols as anchors for CodeGraphContext MCP caller/callee queries (six queries maximum).
+Queries use the selected checkout path and the anchor's exact source path. Up to twelve
+related text files are read from the current checkout, subject to the existing path,
+size, context-budget and source-snapshot checks. Graph output supplies navigation
+hints, never replacement source or instructions. The review panel records graph
+relationships and unavailable-index warnings. Missing documents still stop the flow;
+an unavailable KG produces an explicit document-only fallback. The repository must
+already be indexed in KG; editing does not automatically index or mutate the graph.
+Accept/reject remains the only route to applying a proposal. Regenerate documentation
+and refresh the graph after source changes. Document generation and normal RAG chat
+are unchanged by this integration.
+
+Local generation now automatically writes a unique `deepwiki-document-*.md` in
+its workspace root, including when generation reuses cached results. Export failures
+are surfaced instead of reporting successful completion. Reference copies are excluded
+from subsequent wiki inventories. Existing documents can also be exported manually.
+Chat source lists are collapsed by default. Green percentages show clamped cosine
+similarity, `(1 - distance) * 100`, not calibrated answer confidence. Sources without
+a recorded distance have no score displayed.
+
+## Automatic KG startup and parallel indexing
+
+Generating a wiki starts CodeGraphContext indexing after the checkout is prepared,
+in parallel with document analysis/generation. Cached documentation runs also start
+the graph stage. The pipeline exposes a separate KG row; failures preserve the document
+result. Existing graph indexes are reused and explicitly labeled as not rebuilt.
+
+Without `.local/kg-mcp.json`, the app uses `uvx --python 3.12 --from
+codegraphcontext==0.5.1 codegraphcontext mcp start`; the first launch requires network
+access to obtain the isolated MCP runtime. Install uv using the normal setup prerequisite.
+An explicit MCP configuration still overrides the launch command. The default MCP
+user home/database is isolated under `.local/kg-data`. Generation authorizes its
+selected checkout for the MCP path sandbox. Graph builds are serialized with each
+other, but run concurrently with documentation. Authorizing a newly selected root
+restarts the shared MCP server; avoid running independent slash-command indexing jobs
+while starting generation for another checkout.
+
+Edit planning now has a Code Map-style locate phase before generating replacements.
+The model selects verbatim blocks from document/KG-guided current source; shared snippet
+location recovers real line numbers. Editing requires unique complete matches and rejects
+hidden lines, guessed paths and first-line-only matches. Located blocks appear in the
+review panel. This adds one model call per edit request; Accept/Reject and stale-source
+checks still govern all writes.
+
+## Retry handling
+
+Document structure, Ollama embedding requests, edit block selection and edit model
+responses retry transient transport errors and HTTP 408/429/500/502/503/504 up to
+three total attempts, with 1s then 2s delay. Retries discard partial edit output.
+Document pages retain their configured retry budget, now with backoff and progress
+details. KG retries connection and read-only job-status requests. An ambiguous
+index-submission failure is not resubmitted automatically, avoiding duplicate jobs.
+Invalid paths, authorization errors and source validation failures are not treated
+as transient. Accept/reject writes are never replayed. Exhausted failures remain
+visible through the existing pipeline/review error handlers and retry logs.

@@ -33,10 +33,14 @@ def client():
 
 
 def embed(model, texts):
+    from api.services.retries import retry_sync
     host = os.environ.get('OLLAMA_HOST', 'http://127.0.0.1:11434').rstrip('/')
-    try:
+    def request():
         response = httpx.post(host + '/api/embed', json={'model': model, 'input': texts, 'truncate': False}, timeout=120)
         response.raise_for_status()
+        return response
+    try:
+        response = retry_sync(request, 'Document embedding')
         vectors = response.json().get('embeddings', [])
     except (httpx.HTTPError, ValueError) as exc:
         raise ValueError(f'Ollama embedding failed for {model}. Check the server and install this embedding model; no lexical fallback was used.') from exc

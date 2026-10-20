@@ -96,6 +96,10 @@ async def test_local_invalid_plan_gets_one_corrective_attempt(repo, monkeypatch)
     prompts = []
     class Streamer:
         async def respond_stream(self, prompt):
+            if 'Locate the current code blocks' in prompt:
+                source = 'theme.py' if (repo / 'theme.py').exists() else 'main.py'
+                yield json.dumps({'blocks': [{'path': source, 'snippet': (repo / source).read_text()}]})
+                return
             prompts.append(prompt)
             if len(prompts) == 1:
                 yield "not json"
@@ -153,6 +157,10 @@ async def test_document_answer_contains_docs_without_current_source(repo, monkey
     captured = []
     class Streamer:
         async def respond_stream(self, prompt):
+            if 'Locate the current code blocks' in prompt:
+                source = 'theme.py' if (repo / 'theme.py').exists() else 'main.py'
+                yield json.dumps({'blocks': [{'path': source, 'snippet': (repo / source).read_text()}]})
+                return
             captured.append(prompt)
             yield '{"relevant":true,"grounded":true}' if "candidate_answer" in prompt else "Current colors are red. `theme.py:1`"
     monkeypatch.setattr(document_chat.ChatStreamer, "create", lambda **kw: Streamer())
@@ -170,6 +178,10 @@ async def test_invalid_model_output_retry_limit_and_no_writes(repo, monkeypatch,
     calls = []
     class Streamer:
         async def respond_stream(self, prompt):
+            if 'Locate the current code blocks' in prompt:
+                source = 'theme.py' if (repo / 'theme.py').exists() else 'main.py'
+                yield json.dumps({'blocks': [{'path': source, 'snippet': (repo / source).read_text()}]})
+                return
             calls.append(prompt)
             yield "invalid"
     monkeypatch.setattr(changes.ChatStreamer, "create", lambda **kw: Streamer())
@@ -191,6 +203,10 @@ async def test_edit_traces_document_citation_to_current_code_and_requires_approv
     prompts = []
     class Streamer:
         async def respond_stream(self, prompt):
+            if 'Locate the current code blocks' in prompt:
+                source = 'theme.py' if (repo / 'theme.py').exists() else 'main.py'
+                yield json.dumps({'blocks': [{'path': source, 'snippet': (repo / source).read_text()}]})
+                return
             prompts.append(prompt)
             yield json.dumps({'summary':'Update actual theme implementation', 'edits':[
                 {'path':'theme.py','start_line':1,'end_line':1,'new_text':"color = 'blue'"}]})
@@ -220,6 +236,10 @@ async def test_implementation_request_rejects_readme_only_plan(repo, monkeypatch
     save_docs(repo, content='See `theme.py:1` for implementation.', files=['readme.md'])
     class Streamer:
         async def respond_stream(self, prompt):
+            if 'Locate the current code blocks' in prompt:
+                source = 'theme.py' if (repo / 'theme.py').exists() else 'main.py'
+                yield json.dumps({'blocks': [{'path': source, 'snippet': (repo / source).read_text()}]})
+                return
             yield json.dumps({'summary':'Update theme', 'edits':[{'path':'readme.md','start_line':1,'end_line':1,'new_text':'Theme is blue'}]})
     monkeypatch.setattr(changes.ChatStreamer,'create',lambda **kw:Streamer())
     monkeypatch.setattr(changes,'get_model_config',lambda *args:{'model_kwargs':{}})

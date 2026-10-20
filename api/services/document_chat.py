@@ -1,6 +1,7 @@
 """Document-only RAG answers. Source cross-validation is a separate later stage."""
 import asyncio
 import json
+import math
 
 from api.chat import ChatStreamer, prompt_builder
 from api.config import get_model_config
@@ -38,7 +39,11 @@ async def document_chat(request):
         tokens = count_tokens(section)
         if tokens <= budget:
             sections.append(section)
-            citations.append(f"[{label}] {chunk['title']} — chunk {chunk['chunk']}")
+            distance = chunk.get('distance')
+            score = ''
+            if isinstance(distance, (int, float)) and math.isfinite(distance):
+                score = f" | retrieval-score:{max(0, min(100, (1 - distance) * 100)):.0f}%"
+            citations.append(f"[{label}] {chunk['title']} — chunk {chunk['chunk']}{score}")
             budget -= tokens
     if not sections:
         raise ValueError('Retrieved documents exceed the model context limit; narrow the question.')

@@ -5,6 +5,8 @@ export interface Proposal {
   summary: string;
   root: string;
   status: 'pending' | 'accepted' | 'rejected';
+  source_blocks?: { path: string; start_line: number; end_line: number; code: string }[];
+  graph?: { status: string; warnings: string[]; traces: { anchor: string; symbol: string; relationship: string; files: string[] }[] };
   files: { path: string; before: string | null; after: string | null; diff: string }[];
   documents?: { page_id: string; title: string; chunk: number; files: string[]; areas?: string[] }[];
 }
@@ -29,11 +31,13 @@ export default function ChangeReview({ proposal, busy, error, onDecision, onClos
       <button type="button" onClick={onClose} disabled={busy} aria-label="Close diff panel" className="px-2">×</button>
     </header>
     <div className="flex-1 overflow-auto p-4 space-y-4">
-      {busy && !proposal && <p role="status">Retrieving generated documentation → cross-checking referenced code → preparing changes for your review…</p>}
+      {busy && !proposal && <p role="status">Retrieving documentation → tracing KG relationships → checking current source → preparing your diff…</p>}
       {proposal && <>
         <p className="text-sm whitespace-pre-wrap">{proposal.summary}</p>
         <p className="text-xs break-all">Apply to: <code>{proposal.root}</code></p>
         <p className="text-xs">{proposal.files.length} file(s) · {proposal.status}</p>
+        {!!proposal.source_blocks?.length && <details className="text-xs"><summary>Located code blocks ({proposal.source_blocks.length})</summary>{proposal.source_blocks.map((block, i) => <section key={i}><p>{block.path}:{block.start_line}-{block.end_line}</p><pre className="overflow-auto p-2">{block.code}</pre></section>)}</details>}
+        {proposal.graph && <details className="text-xs"><summary>Knowledge graph · {proposal.graph.status}</summary>{proposal.graph.warnings.map((warning, i) => <p key={i}>{warning}</p>)}{proposal.graph.traces.map((trace, i) => <p key={i}>{trace.anchor} · {trace.symbol} · {trace.relationship}: {trace.files.join(', ') || 'No usable source paths'}</p>)}</details>}
         {proposal.documents && proposal.documents.length > 0 && <details className="text-xs"><summary>Documentation used ({proposal.documents.length} chunks)</summary><ul className="mt-2 space-y-1">{proposal.documents.map((doc, i) => <li key={i}>{doc.title} · chunk {doc.chunk}{doc.areas?.length ? ` · ${doc.areas.join(', ')}` : ''}<br /><span className="opacity-70">{doc.files.join(', ')}</span></li>)}</ul></details>}
         {proposal.files.map(file => <section key={file.path} className="border border-[var(--border-color)] rounded overflow-hidden">
           <h3 className="text-sm font-mono p-2 break-all">{file.path} · {file.before === null ? 'New file' : file.after === null ? 'Deleted file' : 'Modified file'}</h3>

@@ -100,6 +100,10 @@ async def test_retrieval_generation_proposes_without_writing(repo, monkeypatch):
     save_docs(repo, title="Default value", content="The default value is configured in main.py.", files=["main.py"])
     class Streamer:
         async def respond_stream(self, prompt):
+            if 'Locate the current code blocks' in prompt:
+                source = 'theme.py' if (repo / 'theme.py').exists() else 'main.py'
+                yield json.dumps({'blocks': [{'path': source, 'snippet': (repo / source).read_text()}]})
+                return
             seen["prompt"] = prompt
             yield json.dumps({"summary": "Change value", "edits": [{"path": "main.py", "start_line": 1, "end_line": 1, "new_text": "value = 2"}]})
     monkeypatch.setattr(changes.ChatStreamer, "create", lambda **kw: Streamer())

@@ -6,7 +6,7 @@ import ChangeReview, { Proposal, reviewRequest } from './ChangeReview';
 import GraphCommands, { graphRequest } from './GraphCommands';
 import { useChatHistory } from '@/hooks/useChatHistory';
 import { FaChevronLeft, FaChevronRight, FaBolt, FaMicroscope, FaBook, FaChevronDown, FaCheck } from 'react-icons/fa';
-import Markdown from './Markdown';
+import ChatAnswer from './ChatAnswer';
 import CodeMap, { PhaseStatus } from './CodeMap';
 import type { CodeTarget } from './CodeViewer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -1209,7 +1209,7 @@ const Ask: React.FC<AskProps> = ({
                   </div>
                 )}
                 <div className="p-4">
-                  <Markdown content={displayContent} allowHtml={false} />
+                  <ChatAnswer content={displayContent} />
                   {turn.proposalId && <button type="button" disabled={isLoading || reviewBusy} onClick={() => openProposal(turn.proposalId!)} className="mt-3 border rounded px-3 py-1 text-sm">Review changes</button>}
                 </div>
                 <div className="p-2 flex justify-between items-center border-t border-[var(--border-color)]/40">
@@ -1292,7 +1292,7 @@ const Ask: React.FC<AskProps> = ({
                   ref={responseRef}
                   className="p-4 max-h-[500px] overflow-y-auto"
                 >
-                  <Markdown content={response} allowHtml={false} />
+                  <ChatAnswer content={response} />
                 </div>
 
                 {/* Research navigation and download */}

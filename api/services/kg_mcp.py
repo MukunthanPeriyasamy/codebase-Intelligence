@@ -10,6 +10,7 @@ import queue
 import subprocess
 import threading
 import time
+import shutil
 
 from jsonschema import validate
 
@@ -31,6 +32,15 @@ class GraphMCP:
         self.tools = []
         self.workspace = ""
         self.log = None
+        self.allowed_roots = set()
+
+    def allow_workspace(self, root):
+        """Authorize a user-selected generation checkout for the MCP sandbox."""
+        root = str(Path(root).resolve(strict=True))
+        with self.lock:
+            if root not in self.allowed_roots:
+                self.close()
+                self.allowed_roots.add(root)
 
     def close(self):
         with self.lock:
@@ -84,15 +94,25 @@ class GraphMCP:
         self.close()
         path = Path(os.getenv("DEEPWIKI_KG_CONFIG", ".local/kg-mcp.json"))
         if not path.is_file():
-            raise RuntimeError("KG is not configured. Create .local/kg-mcp.json using config/kg-mcp.example.json.")
-        config = json.loads(path.read_text(encoding="utf-8-sig"))
+            if os.getenv('DEEPWIKI_KG_CONFIG'):
+                raise RuntimeError('The configured DEEPWIKI_KG_CONFIG file does not exist')
+            command = shutil.which('uvx')
+            if not command:
+                raise RuntimeError('KG needs uv. Run scripts/setup-deepwiki.ps1, then restart the application.')
+            config = {'command': command, 'args': ['--python', '3.12', '--from', 'codegraphcontext==0.5.1', 'codegraphcontext', 'mcp', 'start'], 'cwd': str(Path.cwd())}
+        else:
+            config = json.loads(path.read_text(encoding="utf-8-sig"))
+        database = Path('.local/kg-data').resolve()
+        database.mkdir(parents=True, exist_ok=True)
         self.workspace = str(Path(config["cwd"]).resolve(strict=True))
         log_path = Path(".local/logs/kg-mcp.log")
         log_path.parent.mkdir(parents=True, exist_ok=True)
         self.log = log_path.open("a", encoding="utf-8")
         self.process = subprocess.Popen(
             [config["command"], *config.get("args", [])], cwd=self.workspace,
-            env={**os.environ, **config.get("env", {})}, shell=False,
+            env={**os.environ, 'HOME': str(database), 'USERPROFILE': str(database), 'CGC_RUNTIME_DB_TYPE': 'kuzudb', 'CGC_EMBEDDED_BUFFER_POOL_MB': '512',
+                 'KUZUDB_PATH': str(database / 'graph'), **config.get("env", {}),
+                 'CGC_ALLOWED_ROOTS': os.pathsep.join([*sorted(self.allowed_roots), config.get('env', {}).get('CGC_ALLOWED_ROOTS', os.getenv('CGC_ALLOWED_ROOTS', ''))])}, shell=False,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.log,
             text=True, encoding="utf-8", errors="replace", bufsize=1,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
